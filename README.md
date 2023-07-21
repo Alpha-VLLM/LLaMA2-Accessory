@@ -1,6 +1,6 @@
 # LLaMA2-Accesory: An Open-source Toolkit for LLM Development 🚀
 
-<p align="center">                                                                                                                                          <img src="docs/logo_v1.png"/ width="100%"> <br>
+<p align="center">                                                                                             <img src="docs/logo_v1.png"/ width="100%"> <br>
 </p>
 
 
@@ -45,8 +45,11 @@ LLaMA2-Accesory supports the pretrain, full-paratemeter finetune, paramter-effic
 
 See [docs/install.md](./docs/install.md). 
 
-# Pre-train & Fine-tune
+## Pre-train & Fine-tune
 See [docs/finetune.md](./docs/finetune.md). 
+
+## Examples
+We provide some examples of [instruction-tuned LLaMA2](./docs/demo_instruct.md) and [Chatbot LLaMA2](./docs/demo_dialog.md).
 
 ## License
 
