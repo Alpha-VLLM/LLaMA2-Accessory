@@ -349,7 +349,7 @@ def save_checkpoint(output_dir, args, model, optimizer, loss_scaler, dataset_sta
         # run saving in seperate functions to save memory
         def _save_model():
             consolidated_model_state_dict = {
-                "model": model.state_dict(),
+                "model": {key: val.half() for key, val in model.state_dict().items()},
             }
             save_path = os.path.join(
                 save_dir,

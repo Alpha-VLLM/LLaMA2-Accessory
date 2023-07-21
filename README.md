@@ -1,16 +1,16 @@
-# LLaMA-Accesory: An Open-source Toolkit for Multimodal Model Finetuning 🚀
+# LLaMA2-Accesory: An Open-source Toolkit for LLM Development 🚀
 
 <p align="center">                                                                                                                                          <img src="docs/logo_v1.png"/ width="100%"> <br>
 </p>
 
 
 
-Welcome to **LLaMa2-Accessory,** your comprehensive open-source solution for pretrained model finetuning, built to support a wide variety of models and applications. 
+Welcome to **LLaMa2-Accessory,** your comprehensive open-source solution for LLM development, built to support a wide variety of models and applications. 
 
-Our toolkit provides a comprehensive set of tools for pretraining, full-parameter finetuning, parameter-efficient finetuning, multimodality finetuning, and in-context multimodality finetuning.
+LLaMa2-Accessory provides comprehensive support for LLM pretraining, full-parameter finetuning, parameter-efficient finetuning, multimodality finetuning, and in-context multimodality finetuning.
 
 ## News
-- **[2023.07.21]** The training code for **LLaMA2** are released. 📌
+- **[2023.07.21]** Initial release 📌
 
 ## Features
 
@@ -41,14 +41,10 @@ These features provide methods to enhance the efficiency, scalability, and flexi
 
 ## Installation
 
-see [docs/install.md](./docs/install.md) for details. 
-
-## Usage
-
-To be added.
+See [docs/install.md](./docs/install.md). 
 
 # Pre-train & Fine-tune
-codes for pre-train and fine-tune are available in `./accessory`, see [docs/finetune.md](./docs/finetune.md) for details. 
+See [docs/finetune.md](./docs/finetune.md). 
 
 ## License
 
