@@ -7,37 +7,39 @@
 
 Welcome to **LLaMa2-Accessory,** your comprehensive open-source solution for LLM development, built to support a wide variety of models and applications. 
 
-LLaMa2-Accessory provides comprehensive support for LLM pretraining, full-parameter finetuning, parameter-efficient finetuning, multimodality finetuning, and in-context multimodality finetuning.
 
 ## News
 - **[2023.07.21]** Initial release 📌
 
 ## Features
 
-LLaMa2-Accesory comes loaded with a suite of capabilities to cater to diverse needs:
+LLaMA2-Accesory supports the pretrain, full-paratemeter finetune, paramter-efficient finetune, multimodality finetune and in-context multimodality finetune. 
 
 
-#### Model Training and Finetuning
-These features provide the foundation for the pretraining and finetuning of your models.
+### Dataset Support
 
 1. **Pretraining Support**: Allows pretraining on the StarCoder dataset and the RefinedWeb dataset, offering a strong basis for subsequent task-specific model adjustments.
    
 2. **Finetuning Support**: Supports finetuning on a variety of datasets including Alpaca, ShareGPT, UltraLM, and MOSS, enabling customization for diverse applications.
 
-3. **Parameter-Efficient Finetuning (PEFT) Methods**: Includes a range of PEFT techniques such as Zero-Init Attention, Bias-Norm-Tuning, LoRa. These are designed to optimize the training process, yielding better model performance with more efficient parameter usage.
+3. **Multimodality Finetuning**: Offers multimodal finetuning with datasets like COCO, SBU, COYO, Shrika, Laion, VQA, and LLaVa. This broadens the capability of models to understand and generate outputs based on various forms of inputs, such as images, text, and audio.
 
-4. **Multimodality Finetuning**: Offers multimodal finetuning with datasets like COCO, SBU, COYO, Shrika, Laion, VQA, and LLaVa. This broadens the capability of models to understand and generate outputs based on various forms of inputs, such as images, text, and audio.
+4. **In-context Multimodality Finetuning**: Employs the MMC4 and Obelisc for in-context multimodality finetuning, bringing an enhanced level of understanding and nuance to models dealing with multimodal data.
 
-5. **In-context Multimodality Finetuning**: Employs the MMC4 and Obelisc for in-context multimodality finetuning, bringing an enhanced level of understanding and nuance to models dealing with multimodal data.
+### Efficient Optimization and Scalability
 
-#### Advanced Optimization and Scalability
-These features provide methods to enhance the efficiency, scalability, and flexibility of the model training process.
-
-1. **Visual Encoder**: Integrates the state-of-the-art CLIP, Q-former and Imagebind visual encoders. This brings cutting-edge image encoding technology to your models, improving their understanding and interpretation of visual data.
-
+1. **Parameter-Efficient Finetuning (PEFT) Methods**: Includes a range of PEFT techniques such as Zero-Init Attention, Bias-Norm-Tuning, LoRa. These are designed to optimize the training process, yielding better model performance with more efficient parameter usage.
+   
 2. **Scalability**: Provides FSDP and Model-parallel support for flexible finetuning that ranges from 7B to 70B. This ensures the solution's ability to handle a wide range of model complexities and sizes, accommodating both smaller and larger scale applications.
 
-3. **Dataset Concatenation**: Enables joint training of langauge, multimodal, and image-text interleaved datasets. This increases the diversity and complexity of the training data, leading to models that are better equipped to handle a variety of real-world scenarios.
+###  Pretrained Multimodal Visual-and-Language Models 
+
+1. **CLIP**: A multimodal vision-and-language model developed by OpenAI, leveraging contrastive learning to map images and their textual descriptions into a shared semantic space, enabling versatile downstream applications.
+
+2. **Q-Former**: A lightweight Transformer architecture that employs a set of learnable query vectors to extract relevant visual features from a frozen image encoder, streamlining the provision of useful visual cues for language model to generate related textual output.
+
+3. **ImageBind**: A model that learns a joint embedding across six different modalities - images, text, audio, depth, thermal, and IMU data, facilitating emergent applications such as cross-modal retrieval, composing modalities with arithmetic, and cross-modal detection and generation.
+
 
 ## Installation
 
