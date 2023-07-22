@@ -1,6 +1,6 @@
 # LLaMA2-Accessory: An Open-source Toolkit for LLM Development 🚀
 
-Welcome to **LLaMA2-Accessory,** your comprehensive open-source solutions for LLM development, built to support a variety of LLM models and applications. 
+Welcome to **LLaMA2-Accessory** 🔥, your comprehensive open-source solutions for LLM development, built to support a variety of LLM models and applications. 
 
 <p align="center">                                                                                             <img src="docs/logo.png"/ width="100%"> <br>
 </p>
@@ -11,7 +11,7 @@ Welcome to **LLaMA2-Accessory,** your comprehensive open-source solutions for LL
 
 ## Features
 
-Upgraded from [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter), LLaMA2-Accessory supports the language pre-training of LLMs, and different fine-tuning methods, including full-parameter, parameter-efficient, and (in-context) multi-modal finetuning. 
+Upgraded from [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter), **LLaMA2-Accessory** supports the language pre-training of LLMs, and different fine-tuning methods, including full-parameter, parameter-efficient, and (in-context) multi-modal finetuning. 
 
 
 ### Dataset Support
