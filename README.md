@@ -51,14 +51,9 @@ See [docs/finetune.md](./docs/finetune.md).
 ## Examples
 We provide some examples of [instruction-tuned LLaMA2](./docs/demo_instruct.md) and [Chatbot LLaMA2](./docs/demo_dialog.md).
 
-## License
+## Core Contributors
 
-Distributed under the MIT License. See `LICENSE` for more information.
-
-## Contributors
-
-
-## Citation
+[Chris Liu](https://github.com/ChrisLiu6), [Jiaming Han](https://github.com/csuhan), [Ziyi Lin](https://github.com/linziyi96), [Guian Fang](https://github.com/Enderfga), [Peng Gao](https://github.com/gaopengpjlab)
 
 ## Acknowledgement
 + [@facebookresearch](https://github.com/facebookresearch) for [llama](https://github.com/facebookresearch/llama)
