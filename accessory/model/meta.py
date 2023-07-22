@@ -3,7 +3,6 @@ import torch.nn as nn
 import json
 from .tokenizer import Tokenizer
 from . import LLM
-from global_configs import tokenizer_path
 from util import misc
 
 

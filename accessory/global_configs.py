@@ -1,1 +1,0 @@
-tokenizer_path = '../tokenizer.model'
