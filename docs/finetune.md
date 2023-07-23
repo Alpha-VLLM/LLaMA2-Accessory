@@ -35,7 +35,7 @@ This document demonstrates the fine-tuning use cases supported by LLaMA2-Accesso
 + https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM/blob/main/data/alpaca_gpt4_data.json
 
 **Model Release:**
-+ [checkpoint](https://huggingface.co/Cxxs/LLaMA2-Accessory/blob/main/finetune/sg/alpaca/consolidated.00-of-01.model.pth)
++ [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/alpaca/consolidated.00-of-01.model.pth)
 
 **Host Local Demo:**
 ```bash
@@ -66,7 +66,7 @@ torchrun --nproc-per-node=1  demos/single-turn.py \
 + Please collect and process the data on your own. [Here](../data_example/ShareGPT.json) is a toy example showing the proper format of the data file.
 
 **Model Release:**
-+ [checkpoint](https://huggingface.co/Cxxs/LLaMA2-Accessory/blob/main/finetune/sg/dialog_sharegpt/consolidated.00-of-01.model.pth)
++ [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/dialog_sharegpt/consolidated.00-of-01.model.pth)
 
 **Host Local Demo:**
 ```bash
@@ -106,7 +106,7 @@ torchrun --nproc-per-node=1  demos/multi-turn.py \
 + https://huggingface.co/datasets/64bits/lima_vicuna_format/raw/main/lima_vicuna_format.json
 
 **Model Release:**
-+ [checkpoint](https://huggingface.co/Cxxs/LLaMA2-Accessory/blob/main/finetune/sg/dialog_lima/consolidated.00-of-01.model.pth)
++ [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/dialog_lima/consolidated.00-of-01.model.pth)
 
 **Host Local Demo:**
 ```bash

@@ -14,12 +14,12 @@
 * **Support More Datasets and Tasks**
 
   - Pre-training with [RefinedWeb](https://huggingface.co/datasets/tiiuae/falcon-refinedweb) and [StarCoder](https://github.com/bigcode-project/starcoder).
-  - Single-modal fine-tuning with [Alpaca](https://github.com/tatsu-lab/stanford_alpaca), [ShareGPT](https://github.com/domeccleston/sharegpt), [UltraChat](https://github.com/thunlp/UltraChat) and [MOSS](https://github.com/OpenLMLab/MOSS).
-  - Multi-modal fine-tuning with image-text pairs ([LAION](https://laion.ai/blog/laion-5b/), [COYO](https://github.com/kakaobrain/coyo-dataset) and more), interleaved image-text data ([MMC4](https://github.com/allenai/mmc4) and [OBELISC](https://github.com/huggingface/OBELISC)) and visual instruction data ([LLaVA](https://github.com/haotian-liu/LLaVA) and [Shrika](https://github.com/shikras/shikra))
+  - Single-modal fine-tuning with [Alpaca](https://github.com/tatsu-lab/stanford_alpaca), [ShareGPT](https://github.com/domeccleston/sharegpt), [LIMA](https://arxiv.org/pdf/2305.11206.pdf), [UltraChat](https://github.com/thunlp/UltraChat) and [MOSS](https://github.com/OpenLMLab/MOSS).
+  - Multi-modal fine-tuning with image-text pairs ([LAION](https://laion.ai/blog/laion-5b/), [COYO](https://github.com/kakaobrain/coyo-dataset) and more), interleaved image-text data ([MMC4](https://github.com/allenai/mmc4) and [OBELISC](https://github.com/huggingface/OBELISC)) and visual instruction data ([LLaVA](https://github.com/haotian-liu/LLaVA), [Shrika](https://github.com/shikras/shikra), [Bard](https://bard.google.com/))
   -  LLM for API Control ([GPT4Tools](https://github.com/StevenGrove/GPT4Tools) and [Gorilla](https://github.com/ShishirPatil/gorilla)).
 * **Efficient Optimization and Deployment**
 
-  - Parameter-efficient fine-tuning with [LoRA](https://github.com/tloen/alpaca-lora), [Zero-init Attenion](https://github.com/OpenGVLab/LLaMA-Adapter) and [Bia-norm Tuning](https://github.com/OpenGVLab/LLaMA-Adapter).
+  - Parameter-efficient fine-tuning with [Zero-init Attenion](https://github.com/OpenGVLab/LLaMA-Adapter) and [Bia-norm Tuning](https://github.com/OpenGVLab/LLaMA-Adapter).
   - Fully Sharded Data Parallel ([FSDP](https://engineering.fb.com/2021/07/15/open-source/fsdp/)), [Flash Attention 2](https://github.com/Dao-AILab/flash-attention) and [QLoRA](https://github.com/artidoro/qlora).
 * **Support More Visual Encoders and LLMs**
   - Visual Encoders: [CLIP](https://github.com/openai/CLIP), [Q-Former](https://github.com/salesforce/LAVIS) and [ImageBind](https://github.com/facebookresearch/ImageBind).
@@ -35,7 +35,7 @@ See [docs/finetune.md](./docs/finetune.md).
 
 ## Demos
 * instruction-tuned LLaMA2: [alpaca.md](./docs/examples/finetune/sg/alpaca.md).
-* Chatbot LLaMA2: [dialog_sharegpt.md](./docs/examples/finetune/sg/dialog_sharegpt.md) or [dialog_lima.md](./docs/examples/finetune/sg/dialog_lima.md).
+* Chatbot LLaMA2: [dialog_sharegpt.md](./docs/examples/finetune/sg/dialog_sharegpt.md) & [dialog_lima.md](./docs/examples/finetune/sg/dialog_lima.md) & [llama2-chat.md](./docs/examples/finetune/sg/llama2-chat.md).
 
 ## Core Contributors
 
