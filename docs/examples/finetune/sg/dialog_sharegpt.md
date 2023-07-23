@@ -1,4 +1,4 @@
-## Demos of Chatbot LLaMA2
+## Demos of Chatbot LLaMA2 fine-tuned using the sharegpt dataset.
 
 ### **Convesation 1:**
 A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions.

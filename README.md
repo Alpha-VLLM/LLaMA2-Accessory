@@ -35,7 +35,7 @@ See [docs/finetune.md](./docs/finetune.md).
 
 ## Demos
 * instruction-tuned LLaMA2: [alpaca.md](./docs/examples/finetune/sg/alpaca.md).
-* Chatbot LLaMA2: [dialog_sharegpt.md](./docs/examples/finetune/sg/dialog_sharegpt.md).
+* Chatbot LLaMA2: [dialog_sharegpt.md](./docs/examples/finetune/sg/dialog_sharegpt.md) or [dialog_lima.md](./docs/examples/finetune/sg/dialog_lima.md).
 
 ## Core Contributors
 
