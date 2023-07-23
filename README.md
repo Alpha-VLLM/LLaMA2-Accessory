@@ -7,10 +7,10 @@
 
 **LLaMA2-Accessory** is an open-source toolkit for pre-training, fine-tunnig and deployment of **Large Language Models (LLMs)** and **mutlimodal LLMs**. This repo is mainly inherited from [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter) with more advanced features.
 
-### News
+## News
 - **[2023.07.23]** Initial release 📌
 
-### Features
+## Features
 * **Support More Datasets and Tasks**
 
   - Pre-training with [RefinedWeb](https://huggingface.co/datasets/tiiuae/falcon-refinedweb) and [StarCoder](https://github.com/bigcode-project/starcoder).
@@ -26,14 +26,14 @@
   - LLMs: LLaMA and LLaMA2.
 
 
-### Installation
+## Installation
 
 See [docs/install.md](./docs/install.md). 
 
-### Training & Inference
+## Training & Inference
 See [docs/finetune.md](./docs/finetune.md). 
 
-### Demos
+## Demos
 * instruction-tuned LLaMA2: [docs/demo_instruct.md](./docs/demo_instruct.md).
 * Chatbot LLaMA2: [docs/demo_dialog.md](./docs/demo_dialog.md).
 
