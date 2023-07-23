@@ -7,6 +7,7 @@ from model.meta import MetaModel
 
 import argparse
 import torch
+import torch.distributed as dist
 import gradio as gr
 
 from util import misc
@@ -71,6 +72,9 @@ def generate(
     conv.append_message(conv.roles[1], None)
     _prompt = conv.get_prompt()
     print(_prompt)
+
+    dist.barrier()
+    dist.broadcast_object_list([_prompt, image, max_gen_len, gen_t, top_p])
     with torch.cuda.amp.autocast():
         result = model.generate([_prompt], image, max_gen_len=max_gen_len, temperature=gen_t, top_p=top_p,)
         print(result)
@@ -121,11 +125,26 @@ def create_demo():
     return demo
 
 
-description = """
-# Multi-turn demo🚀
-"""
+def worker_func():
+    while True:
+        dist.barrier()
 
-with gr.Blocks(theme=gr.themes.Default(), css="#pointpath {height: 10em} .label {height: 3em}") as DEMO:
-    gr.Markdown(description)
-    create_demo()
-DEMO.queue(api_open=True, concurrency_count=1).launch(share=True)
+        input_data = [None for _ in range(5)]
+        dist.broadcast_object_list(input_data)
+        _prompt, image, max_gen_len, gen_t, top_p = input_data
+        with torch.cuda.amp.autocast():
+            _ = model.generate([_prompt], image, max_gen_len=max_gen_len, temperature=gen_t, top_p=top_p, )
+
+
+if dist.get_rank() == 0:
+    description = """
+    # Multi-turn demo🚀
+    """
+
+    with gr.Blocks(theme=gr.themes.Default(), css="#pointpath {height: 10em} .label {height: 3em}") as DEMO:
+        gr.Markdown(description)
+        create_demo()
+    DEMO.queue(api_open=True, concurrency_count=1).launch(share=True)
+
+else:
+    worker_func()
