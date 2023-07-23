@@ -54,10 +54,10 @@ We provide some examples of [instruction-tuned LLaMA2](./docs/demo_instruct.md) 
 
 ## Core Contributors
 
-[Chris Liu](https://github.com/ChrisLiu6), [Jiaming Han](https://github.com/csuhan), [Ziyi Lin](https://github.com/linziyi96), [Guian Fang](https://github.com/Enderfga), [Renrui Zhang](https://github.com/ZrrSkywalker), [Peng Gao](https://github.com/gaopengpjlab)
+[Chris Liu](https://github.com/ChrisLiu6), [Jiaming Han](https://github.com/csuhan), [Ziyi Lin](https://github.com/linziyi96), [Guian Fang](https://github.com/Enderfga), [Renrui Zhang](https://github.com/ZrrSkywalker), [Wenqi Shao](https://github.com/wqshao126), [Peng Gao](https://github.com/gaopengpjlab)
 
 ## Acknowledgement
-+ [@facebookresearch](https://github.com/facebookresearch) for [llama](https://github.com/facebookresearch/llama) & [ImageBind](https://github.com/facebookresearch/ImageBind)
++ [@facebookresearch](https://github.com/facebookresearch) for [llama](https://github.com/facebookresearch/llama) & [ImageBind](https://github.com/facebookresearch/ImageBind) & [LIMA](https://huggingface.co/datasets/64bits/lima_vicuna_format)
 + [@OpenGVLab](https://github.com/OpenGVLab) for [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter)
 + [@Instruction-Tuning-with-GPT-4](https://github.com/Instruction-Tuning-with-GPT-4) for [GPT-4-LLM](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
 + [@tatsu-lab](https://github.com/tatsu-lab) for [stanford_alpaca](https://github.com/tatsu-lab/stanford_alpaca)
