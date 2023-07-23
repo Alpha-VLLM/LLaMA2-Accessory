@@ -2,8 +2,11 @@
 
 Welcome to **LLaMA2-Accessory** 🔥, your comprehensive open-source solutions for LLM development, built to support a variety of LLM models and applications. 
 
-<p align="center">                                                                                             <img src="docs/logo.png"/ width="100%"> <br>
+<p align="center">
+ <img src="docs/logo.png" width="100%"/> 
+ <br>
 </p>
+
 
 
 ## News

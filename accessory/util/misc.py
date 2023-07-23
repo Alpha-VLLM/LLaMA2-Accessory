@@ -497,13 +497,13 @@ def resume_stage2(args, model, optimizer, loss_scaler, dataset_train):
         return epoch_iter
 
 
-def load_pretrained(load_dir, args, model):
+def load_pretrained(load_dir, pretrained_type, model):
     mp_rank = fs_init.get_model_parallel_rank()
     mp_world_size = fs_init.get_model_parallel_world_size()
 
     dp_rank = fs_init.get_data_parallel_rank()
     if dp_rank == 0: # later broadcast to all ranks through FSDP init
-        if not hasattr(args, "pretrained_type") or args.pretrained_type == "consolidated":
+        if pretrained_type == "consolidated":
             candidate_names = [
                 os.path.join(load_dir, f"consolidated.{mp_rank:02d}-of-{mp_world_size:02d}.pth"),
                 os.path.join(load_dir, f"consolidated.{mp_rank:02d}-of-{mp_world_size:02d}.model.pth")
@@ -519,11 +519,13 @@ def load_pretrained(load_dir, args, model):
             if 'model' in state_dict:
                 state_dict = state_dict['model']
             load_result = model.load_state_dict(state_dict, strict=False)
-        elif args.pretrained_type == "meta_ori":
+        elif pretrained_type == "meta_ori":
             state_dict_path = os.path.join(load_dir, f"consolidated.{mp_rank:02d}.pth")
             state_dict = torch.load(state_dict_path, map_location='cpu')
             model_state = {f"llma.{key}": val for key, val in state_dict.items()}
             load_result = model.load_state_dict(model_state, strict=False)
+        else:
+            raise ValueError(f"Unknown pretrained_type: {pretrained_type}")
         print('load pretrained result:\n', load_result)
 
 

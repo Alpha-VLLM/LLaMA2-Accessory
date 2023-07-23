@@ -1,23 +1,29 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 # This software may be used and distributed according to the terms of the Llama 2 Community License Agreement.
 
-import math
+from typing import Optional, Tuple
 from dataclasses import dataclass
-from typing import Any, Optional, Tuple
+import math
 import functools
 
-import fairscale.nn.model_parallel.initialize as fs_init
 import torch
+from torch import nn
 import torch.nn.functional as F
+
+import fairscale.nn.model_parallel.initialize as fs_init
 from fairscale.nn.model_parallel.layers import (
-    ColumnParallelLinear,
     ParallelEmbedding,
     RowParallelLinear,
+    ColumnParallelLinear,
 )
-from torch import nn
 
 from apex.normalization import FusedRMSNorm as RMSNorm
 import open_clip
+
+import configs.global_configs
+if configs.global_configs.USE_FLASH_ATTENTION:
+    from flash_attn import flash_attn_func
+
 default_linear_init = functools.partial(nn.init.kaiming_uniform_, a=math.sqrt(5))
 
 
@@ -116,7 +122,7 @@ class Attention(nn.Module):
             init_method=default_linear_init,
         )
 
-        self.flash = True
+        self.flash = configs.global_configs.USE_FLASH_ATTENTION
 
     def forward(self, x: torch.Tensor, start_pos: int, freqs_cis: torch.Tensor, mask: Optional[torch.Tensor]):
         bsz, seqlen, _ = x.shape
@@ -135,20 +141,21 @@ class Attention(nn.Module):
         keys = repeat_kv(keys, self.n_rep)  # (bs, seqlen, n_local_heads, head_dim)
         values = repeat_kv(values, self.n_rep)  # (bs, seqlen, n_local_heads, head_dim)
 
-        xq = xq.transpose(1, 2)  # (bs, n_local_heads, seqlen, head_dim)
-        keys = keys.transpose(1, 2)
-        values = values.transpose(1, 2)
         if self.flash:
-            output = F.scaled_dot_product_attention(xq, keys, values, attn_mask=None, dropout_p=0.0, is_causal=True)
+            output = flash_attn_func(xq, keys, values, dropout_p=0.0, causal=True)
+            output = output.contiguous().view(bsz, seqlen, -1)
         else:
+            xq = xq.transpose(1, 2)  # (bs, n_local_heads, seqlen, head_dim)
+            keys = keys.transpose(1, 2)
+            values = values.transpose(1, 2)
             scores = torch.matmul(xq, keys.transpose(2, 3)) / math.sqrt(self.head_dim)
             if mask is not None:
                 scores = scores + mask  # (bs, n_local_heads, slen, cache_len + slen)
             scores = F.softmax(scores.float(), dim=-1).type_as(xq)
             output = torch.matmul(scores, values)  # (bs, n_local_heads, slen, head_dim)
-        output = output.transpose(
-            1, 2
-        ).contiguous().view(bsz, seqlen, -1)
+            output = output.transpose(
+                1, 2
+            ).contiguous().view(bsz, seqlen, -1)
 
         return self.wo(output)
 

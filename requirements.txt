@@ -6,6 +6,8 @@ pandas
 tensorboard
 fairscale
 sentencepiece
+gradio
+open_clip_torch
 fire
 packaging
 transformers

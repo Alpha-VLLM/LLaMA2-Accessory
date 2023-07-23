@@ -91,7 +91,7 @@ def train_one_epoch(model: torch.nn.Module,
         c_loss_value_reduce = misc.all_reduce_mean(c_loss_value)
         if update_grad:
             grad_norm_reduce = misc.all_reduce_mean(grad_norm)
-        if log_writer is not None and (data_iter_step + 1) % accum_iter == 0:
+        if log_writer is not None and update_grad:
             """ We use epoch_1000x as the x-axis in tensorboard.
             This calibrates different curves when batch size changes.
             """
@@ -101,6 +101,15 @@ def train_one_epoch(model: torch.nn.Module,
                 log_writer.add_scalar('grad_norm', grad_norm_reduce, epoch_1000x)
             log_writer.add_scalar('lr', lr, epoch_1000x)
 
+
+        # save within epoch
+        n_update_per_save = 10000 // accum_iter
+        if update_grad and ((data_iter_step + 1) // accum_iter) % n_update_per_save == 0:
+            misc.save_checkpoint(
+                output_dir=args.output_dir,
+                args=args, epoch=epoch, iteration=data_iter_step, model=model, optimizer=optimizer,
+                loss_scaler=loss_scaler, dataset_state=None,
+            )
 
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()

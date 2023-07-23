@@ -158,7 +158,7 @@ def main(args):
     model = MetaModel(args.llama_type, args.llama_config,
                       args.tokenizer_path, with_visual=not args.no_visual)
     print(f"load pretrained from {args.pretrained_path}")
-    misc.load_pretrained(args.pretrained_path, args, model)
+    misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
     print("Unwrapped Model = %s" % str(model))
 
     # resume stage1

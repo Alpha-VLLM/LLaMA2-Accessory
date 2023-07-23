@@ -203,7 +203,7 @@ def clip_grad_norm(
         # unless we use additional communication, which we prefer to avoid
         # since `clip_grad_norm_()` is called in the training loop
         warnings.warn(
-            f"Called FSDP.clip_grad_norm_() on rank {self.rank} with no "
+            f"Called FSDP.clip_grad_norm_() on rank {dist.get_rank()} with no "
             "gradients -- returning the total norm in the default dtype "
             f"{total_norm.dtype}"
         )  # warn since this is generally unexpected
