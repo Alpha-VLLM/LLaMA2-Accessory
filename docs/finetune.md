@@ -65,7 +65,7 @@ torchrun --nproc-per-node=1  demos/single-turn.py \
 **Data:**
 + Please collect and process the data on your own. [Here](../data_example/ShareGPT.json) is a toy example showing the proper format of the data file.
 
-Model Release:
+**Model Release:**
 + [checkpoint](https://huggingface.co/Cxxs/LLaMA2-Accessory/blob/main/finetune/sg/dialog_sharegpt/consolidated.00-of-01.model.pth)
 
 **Host Local Demo:**
