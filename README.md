@@ -7,7 +7,7 @@ Welcome to **LLaMA2-Accessory** 🔥, your comprehensive open-source solutions f
 
 
 ## News
-- **[2023.07.21]** Initial release 📌
+- **[2023.07.23]** Initial release 📌
 
 ## Features
 
@@ -51,7 +51,7 @@ We provide some examples of [instruction-tuned LLaMA2](./docs/demo_instruct.md) 
 
 ## Core Contributors
 
-[Chris Liu](https://github.com/ChrisLiu6), [Jiaming Han](https://github.com/csuhan), [Ziyi Lin](https://github.com/linziyi96), [Renrui Zhang](https://github.com/ZrrSkywalker), [Guian Fang](https://github.com/Enderfga), [Peng Gao](https://github.com/gaopengpjlab)
+[Chris Liu](https://github.com/ChrisLiu6), [Jiaming Han](https://github.com/csuhan), [Ziyi Lin](https://github.com/linziyi96), [Guian Fang](https://github.com/Enderfga), [Renrui Zhang](https://github.com/ZrrSkywalker), [Peng Gao](https://github.com/gaopengpjlab)
 
 ## Acknowledgement
 + [@facebookresearch](https://github.com/facebookresearch) for [llama](https://github.com/facebookresearch/llama) & [ImageBind](https://github.com/facebookresearch/ImageBind)
