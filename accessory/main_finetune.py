@@ -100,6 +100,8 @@ def get_args_parser():
                         help='path where to save, empty for no saving')
     parser.add_argument('--log_dir', default='./output_dir',
                         help='path where to tensorboard log')
+    parser.add_argument('--save_interval', default=1, type=int,
+                        help='number of epochs between model saving')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
     parser.add_argument('--seed', default=0, type=int)
@@ -270,7 +272,7 @@ def main(args):
             args=args
         )
 
-        if args.output_dir and (epoch % 1 == 0 or epoch + 1 == args.epochs):
+        if args.output_dir and (epoch % args.save_interval == 0 or epoch + 1 == args.epochs):
             misc.save_checkpoint(
                 output_dir=args.output_dir,
                 args=args, epoch=epoch, iteration=None, model=model, optimizer=optimizer,
