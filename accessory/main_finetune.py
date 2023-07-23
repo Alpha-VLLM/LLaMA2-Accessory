@@ -172,7 +172,7 @@ def main(args):
         "bf16": torch.bfloat16,
         "tf32": torch.float32,
     }[args.precision]
-    Attention, FeedForward = type(model.llma.layers[0].attention), type(model.llma.layers[0].feed_forward)
+    TransformerBlock = type(model.llma.layers[0])
     # ignored_named_parameters = {name: param for name, param in model.named_parameters() if not param.requires_grad}
     # print(ignored_named_parameters.keys())
     model = FSDP(
@@ -180,7 +180,7 @@ def main(args):
         process_group=fs_init.get_data_parallel_group(),
         auto_wrap_policy=functools.partial(
             transformer_auto_wrap_policy,
-            transformer_layer_cls=[] if 'peft' in args.llama_type.lower() else [Attention, FeedForward],
+            transformer_layer_cls=[] if 'peft' in args.llama_type.lower() else [TransformerBlock],
         ),
         limit_all_gathers=True,
         use_orig_params=True,
@@ -210,7 +210,7 @@ def main(args):
             offload_to_cpu=False,
             checkpoint_impl=CheckpointImpl.NO_REENTRANT,
         )
-        check_fn = lambda submodule: isinstance(submodule, (Attention, FeedForward))
+        check_fn = lambda submodule: isinstance(submodule, TransformerBlock)
         apply_activation_checkpointing(model, checkpoint_wrapper_fn=non_reentrant_wrapper, check_fn=check_fn)
 
     print("Model = %s" % str(model))

@@ -520,6 +520,13 @@ def load_pretrained(load_dir, pretrained_type, model):
                 state_dict = state_dict['model']
             load_result = model.load_state_dict(state_dict, strict=False)
         elif pretrained_type == "meta_ori":
+            ckpt_mp_world_size = len([
+                path for path in os.listdir(load_dir)
+                if path.startswith("consolidated.") and path.endswith(".pth")
+            ])
+            assert ckpt_mp_world_size == mp_world_size, (
+                "Loading from checkpoints of different mp_world_size is currently not supported."
+            )
             state_dict_path = os.path.join(load_dir, f"consolidated.{mp_rank:02d}.pth")
             state_dict = torch.load(state_dict_path, map_location='cpu')
             model_state = {f"llma.{key}": val for key, val in state_dict.items()}
@@ -564,6 +571,7 @@ def broadcast_nonmp_parameters(model):
     from fairscale.nn.model_parallel.layers import (
         RowParallelLinear,
         ColumnParallelLinear,
+        ParallelEmbedding,
     )
     if fs_init.get_model_parallel_world_size() == 1:
         return
@@ -584,6 +592,10 @@ def broadcast_nonmp_parameters(model):
                 print(f"ignore: {name}")
                 assert getattr(v, "is_model_parallel", False)
                 continue
+            if isinstance(module, ParallelEmbedding):
+                print(f"ignore: {name}")
+                assert getattr(v, "is_model_parallel", False)
+                continue
             memo.add(v)
             dist.broadcast(v, src=fs_init.get_model_parallel_src_rank(), group=fs_init.get_model_parallel_group())
     print("braodcast done")
@@ -593,6 +605,7 @@ def mark_mp_params(model: torch.nn.Module):
     from fairscale.nn.model_parallel.layers import (
         RowParallelLinear,
         ColumnParallelLinear,
+        ParallelEmbedding,
     )
     for m in model.modules():
         if isinstance(m, ColumnParallelLinear):
@@ -601,5 +614,8 @@ def mark_mp_params(model: torch.nn.Module):
                 m.bias.is_model_parallel = True
 
         if isinstance(m, RowParallelLinear):
+            m.weight.is_model_parallel = True
+
+        if isinstance(m, ParallelEmbedding):
             m.weight.is_model_parallel = True
 

@@ -1,6 +1,9 @@
 import torch
 import torch.nn as nn
 import json
+
+from fairscale.nn.model_parallel import initialize as fs_init
+
 from .tokenizer import Tokenizer
 from . import LLM
 from util import misc
@@ -27,13 +30,21 @@ class MetaModel(nn.Module):
 
         model = Transformer(model_args, with_visual=with_visual)
         self.llma = model
-        for name, param in self.named_parameters():
-            if param.requires_grad:
-               print(f"Trainable param: {name}, {param.shape}, {param.dtype}")
-        count = sum(p.numel() for p in self.parameters() if p.requires_grad)
-        print(f"Parameter count : {count}")
 
         misc.mark_mp_params(self)
+
+        param_count_local, param_count_all = 0, 0
+        for name, param in self.named_parameters():
+            is_model_parallel = getattr(param, "is_model_parallel", False)
+            if param.requires_grad:
+                print(f"Trainable param: {name}, local_size: {param.shape}, model_parallel: {is_model_parallel}, dtype: {param.dtype}")
+                if is_model_parallel:
+                    param_count_all += param.numel() * fs_init.get_model_parallel_world_size()
+                else:
+                    param_count_all += param.numel()
+                param_count_local += param.numel()
+        print(f"Parameter count : {param_count_local} (local rank), {param_count_all} (all).")
+
 
     def forward(self, examples, labels, images=None):
         output = self.llma(examples, images)
