@@ -1,3 +1,5 @@
+#!/bin/bash
+
 pretrained_path=$1
 pretrained_type=meta_ori
 llama_config="$2"
