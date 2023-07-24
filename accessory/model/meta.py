@@ -28,8 +28,13 @@ class MetaModel(nn.Module):
         self.tokenizer = Tokenizer(model_path=tokenizer_path)
         model_args.vocab_size = self.tokenizer.n_words
 
+        print("Model Args:\n", model_args)
+
         model = Transformer(model_args, with_visual=with_visual)
         self.llma = model
+
+        self.is_peft = getattr(model, "is_peft", False)
+        print(f"Model is Peft: {self.is_peft}")
 
         misc.mark_mp_params(self)
 

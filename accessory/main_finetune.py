@@ -180,7 +180,7 @@ def main(args):
         process_group=fs_init.get_data_parallel_group(),
         auto_wrap_policy=functools.partial(
             transformer_auto_wrap_policy,
-            transformer_layer_cls=[] if 'peft' in args.llama_type.lower() else [TransformerBlock],
+            transformer_layer_cls=[] if model.is_peft else [TransformerBlock],
         ),
         limit_all_gathers=True,
         use_orig_params=True,

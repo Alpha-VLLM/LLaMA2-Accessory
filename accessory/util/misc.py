@@ -568,11 +568,6 @@ def add_weight_decay(model, weight_decay=1e-5, skip_list=()):
 
 
 def broadcast_nonmp_parameters(model):
-    from fairscale.nn.model_parallel.layers import (
-        RowParallelLinear,
-        ColumnParallelLinear,
-        ParallelEmbedding,
-    )
     if fs_init.get_model_parallel_world_size() == 1:
         return
     print("starting broadcast non-model-parallel parameters within model parallel group")
@@ -584,17 +579,8 @@ def broadcast_nonmp_parameters(model):
             name = module_prefix + ('.' if module_prefix else '') + k
             if v is None or v in memo:
                 continue
-            if isinstance(module, ColumnParallelLinear):
+            if getattr(v, "is_model_parallel", False):
                 print(f"ignore: {name}")
-                assert getattr(v, "is_model_parallel", False)
-                continue
-            if isinstance(module, RowParallelLinear) and k=="weight":
-                print(f"ignore: {name}")
-                assert getattr(v, "is_model_parallel", False)
-                continue
-            if isinstance(module, ParallelEmbedding):
-                print(f"ignore: {name}")
-                assert getattr(v, "is_model_parallel", False)
                 continue
             memo.add(v)
             dist.broadcast(v, src=fs_init.get_model_parallel_src_rank(), group=fs_init.get_model_parallel_group())
