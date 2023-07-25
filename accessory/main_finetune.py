@@ -50,8 +50,10 @@ def get_args_parser():
     # Model parameters
     parser.add_argument('--llama_type', default='llama', type=str, metavar='MODEL',
                         help='Name of model to train')
-    parser.add_argument('--llama_config', default='params.json', type=str,
-                        help='Path to llama model config')
+    parser.add_argument('--llama_config', default='params.json', type=str, nargs="+",
+                        help='Path to llama model config. If multiple jsons are given, their union will be used. '
+                             'When the same key appears more than once, its last appearance is adopted.')
+
     parser.add_argument('--no_visual', action="store_true",
                         help='to not instantialize visual modules')
     parser.add_argument('--tokenizer_path', type=str, default="../tokenizer.model",

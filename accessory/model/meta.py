@@ -12,7 +12,7 @@ from util import misc
 class MetaModel(nn.Module):
     """ Masked Autoencoder with VisionTransformer backbone
     """
-    def __init__(self, llama_type, llama_config, tokenizer_path, with_visual=False):
+    def __init__(self, llama_type, llama_config: list, tokenizer_path, with_visual=False):
         super().__init__()
 
         self.criterion = torch.nn.CrossEntropyLoss(ignore_index=0)
@@ -20,8 +20,10 @@ class MetaModel(nn.Module):
         ModelArgs = LLM.__dict__[llama_type].ModelArgs
         Transformer = LLM.__dict__[llama_type].Transformer
 
-        with open(llama_config, "r") as f:
-            params = json.loads(f.read())
+        params = {}
+        for _ in llama_config:
+            with open(_, "r") as f:
+                params.update(json.loads(f.read()))
         model_args: ModelArgs = ModelArgs(
             max_seq_len=2048, max_batch_size=32, **params
         )
