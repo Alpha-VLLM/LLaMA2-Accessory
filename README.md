@@ -31,7 +31,7 @@
 See [docs/install.md](./docs/install.md). 
 
 ## Training & Inference
-See [docs/finetune.md](./docs/finetune.md). 
+See [docs/pretrain.md](./docs/pretrain.md) and [docs/finetune.md](./docs/finetune.md). 
 
 ## Demos
 * instruction-tuned LLaMA2: [alpaca](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/alpaca.html).
