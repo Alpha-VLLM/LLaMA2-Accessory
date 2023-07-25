@@ -348,8 +348,11 @@ def save_checkpoint(output_dir, args, model, optimizer, loss_scaler, dataset_sta
     ):
         # run saving in seperate functions to save memory
         def _save_model():
+            model_trainable_params = model.get_trainable_params()
+            model_trainable_params = ['.'.join([_ for _ in key.split('.') if not _.startswith('_')])
+                                      for key in model_trainable_params.keys()]
             consolidated_model_state_dict = {
-                "model": {key: val.half() for key, val in model.state_dict().items()},
+                "model": {key: val.half() for key, val in model.state_dict().items() if key in model_trainable_params},
             }
             save_path = os.path.join(
                 save_dir,

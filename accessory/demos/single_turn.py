@@ -19,9 +19,9 @@ from data.alpaca import transform_train, format_prompt
 def get_args_parser():
     parser = argparse.ArgumentParser('Single-turn (conversation) demo', add_help=False)
     # Model parameters
-    parser.add_argument('--llama_type', default='llama', type=str, metavar='MODEL', choices=['llama'],
+    parser.add_argument('--llama_type', default='llama', type=str, metavar='MODEL',
                         help='type of llama')
-    parser.add_argument('--llama_config', default='/path/to/params.json', type=str,
+    parser.add_argument('--llama_config', default='/path/to/params.json', type=str, nargs="+",
                         help='Path to llama model config')
     parser.add_argument('--tokenizer_path', type=str, default="../tokenizer.model",
                         help='path to tokenizer.model')
@@ -50,9 +50,15 @@ misc.init_distributed_mode(args)
 fs_init.initialize_model_parallel(args.model_parallel_size)
 model = MetaModel(args.llama_type, args.llama_config, args.tokenizer_path, with_visual=False)
 print(f"load pretrained from {args.pretrained_path}")
-misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
+# misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
 print("Model = %s" % str(model))
 model.cuda().half()
+import pdb
+pdb.set_trace()
+
+model_trainable_params = model.get_trainable_params()
+consolidated_model_state_dict = {"model": {key: val.half() for key, val in model.state_dict().items() if key in model_trainable_params}}
+
 
 @ torch.inference_mode()
 def generate(

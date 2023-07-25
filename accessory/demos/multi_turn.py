@@ -18,9 +18,9 @@ from data.conversation.lib import conv_templates, SeparatorStyle, Conversation
 def get_args_parser():
     parser = argparse.ArgumentParser('Multi-turn (conversation) demo', add_help=False)
     # Model parameters
-    parser.add_argument('--llama_type', default='llama', type=str, metavar='MODEL', choices=['llama'],
+    parser.add_argument('--llama_type', default='llama', type=str, metavar='MODEL',
                         help='type of llama')
-    parser.add_argument('--llama_config', default='/path/to/params.json', type=str,
+    parser.add_argument('--llama_config', default='/path/to/params.json', type=str, nargs="+",
                         help='Path to llama model config')
     parser.add_argument('--tokenizer_path', type=str, default="../tokenizer.model",
                         help='path to tokenizer.model')

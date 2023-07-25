@@ -53,6 +53,11 @@ class MetaModel(nn.Module):
         print(f"Parameter count : {param_count_local} (local rank), {param_count_all} (all).")
 
 
+    def get_trainable_params(self):
+        llma_trainable = self.llma.get_trainable_params()
+        return {"llma." + name: param for name, param in llma_trainable.items()}
+
+
     def forward(self, examples, labels, images=None):
         output = self.llma(examples, images)
         output = output[:, :-1, :]
@@ -121,6 +126,7 @@ class MetaModel(nn.Module):
                 pass
             decoded.append(self.tokenizer.decode(t))
         return decoded
+
 
     def sample_top_p(self, probs, p):
         probs_sort, probs_idx = torch.sort(probs, dim=-1, descending=True)
