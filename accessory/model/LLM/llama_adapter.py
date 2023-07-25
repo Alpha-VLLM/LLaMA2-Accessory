@@ -16,6 +16,7 @@ from fairscale.nn.model_parallel.layers import (
     RowParallelLinear,
     ColumnParallelLinear
 )
+from ..peft import LoraColumnParallelLinear, LoraRowParallelLinear
 
 from apex.normalization import FusedRMSNorm as RMSNorm
 import open_clip
@@ -41,8 +42,12 @@ class ModelArgs:
     max_batch_size: int = 32
     max_seq_len: int = 2048
 
-    prefix_layers = None
-    prefix_len = 30
+    prefix_layers: Optional[int] = None # prefix, set to n_layers by default
+    prefix_len: int = 30
+
+    lora_rank: int = -1 # lora
+
+    bias_tuning: bool = False  # bias
 
 
 def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0):
@@ -96,33 +101,37 @@ class Attention(nn.Module):
         self.n_rep = self.n_local_heads // self.n_local_kv_heads
         self.head_dim = args.dim // args.n_heads
 
-        self.wq = ColumnParallelLinear(
+        self.wq = LoraColumnParallelLinear(
             args.dim,
             args.n_heads * self.head_dim,
-            bias=False,
+            bias=args.bias_tuning,
             gather_output=False,
             init_method=default_linear_init,
+            lora_rank=args.lora_rank
         )
-        self.wk = ColumnParallelLinear(
+        self.wk = LoraColumnParallelLinear(
             args.dim,
             self.n_kv_heads * self.head_dim,
-            bias=False,
+            bias=args.bias_tuning,
             gather_output=False,
             init_method=default_linear_init,
+            lora_rank=args.lora_rank
         )
-        self.wv = ColumnParallelLinear(
+        self.wv = LoraColumnParallelLinear(
             args.dim,
             self.n_kv_heads * self.head_dim,
-            bias=False,
+            bias=args.bias_tuning,
             gather_output=False,
             init_method=default_linear_init,
+            lora_rank=args.lora_rank
         )
-        self.wo = RowParallelLinear(
+        self.wo = LoraRowParallelLinear(
             args.n_heads * self.head_dim,
             args.dim,
-            bias=False,
+            bias=args.bias_tuning,
             input_is_parallel=True,
             init_method=default_linear_init,
+            lora_rank=args.lora_rank
         )
 
         self.args = args
@@ -148,9 +157,9 @@ class Attention(nn.Module):
         values = repeat_kv(values, self.n_rep)  # (bs, seqlen, n_local_heads, head_dim)
 
         if prefix is not None:
-            prefix_k = self.w_k(prefix).repeat(bsz, 1, 1).view(bsz, self.args.prefix_len, self.n_local_heads,
+            prefix_k = self.wk(prefix).repeat(bsz, 1, 1).view(bsz, self.args.prefix_len, self.n_local_heads,
                                                                self.head_dim)
-            prefix_v = self.w_v(prefix).repeat(bsz, 1, 1).view(bsz, self.args.prefix_len, self.n_local_heads,
+            prefix_v = self.wv(prefix).repeat(bsz, 1, 1).view(bsz, self.args.prefix_len, self.n_local_heads,
                                                                self.head_dim)
 
         if self.flash:
@@ -187,6 +196,7 @@ class FeedForward(nn.Module):
         hidden_dim: int,
         multiple_of: int,
         ffn_dim_multiplier: Optional[float],
+        args: ModelArgs,
     ):
         super().__init__()
         hidden_dim = int(2 * hidden_dim / 3)
@@ -195,14 +205,17 @@ class FeedForward(nn.Module):
             hidden_dim = int(ffn_dim_multiplier * hidden_dim)
         hidden_dim = multiple_of * ((hidden_dim + multiple_of - 1) // multiple_of)
 
-        self.w1 = ColumnParallelLinear(
-            dim, hidden_dim, bias=False, gather_output=False, init_method=default_linear_init
+        self.w1 = LoraColumnParallelLinear(
+            dim, hidden_dim, bias=args.bias_tuning, gather_output=False,
+            init_method=default_linear_init, lora_rank=args.lora_rank
         )
-        self.w2 = RowParallelLinear(
-            hidden_dim, dim, bias=False, input_is_parallel=True, init_method=default_linear_init
+        self.w2 = LoraRowParallelLinear(
+            hidden_dim, dim, bias=args.bias_tuning, input_is_parallel=True,
+            init_method=default_linear_init, lora_rank=args.lora_rank
         )
-        self.w3 = ColumnParallelLinear(
-            dim, hidden_dim, bias=False, gather_output=False, init_method=default_linear_init
+        self.w3 = LoraColumnParallelLinear(
+            dim, hidden_dim, bias=args.bias_tuning, gather_output=False,
+            init_method=default_linear_init, lora_rank=args.lora_rank
         )
 
     # @torch.compile
@@ -225,6 +238,7 @@ class TransformerBlock(nn.Module):
             hidden_dim=4 * args.dim,
             multiple_of=args.multiple_of,
             ffn_dim_multiplier=args.ffn_dim_multiplier,
+            args=args
         )
         self.layer_id = layer_id
         self.attention_norm = RMSNorm(args.dim, eps=args.norm_eps)
@@ -301,7 +315,8 @@ class Transformer(nn.Module):
         trainable = {}
         for name, para in self.named_parameters():
             if not name.startswith("clip."):
-                if 'norm' in name or 'bias' in name or 'prefix' in name:
+                trainable_key_words = ['norm', 'prefix', 'bias', 'lora']
+                if any([_ in name for _ in trainable_key_words]):
                     trainable[name] = para
 
         return trainable

@@ -13,7 +13,7 @@ exp_name=finetune/sg/alpaca_llamaAdapter
 echo "exp name: $exp_name"
 mkdir -p output/"$exp_name"
 
-torchrun --master_port=1112 --nproc_per_node=6 main_finetune.py \
+torchrun --master_port=1112 --nproc_per_node=8 main_finetune.py \
 --output_dir output/"$exp_name" --epochs 4 --warmup_epochs 1 \
 --batch_size 4 --accum_iter 2 --num_workers 4 \
 --max_words 512 \
