@@ -1,13 +1,3 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
-
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-# --------------------------------------------------------
-# References:
-# DeiT: https://github.com/facebookresearch/deit
-# BEiT: https://github.com/microsoft/unilm/tree/master/beit
-# --------------------------------------------------------
 import argparse
 import datetime
 import json
@@ -49,6 +39,7 @@ from data.alpaca import FinetuneDataset, transform_train, FinetuneDistSampler
 from data.conversation.dataset import FinetuneDialogDataset
 
 
+
 def get_args_parser():
     parser = argparse.ArgumentParser('LLaMA2-Accessory Finetuning', add_help=False)
     parser.add_argument('--batch_size', default=16, type=int,
@@ -57,7 +48,7 @@ def get_args_parser():
                         help='Accumulate gradient iterations (for increasing the effective batch size under memory constraints)')
 
     # Model parameters
-    parser.add_argument('--llama_type', default='llama', type=str, metavar='MODEL', choices=['llama'],
+    parser.add_argument('--llama_type', default='llama', type=str, metavar='MODEL',
                         help='Name of model to train')
     parser.add_argument('--llama_config', default='params.json', type=str,
                         help='Path to llama model config')

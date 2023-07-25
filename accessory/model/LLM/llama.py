@@ -122,6 +122,8 @@ class Attention(nn.Module):
             init_method=default_linear_init,
         )
 
+        self.args = args
+
         self.flash = configs.global_configs.USE_FLASH_ATTENTION
 
     def forward(self, x: torch.Tensor, start_pos: int, freqs_cis: torch.Tensor, mask: Optional[torch.Tensor]):
@@ -148,11 +150,8 @@ class Attention(nn.Module):
             xq = xq.transpose(1, 2)  # (bs, n_local_heads, seqlen, head_dim)
             keys = keys.transpose(1, 2)
             values = values.transpose(1, 2)
-            scores = torch.matmul(xq, keys.transpose(2, 3)) / math.sqrt(self.head_dim)
-            if mask is not None:
-                scores = scores + mask  # (bs, n_local_heads, slen, cache_len + slen)
-            scores = F.softmax(scores.float(), dim=-1).type_as(xq)
-            output = torch.matmul(scores, values)  # (bs, n_local_heads, slen, head_dim)
+            output = F.scaled_dot_product_attention(xq, keys, values, dropout_p=0.0, mask=mask)
+
             output = output.transpose(
                 1, 2
             ).contiguous().view(bsz, seqlen, -1)
@@ -258,6 +257,26 @@ class Transformer(nn.Module):
             self.clip_proj = nn.Linear(in_dim, params.dim)
             self.clip_proj_norm = nn.LayerNorm(params.dim)
             self.image_words = 257
+
+        self.set_default_trainability()
+
+
+    def get_trainable_params(self):
+        trainable = {}
+        for name, para in self.named_parameters():
+            if not name.startswith("clip."):
+                trainable[name] = para
+
+        return trainable
+
+
+    def set_default_trainability(self):
+        for key, value in self.named_parameters():
+            value.requires_grad = False
+            value.data = value.data.half()
+        for key, value in self.get_trainable_params().items():
+            value.data = value.data.float()
+            value.requires_grad = True
 
 
     @torch.no_grad()

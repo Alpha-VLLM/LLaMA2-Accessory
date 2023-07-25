@@ -42,7 +42,7 @@ class ModelArgs:
     max_seq_len: int = 2048
 
     prefix_layers = None
-    prefix_len = 1
+    prefix_len = 30
 
 
 def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0):
@@ -284,12 +284,15 @@ class Transformer(nn.Module):
         # prefix tuning with zero-init attention
         if params.prefix_len > 0:
             prefix_layers = params.prefix_layers if params.prefix_layers is not None else params.n_layers
+            self.prefix_layers = prefix_layers
             print(f"create prefix-tuning model with prefix_len {params.prefix_len} and prefix_layers {prefix_layers}")
             n_local_heads = self.layers[0].attention.n_local_heads
             self.prefix_gate = torch.nn.Parameter(torch.zeros(prefix_layers, n_local_heads))
             self.prefix_gate.is_model_parallel = True
-            self.prefix = torch.nn.Parameter(torch.zeros(params.prefix_layers, 1, params.prefix_len, params.dim))
+            self.prefix = torch.nn.Parameter(torch.zeros(prefix_layers, 1, params.prefix_len, params.dim))
             torch.nn.init.normal_(self.prefix)
+        else:
+            self.prefix_layers = 0
 
         self.set_default_trainability()
 
@@ -298,7 +301,7 @@ class Transformer(nn.Module):
         trainable = {}
         for name, para in self.named_parameters():
             if not name.startswith("clip."):
-                if 'norm' in name or 'bias' or 'prefix' in name:
+                if 'norm' in name or 'bias' in name or 'prefix' in name:
                     trainable[name] = para
 
         return trainable
@@ -362,10 +365,10 @@ class Transformer(nn.Module):
         mask = torch.full((1, 1, seqlen, seqlen), float("-inf"), device=h.device)
         mask = torch.triu(mask, diagonal=1).type_as(h)
 
-        for layer in self.layers[:-1 * self.params.prefix_layers]:
+        for layer in self.layers[:-1 * self.prefix_layers]:
             h = layer(h, start_pos, freqs_cis, mask)
         prefix_index = 0
-        for layer in self.layers[-1 * self.params.prefix_layers:]:
+        for layer in self.layers[-1 * self.prefix_layers:]:
             prefix_gate_this_layer = self.prefix_gate[prefix_index]
             prefix_this_layer = self.prefix[prefix_index]
             h = layer(h, start_pos, freqs_cis, mask, prefix_this_layer, prefix_gate_this_layer)

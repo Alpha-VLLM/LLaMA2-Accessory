@@ -4,7 +4,7 @@ pretrained_path=$1
 pretrained_type=meta_ori
 llama_config="$2"
 tokenizer_path="$3"
-data_config=configs/finetune/sg/dialog_lima.yaml
+data_config=configs/data/finetune/sg/dialog_lima.yaml
 
 data_parallel=sdp
 model_parallel=1
