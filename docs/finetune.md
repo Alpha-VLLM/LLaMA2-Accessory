@@ -24,6 +24,17 @@ This document demonstrates the fine-tuning use cases supported by LLaMA2-Accesso
 > + Point `tokenizer_path` in `.sh` to the tokenizer file (usually named as `tokenizer.model`)
 > + The `data_config` argument in the `.sh` file points to a `.yaml` file defining the fine-tuning datasets. You need to first download the data and modify the paths in `.yaml` to the correct location
 
+>## How to Apply Delta Weights
+>We release checkpoints as delta weights to comply with the LLaMA2 model license. You can add our delta to the original LLaMA2 weights to obtain the finetuned weights. Instructions:
+>1. After agreeing to the License, Acceptable Use Policy, and Meta's privacy policy, proceed to download the LLaMA2 weights from [here](https://ai.meta.com/resources/models-and-libraries/llama-downloads/).
+>2. Utilize the following scripts to obtain finetuned weights by applying our delta. Make sure to download the delta weights from the [model release page](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory).
+>    ```bash
+>    # For Merging
+>    python tools/weight_operate.py  --pretrained_path /path/to/llama2/consolidated.00.pth --delta_path /path/to/delta.pth --output_path /path/to/finetuned.pth
+>    # For Separation
+>    python tools/weight_operate.py  --pretrained_path /path/to/llama2/consolidated.00.pth --delta_path /path/to/finetuned.pth --output_path /path/to/delta.pth --operate_type extract
+>    ```
+
 ## Full-Parameter Fine-tuning
 
 
