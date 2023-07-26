@@ -202,9 +202,9 @@ if __name__ == "__main__":
                        help="Number of GPUs to run the model on. Equivalent to --gpu_ids 0 1 2 ... n-1")
     parser.add_argument("--tokenizer_path", type=str, required=True,
                         help="Path to the tokenizer.model file provided along with the LLaMA model.")
-    parser.add_argument("--llama_type", default="llama", type=str, metavar="MODEL", choices=["llama"],
+    parser.add_argument("--llama_type", default="llama", type=str, metavar="MODEL",
                         help="LLaMA model type. Reserved for future use.")
-    parser.add_argument("--llama_config", type=str, required=True,
+    parser.add_argument("--llama_config", type=str, required=True, nargs="+",
                         help="Path to the llama model config json.")
     parser.add_argument("--model_max_seq_len", type=int, default=2048,
                         help="Max sequence length accepted by the pretrained model.")
