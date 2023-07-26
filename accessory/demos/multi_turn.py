@@ -226,7 +226,7 @@ if __name__ == "__main__":
         args.gpu_ids = list(range(args.n_gpus))
     
     # setup the queues and start the model workers
-    mp.set_start_method("spawn")  # using the defaukt "fork" method messes up some imported libs (e.g., pandas)
+    mp.set_start_method("spawn")  # using the default "fork" method messes up some imported libs (e.g., pandas)
     request_queues = []
     response_queue = mp.Queue()
     worker_processes = []
