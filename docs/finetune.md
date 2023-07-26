@@ -171,8 +171,8 @@ torchrun --nproc-per-node=1  demos/multi_turn.py \
 + [exps/finetune/sg/dialog_gorilla.sh](../accessory/exps/finetune/sg/gorilla.sh)
 
 **Data:**
-+ https://github.com/ShishirPatil/gorilla
-+ run accessory/tools/data_conversion/to_alpaca/gorilla.py to reformat original data.
++ https://github.com/ShishirPatil/gorilla/blob/main/data/apibench/tensorflow_train.json
++ run [tools/data_conversion/to_alpaca/gorilla.py](../accessory/tools/data_conversion/to_alpaca/gorilla.py) to reformat original data.
 
 **Model Release:**
 + [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/gorilla/consolidated.00-of-01.model.pth)
@@ -192,7 +192,13 @@ torchrun --nproc-per-node=1  demos/single_turn.py \
 > 
 > *Answer:*
 > 
-> <<\<domain\>>>: Image feature vector, <<\<api_call\>>>: hub.KerasLayer('https://tfhub.dev/google/imagenet/mobilenet_v2_100_224/feature_vector/4'), <<\<api_provider\>>>: TensorFlow Hub, <<\<explanation\>>>: This API call loads a pre-trained MobileNetV2 model from TensorFlow Hub, which has been trained on the ImageNet dataset. This model is used for extracting feature vectors from images. You can feed your street art images into this model to obtain feature vectors, which can then be used for clustering. 
+> <<\<domain\>>>: Image feature vector,
+> 
+> <<\<api_call\>>>: hub.KerasLayer('https://tfhub.dev/google/imagenet/mobilenet_v2_100_224/feature_vector/4'),
+> 
+> <<\<api_provider\>>>: TensorFlow Hub,
+> 
+> <<\<explanation\>>>: This API call loads a pre-trained MobileNetV2 model from TensorFlow Hub, which has been trained on the ImageNet dataset. This model is used for extracting feature vectors from images. You can feed your street art images into this model to obtain feature vectors, which can then be used for clustering. 
 > 
 > <<\<code\>>>: 
 > ```
