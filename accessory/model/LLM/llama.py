@@ -1,7 +1,7 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 # This software may be used and distributed according to the terms of the Llama 2 Community License Agreement.
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 from dataclasses import dataclass
 import math
 import functools
@@ -123,8 +123,21 @@ class Attention(nn.Module):
         )
 
         self.flash = configs.global_configs.USE_FLASH_ATTENTION
+        self.k_cache, self.v_cache = None, None
 
-    def forward(self, x: torch.Tensor, start_pos: int, freqs_cis: torch.Tensor, mask: Optional[torch.Tensor]):
+    def forward(
+        self, x: torch.Tensor, start_pos: int, freqs_cis: torch.Tensor,
+        mask: Union[torch.Tensor, str, None]
+    ) -> torch.Tensor:
+        """
+        Supported mask spec:
+        1. Float tensor: The tensor is added to the attention score matrix.
+        2. Boolean tensor: Substitute the ``True`` values with ``0.0`` and ``False`` values with 
+           ``-inf``, then process in the same way as the float tensor.
+        3. str: Currently the only supported choice is ``causal``, for which each token attends
+           to all tokens appearing no later than itself. Our implementation assumes the query and
+           key sequences aligns on the right for ``causal`` if their lengths are not equal.
+        """
         bsz, seqlen, _ = x.shape
         xq, xk, xv = self.wq(x), self.wk(x), self.wv(x)
 
@@ -134,24 +147,54 @@ class Attention(nn.Module):
 
         xq, xk = apply_rotary_emb(xq, xk, freqs_cis=freqs_cis)
 
-        keys = xk
-        values = xv
+        # if cache is enabled, prepend keys and values in the history.
+        if self.k_cache is None or self.v_cache is None:
+            keys, values = xk, xv
+        else:
+            self.k_cache = self.k_cache.to(xk)
+            self.v_cache = self.v_cache.to(xv)
+            self.k_cache[:bsz, start_pos: start_pos + seqlen, :, :] = xk
+            self.v_cache[:bsz, start_pos: start_pos + seqlen, :, :] = xv
+            keys = self.k_cache[:bsz, :start_pos + seqlen]
+            values = self.v_cache[:bsz, :start_pos + seqlen]
 
-        # repeat k/v heads if n_kv_heads < n_heads
-        keys = repeat_kv(keys, self.n_rep)  # (bs, seqlen, n_local_heads, head_dim)
-        values = repeat_kv(values, self.n_rep)  # (bs, seqlen, n_local_heads, head_dim)
-
-        if self.flash:
-            output = flash_attn_func(xq, keys, values, dropout_p=0.0, causal=True)
+        is_causal = isinstance(mask, str) and mask == "causal"
+        # "causal" dispatches to flash_attn only when q and k have the same seqlen
+        # because currently the flash_attn causal impl for unequal q & k length is not suited
+        # for generation: Generation with cache requires aligning on the right, while the
+        # current flash_attn impl aligns on the left. For example, we expect the mask to be
+        # as the left one, while the current flash_attn impl gives the right one
+        #
+        #              K                     K
+        #        1 1 1 1 1 0 0         1 0 0 0 0 0 0
+        #     Q  1 1 1 1 1 1 0       Q 1 1 0 0 0 0 0
+        #        1 1 1 1 1 1 1         1 1 1 0 0 0 0
+        use_flash = (
+            self.flash  # user configuration
+            and (mask is None or (is_causal and keys.size(1) == xq.size(1)))  # supported mask
+        )
+        if use_flash:
+            # repeating k/v heads is included in flash_attn
+            output = flash_attn_func(xq, keys, values, dropout_p=0.0, causal=is_causal)
             output = output.contiguous().view(bsz, seqlen, -1)
         else:
+            # repeat k/v heads if n_kv_heads < n_heads
+            keys = repeat_kv(keys, self.n_rep)  # (bs, seqlen, n_local_heads, head_dim)
+            values = repeat_kv(values, self.n_rep)  # (bs, seqlen, n_local_heads, head_dim)
+
             xq = xq.transpose(1, 2)  # (bs, n_local_heads, seqlen, head_dim)
             keys = keys.transpose(1, 2)
             values = values.transpose(1, 2)
             scores = torch.matmul(xq, keys.transpose(2, 3)) / math.sqrt(self.head_dim)
+            scores = scores.float()  # for softmax
             if mask is not None:
+                if is_causal:
+                    mask = self._make_causal_mask(xq.size(2), keys.size(2))
+                    mask = mask.to(scores.device, non_blocking=True)
+                if mask.dtype is torch.bool:
+                    mask = self._convert_bool_mask_to_float(mask)
                 scores = scores + mask  # (bs, n_local_heads, slen, cache_len + slen)
-            scores = F.softmax(scores.float(), dim=-1).type_as(xq)
+            scores = F.softmax(scores, dim=-1).type_as(xq)
             output = torch.matmul(scores, values)  # (bs, n_local_heads, slen, head_dim)
             output = output.transpose(
                 1, 2
@@ -159,6 +202,26 @@ class Attention(nn.Module):
 
         return self.wo(output)
 
+    def allocate_kv_cache(self, max_batch_size: int, max_seq_len: int) -> None:
+        kv_cache_shape = (max_batch_size, max_seq_len, self.n_local_kv_heads, self.head_dim)
+        if self.k_cache is None or self.k_cache.size() != kv_cache_shape:
+            self.k_cache = torch.empty(kv_cache_shape)
+        if self.v_cache is None or self.v_cache.size() != kv_cache_shape:
+            self.v_cache = torch.empty(kv_cache_shape)
+
+    def destroy_kv_cache(self) -> None:
+        self.k_cache, self.v_cache = None, None
+
+    def _make_causal_mask(self, q_len: int, kv_len: int) -> torch.Tensor:
+        q_indices = torch.arange(q_len) - q_len
+        kv_indices = torch.arange(kv_len) - kv_len
+        causal_mask_bool = q_indices.view(-1, 1) >= kv_indices.view(1, -1)
+        return causal_mask_bool
+
+    def _convert_bool_mask_to_float(self, mask_bool: torch.Tensor) -> torch.Tensor:
+        mask_float = torch.full_like(mask_bool, fill_value=float("-inf"), dtype=torch.float)
+        mask_float[mask_bool] = 0.
+        return mask_float
 
 class FeedForward(nn.Module):
     def __init__(
@@ -216,7 +279,10 @@ class TransformerBlock(nn.Module):
     def _forward_attention(self, x, start_pos, freqs_cis, mask):
         return x + self.attention(self.attention_norm(x), start_pos, freqs_cis, mask)
 
-    def forward(self, x: torch.Tensor, start_pos: int, freqs_cis: torch.Tensor, mask: Optional[torch.Tensor]):
+    def forward(
+        self, x: torch.Tensor, start_pos: int, freqs_cis: torch.Tensor,
+        mask: Union[torch.Tensor, str, None]
+    ) -> torch.Tensor:
         h = self._forward_attention(x, start_pos, freqs_cis, mask)
         out = self._forward_ffn(h)
         return out
@@ -291,54 +357,58 @@ class Transformer(nn.Module):
         image_tokens = self.clip_proj_norm(self.clip_proj(image_tokens))
         return image_tokens
 
+
     def forward(self, examples, image=None):
+        self._destroy_kv_cache()  # training always disables kv cache
         _bsz, seqlen = examples.shape
         h = self.tok_embeddings(examples)
         self.freqs_cis = self.freqs_cis.to(h.device)
-        start_pos = 0
 
         if image is not None:
             image_tokens = self.encode_image(image)
             h = torch.cat((image_tokens, h), dim=1)
-            start_pos = image_tokens.shape[1]
             seqlen = h.shape[1]
 
-        # print(f"image: {start_pos}, text: {seqlen - start_pos}, seq_len: {seqlen}")
-
         freqs_cis = self.freqs_cis[:seqlen]
-        mask = torch.full((1, 1, seqlen, seqlen), float("-inf"), device=h.device)
-        mask = torch.triu(mask, diagonal=1).type_as(h)
         for layer in self.layers:
-            h = layer(h, start_pos, freqs_cis, mask)
+            h = layer(h, start_pos=0, freqs_cis=freqs_cis, mask="causal")
         h = self.norm(h)
-        output = self.output(h[:, start_pos:, :])
+        output = self.output(h[:, image_tokens.size(1):, :])
         return output
 
 
     @torch.inference_mode()
     def forward_inference(self, tokens: torch.Tensor, start_pos: int, image=None):
-        assert start_pos==0
         _bsz, seqlen = tokens.shape
+        if start_pos == 0:
+            self._allocate_kv_cache(_bsz)  # kv cache will not re-allocate if size is unchanged
         h = self.tok_embeddings(tokens)
         self.freqs_cis = self.freqs_cis.to(h.device)
 
         if image is not None:
+            assert start_pos == 0
             image_tokens = self.encode_image(image)
             h = torch.cat((image_tokens, h), dim=1)
-            start_pos = start_pos + image_tokens.shape[1]
             seqlen = h.shape[1]
 
-        freqs_cis = self.freqs_cis[:seqlen]
+        freqs_cis = self.freqs_cis[start_pos: start_pos + seqlen]
 
-        mask = None
-        if seqlen > 1:
-            mask = torch.full((1, 1, seqlen, seqlen), float("-inf"), device=tokens.device)
-            mask = torch.triu(mask, diagonal=1).type_as(h)
-            mask[:, :, :, :start_pos] = 0
-
+        # Despite that "causal" also works for seqlen == 1, keep it to None for possibly
+        # better performance
+        mask = None if seqlen == 1 else "causal"
 
         for layer in self.layers:
             h = layer(h, start_pos, freqs_cis, mask)
         h = self.norm(h)
         output = self.output(h[:, -1, :])  # only compute last logits
         return output.float()
+
+    def _allocate_kv_cache(self, max_batch_size: int) -> None:
+        for layer in self.layers:
+            layer.attention.allocate_kv_cache(max_batch_size, self.params.max_seq_len)
+
+    def _destroy_kv_cache(self) -> None:
+        for layer in self.layers:
+            layer.attention.destroy_kv_cache()
+
+
