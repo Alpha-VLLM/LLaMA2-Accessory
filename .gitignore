@@ -161,7 +161,6 @@ cython_debug/
 
 # Project-specific gitignores
 .output
-data/
 accessory/output/
 accessory/output_dir/
 tokenizer.model
