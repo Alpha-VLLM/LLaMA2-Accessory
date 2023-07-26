@@ -15,6 +15,7 @@ from fairscale.nn.model_parallel import initialize as fs_init
 
 from data.conversation.lib import conv_templates, SeparatorStyle, Conversation
 
+
 def get_args_parser():
     parser = argparse.ArgumentParser('Multi-turn (conversation) demo', add_help=False)
     # Model parameters
@@ -52,6 +53,7 @@ print(f"load pretrained from {args.pretrained_path}")
 misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
 print("Model = %s" % str(model))
 model.cuda().half()
+
 
 @ torch.inference_mode()
 def generate(
