@@ -8,7 +8,7 @@ def get_args_parser():
                         help='directory containing pre-trained checkpoints')
     parser.add_argument('--delta_path', default='/path/to/delta', type=str,
                         help='directory containing delta checkpoints')
-    parser.add_argument('--output_dir', default='./output',
+    parser.add_argument('--output_path', default='./output',
                         help='path where to save')
     
     parser.add_argument('--operate_type', default='apply', choices=['extract', 'apply'])
