@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import json
+from typing import List
 
 from fairscale.nn.model_parallel import initialize as fs_init
 
@@ -13,7 +14,7 @@ class MetaModel(nn.Module):
     """ Masked Autoencoder with VisionTransformer backbone
     """
     def __init__(
-        self, llama_type: str, llama_config: str, tokenizer_path: str,
+        self, llama_type: str, llama_config: List[str], tokenizer_path: str,
         with_visual: bool = False, max_seq_len: int = 2048,
     ) -> None:
         super().__init__()
@@ -23,16 +24,23 @@ class MetaModel(nn.Module):
         ModelArgs = LLM.__dict__[llama_type].ModelArgs
         Transformer = LLM.__dict__[llama_type].Transformer
 
-        with open(llama_config, "r") as f:
-            params = json.loads(f.read())
+        params = {}
+        for _ in llama_config:
+            with open(_, "r") as f:
+                params.update(json.loads(f.read()))
         model_args: ModelArgs = ModelArgs(
             max_seq_len=max_seq_len, max_batch_size=32, **params
         )
         self.tokenizer = Tokenizer(model_path=tokenizer_path)
         model_args.vocab_size = self.tokenizer.n_words
 
+        print("Model Args:\n", model_args)
+
         model = Transformer(model_args, with_visual=with_visual)
         self.llma = model
+
+        self.is_peft = getattr(model, "is_peft", False)
+        print(f"Model is Peft: {self.is_peft}")
 
         misc.mark_mp_params(self)
 
@@ -47,6 +55,11 @@ class MetaModel(nn.Module):
                     param_count_all += param.numel()
                 param_count_local += param.numel()
         print(f"Parameter count : {param_count_local} (local rank), {param_count_all} (all).")
+
+
+    def get_trainable_params(self):
+        llma_trainable = self.llma.get_trainable_params()
+        return {"llma." + name: param for name, param in llma_trainable.items()}
 
 
     def forward(self, examples, labels, images=None):
@@ -117,6 +130,7 @@ class MetaModel(nn.Module):
                 pass
             decoded.append(self.tokenizer.decode(t))
         return decoded
+
 
     def sample_top_p(self, probs, p):
         probs_sort, probs_idx = torch.sort(probs, dim=-1, descending=True)

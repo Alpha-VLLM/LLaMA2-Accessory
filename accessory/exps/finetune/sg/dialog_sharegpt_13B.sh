@@ -7,9 +7,9 @@ tokenizer_path="$3"
 data_config=configs/data/finetune/sg/dialog_sharegpt.yaml
 
 data_parallel=sdp
-model_parallel=1
+model_parallel=2
 
-exp_name=finetune/sg/dialog_sharegpt
+exp_name=finetune/sg/dialog_sharegpt_13B
 echo "exp name: $exp_name"
 mkdir -p output/"$exp_name"
 

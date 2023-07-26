@@ -1,0 +1,2 @@
+META:
+  - ['../data/tensorflow_train_formatted.json', 'text']

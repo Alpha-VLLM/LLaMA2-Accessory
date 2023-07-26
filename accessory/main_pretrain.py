@@ -33,36 +33,30 @@ from apex.optimizers import FusedAdam
 import util.misc as misc
 from util.misc import NativeScalerWithGradNormCount as NativeScaler
 from model.meta import MetaModel
-from engine_finetune import train_one_epoch
+from engine_pretrain import train_one_epoch, val_one_epoch
 from torch.utils.data import Dataset
-from data.alpaca import FinetuneDataset, transform_train, FinetuneDistSampler
-from data.conversation.dataset import FinetuneDialogDataset
-
+from data import falcon, falcon_packed
 
 
 def get_args_parser():
-    parser = argparse.ArgumentParser('LLaMA2-Accessory Finetuning', add_help=False)
-    parser.add_argument('--batch_size', default=16, type=int,
+    parser = argparse.ArgumentParser('LLaMA2-Accessory pretraining', add_help=False)
+    parser.add_argument('--batch_size', default=4, type=int,
                         help='Batch size per GPU (effective batch size is batch_size * accum_iter * # gpus')
     parser.add_argument('--accum_iter', default=4, type=int,
                         help='Accumulate gradient iterations (for increasing the effective batch size under memory constraints)')
 
     # Model parameters
-    parser.add_argument('--llama_type', default='llama', type=str, metavar='MODEL',
+    parser.add_argument('--llama_type', default='llama', type=str, metavar='MODEL', choices=['llama',],
                         help='Name of model to train')
-    parser.add_argument('--llama_config', default='params.json', type=str, nargs="+",
-                        help='Path to llama model config. If multiple jsons are given, their union will be used. '
-                             'When the same key appears more than once, its last appearance is adopted.')
-
-    parser.add_argument('--no_visual', action="store_true",
-                        help='to not instantialize visual modules')
+    parser.add_argument('--llama_config', default='params.json', type=str,
+                        help='Path to llama model config')
     parser.add_argument('--tokenizer_path', type=str, default="../tokenizer.model",
                         help='path to tokenizer.model')
 
 
-    parser.add_argument('--pretrained_path', default='/path/to/pretrained', type=str,
-                        help='path to checkpoint from pretrain stage')
-    parser.add_argument('--pretrained_type', type=str, choices=['consolidated', 'meta_ori'],
+    parser.add_argument('--pretrained_path', default=None, type=str,
+                        help='(Optional) directory containing checkpoints to start from')
+    parser.add_argument('--pretrained_type', type=str, default="meta_ori", choices=['consolidated', 'meta_ori'],
                         help='pretrained checkpoint save format')
 
     # Optimizer parameters
@@ -74,27 +68,30 @@ def get_args_parser():
     parser.add_argument('--min_lr', type=float, default=0.0001, metavar='LR',
                         help='lower lr bound for cyclic schedulers that hit 0')
 
-    parser.add_argument('--epochs', default=400, type=int)
-    parser.add_argument('--warmup_epochs', type=float, default=1.0, metavar='N',
-                        help='epoch to warmup LR')
+    parser.add_argument('--warmup_iters', type=int, default=20000, metavar='N',
+                        help='iterations to warmup LR')
+    parser.add_argument('--lr_decay_iters', type=int, default=1800000, metavar='N',
+                        help='iters before keeping minimal learning rate')
 
     parser.add_argument('--clip_grad', type=int, default=-1,
                         help='grad clipping norm')
 
     # Dataset parameters
-    parser.add_argument('--max_words', default=1024, type=int,
+    parser.add_argument('--data_meta_path', default='/path/to/data/meta/file', type=str,
+                        help='path to data meta file')
+    parser.add_argument('--data_root', default=None, type=str,
+                        help='root path for data')
+    parser.add_argument('--packed_data', action="store_true",
+                        help='use packed dataset')
+    parser.add_argument('--max_words', default=2048, type=int,
                         help='max token length')
-    parser.add_argument('--dialog', action="store_true", default=False,
-                        help='whether use dialog dataset')
-    parser.add_argument('--data_config', default='/path/to/data/config/yaml', type=str,
-                        help='data config path')
 
     parser.add_argument('--output_dir', default='./output_dir',
                         help='path where to save, empty for no saving')
     parser.add_argument('--log_dir', default='./output_dir',
                         help='path where to tensorboard log')
-    parser.add_argument('--save_interval', default=1, type=int,
-                        help='number of epochs between model saving')
+    parser.add_argument('--save_freq', type=int, default=5000,
+                        help='number of iterations between model saving')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
     parser.add_argument('--seed', default=0, type=int)
@@ -151,9 +148,10 @@ def main(args):
 
     # define the model
     model = MetaModel(args.llama_type, args.llama_config,
-                      args.tokenizer_path, with_visual=not args.no_visual)
-    print(f"load pretrained from {args.pretrained_path}")
-    misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
+                      args.tokenizer_path, with_visual=False)
+    if args.pretrained_path:
+        print(f"load pretrained from {args.pretrained_path}")
+        misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
     print("Unwrapped Model = %s" % str(model))
 
     # resume stage1
@@ -166,14 +164,13 @@ def main(args):
         "tf32": torch.float32,
     }[args.precision]
     TransformerBlock = type(model.llma.layers[0])
-    # ignored_named_parameters = {name: param for name, param in model.named_parameters() if not param.requires_grad}
-    # print(ignored_named_parameters.keys())
+
     model = FSDP(
         model,
         process_group=fs_init.get_data_parallel_group(),
         auto_wrap_policy=functools.partial(
             transformer_auto_wrap_policy,
-            transformer_layer_cls=[] if model.is_peft else [TransformerBlock],
+            transformer_layer_cls=[TransformerBlock],
         ),
         limit_all_gathers=True,
         use_orig_params=True,
@@ -188,8 +185,7 @@ def main(args):
             "ddp": ShardingStrategy.NO_SHARD,
             "fsdp": ShardingStrategy.FULL_SHARD,
         }[args.data_parallel],
-        device_id=device,
-        ignored_parameters=[param for param in model.parameters() if not param.requires_grad]
+        device_id=device
     )
 
     # broadcast nonmp parameters within model parallel group
@@ -218,13 +214,18 @@ def main(args):
     loss_scaler = NativeScaler(args)
 
     # data
-    if args.dialog:
-        DatasetClass = FinetuneDialogDataset
+    if args.packed_data:
+        DatasetTrainCls = falcon_packed.Falcon
+        DatasetValCls = falcon_packed.FalconVal
     else:
-        DatasetClass = FinetuneDataset
-    dataset_train = DatasetClass(args.data_config, transform_train,
-                                 max_words=args.max_words, image_words=model.get_image_words(),
-                                 tokenizer_path=args.tokenizer_path)
+        DatasetTrainCls = falcon.Falcon
+        DatasetValCls = falcon.FalconVal
+    dataset_train = DatasetTrainCls(
+        args.data_meta_path, args.data_root, tokenizer_path=args.tokenizer_path,
+        max_words=args.max_words, num_processes=dp_world_size, process_rank=dp_rank,
+    )
+    dataset_val = DatasetValCls(args.data_meta_path, args.data_root, tokenizer_path=args.tokenizer_path,
+                                max_words=args.max_words)
     print(dataset_train)
 
     if global_rank == 0 and args.log_dir is not None:
@@ -233,54 +234,44 @@ def main(args):
     else:
         log_writer = None
 
-    sampler_train = FinetuneDistSampler(
-        dataset_train, num_replicas=dp_world_size, rank=dp_rank, shuffle=True, batch_size=args.batch_size,
-        acc_grad=args.accum_iter
-    )
     data_loader_train = torch.utils.data.DataLoader(
         dataset_train,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
         pin_memory=args.pin_mem,
-        sampler=sampler_train,
         drop_last=True,
     )
 
-    start_epoch = 0
+    sampler_val = torch.utils.data.DistributedSampler(
+        dataset_val, num_replicas=dp_world_size, rank=dp_rank, shuffle=False
+    )
+    data_loader_val = torch.utils.data.DataLoader(
+        dataset_val,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+        pin_memory=args.pin_mem,
+        sampler=sampler_val,
+        drop_last=True,
+    )
+
+    start_iter = 0
     if args.resume:
-        start_epoch, _ = misc.resume_stage2(args=args, model=model, optimizer=optimizer, loss_scaler=loss_scaler,
-                                            dataset_train=dataset_train)
+        _, start_iter = misc.resume_stage2(args=args, model=model, optimizer=optimizer,
+                                           loss_scaler=loss_scaler, dataset_train=dataset_train)
 
-
-    print(f"Start training for {args.epochs} epochs")
+    print(f"Start training")
     start_time = time.time()
-    for epoch in range(start_epoch, args.epochs):
-        if args.distributed:
-            data_loader_train.sampler.set_epoch(epoch)
 
-        train_stats = train_one_epoch(
-            model, data_loader_train,
-            optimizer, epoch, loss_scaler,
-            log_writer=log_writer,
-            args=args
-        )
+    train_stats = train_one_epoch(
+        model, data_loader_train, data_loader_val,
+        optimizer, 0, start_iter, loss_scaler,
+        log_writer=log_writer,
+        args=args
+    )
 
-        if args.output_dir and (epoch % args.save_interval == 0 or epoch + 1 == args.epochs):
-            misc.save_checkpoint(
-                output_dir=args.output_dir,
-                args=args, epoch=epoch, iteration=None, model=model, optimizer=optimizer,
-                loss_scaler=loss_scaler, dataset_state=None,
-            )
-
-        log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
-                     'epoch': epoch,
-                     **{f'val_{k}': v for k, v in train_stats.items()}}
-
-        if args.output_dir and misc.is_main_process():
-            if log_writer is not None:
-                log_writer.flush()
-            with open(os.path.join(args.output_dir, "log.txt"), mode="a", encoding="utf-8") as f:
-                f.write(json.dumps(log_stats) + "\n")
+    if args.output_dir and misc.is_main_process():
+        if log_writer is not None:
+            log_writer.flush()
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))

@@ -4,12 +4,12 @@ pretrained_path=$1
 pretrained_type=meta_ori
 llama_config="$2"
 tokenizer_path="$3"
-data_config=configs/data/finetune/sg/dialog_sharegpt.yaml
+data_config=configs/data/finetune/sg/dialog_lima.yaml
 
-data_parallel=sdp
-model_parallel=1
+data_parallel=fsdp
+model_parallel=2
 
-exp_name=finetune/sg/dialog_sharegpt
+exp_name=finetune/sg/dialog_lima_13B
 echo "exp name: $exp_name"
 mkdir -p output/"$exp_name"
 

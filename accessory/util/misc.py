@@ -348,8 +348,11 @@ def save_checkpoint(output_dir, args, model, optimizer, loss_scaler, dataset_sta
     ):
         # run saving in seperate functions to save memory
         def _save_model():
+            model_trainable_params = model.get_trainable_params()
+            model_trainable_params = ['.'.join([_ for _ in key.split('.') if not _.startswith('_')])
+                                      for key in model_trainable_params.keys()]
             consolidated_model_state_dict = {
-                "model": {key: val.half() for key, val in model.state_dict().items()},
+                "model": {key: val.half() for key, val in model.state_dict().items() if key in model_trainable_params},
             }
             save_path = os.path.join(
                 save_dir,
@@ -568,11 +571,6 @@ def add_weight_decay(model, weight_decay=1e-5, skip_list=()):
 
 
 def broadcast_nonmp_parameters(model):
-    from fairscale.nn.model_parallel.layers import (
-        RowParallelLinear,
-        ColumnParallelLinear,
-        ParallelEmbedding,
-    )
     if fs_init.get_model_parallel_world_size() == 1:
         return
     print("starting broadcast non-model-parallel parameters within model parallel group")
@@ -584,17 +582,8 @@ def broadcast_nonmp_parameters(model):
             name = module_prefix + ('.' if module_prefix else '') + k
             if v is None or v in memo:
                 continue
-            if isinstance(module, ColumnParallelLinear):
+            if getattr(v, "is_model_parallel", False):
                 print(f"ignore: {name}")
-                assert getattr(v, "is_model_parallel", False)
-                continue
-            if isinstance(module, RowParallelLinear) and k=="weight":
-                print(f"ignore: {name}")
-                assert getattr(v, "is_model_parallel", False)
-                continue
-            if isinstance(module, ParallelEmbedding):
-                print(f"ignore: {name}")
-                assert getattr(v, "is_model_parallel", False)
                 continue
             memo.add(v)
             dist.broadcast(v, src=fs_init.get_model_parallel_src_rank(), group=fs_init.get_model_parallel_group())

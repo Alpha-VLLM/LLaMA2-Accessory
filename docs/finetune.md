@@ -24,6 +24,17 @@ This document demonstrates the fine-tuning use cases supported by LLaMA2-Accesso
 > + Point `tokenizer_path` in `.sh` to the tokenizer file (usually named as `tokenizer.model`)
 > + The `data_config` argument in the `.sh` file points to a `.yaml` file defining the fine-tuning datasets. You need to first download the data and modify the paths in `.yaml` to the correct location
 
+>## How to Apply Delta Weights
+>We release checkpoints as delta weights to comply with the LLaMA2 model license. You can add our delta to the original LLaMA2 weights to obtain the finetuned weights. Instructions:
+>1. After agreeing to the License, Acceptable Use Policy, and Meta's privacy policy, proceed to download the LLaMA2 weights from [here](https://ai.meta.com/resources/models-and-libraries/llama-downloads/).
+>2. Utilize the following scripts to obtain finetuned weights by applying our delta. Make sure to download the delta weights from the [model release page](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory).
+>    ```bash
+>    # For Merging
+>    python tools/weight_operate.py  --pretrained_path /path/to/llama2/consolidated.00.pth --delta_path /path/to/delta.pth --output_path /path/to/finetuned.pth
+>    # For Separation
+>    python tools/weight_operate.py  --pretrained_path /path/to/llama2/consolidated.00.pth --delta_path /path/to/finetuned.pth --output_path /path/to/delta.pth --operate_type extract
+>    ```
+
 ## Full-Parameter Fine-tuning
 
 
@@ -39,7 +50,7 @@ This document demonstrates the fine-tuning use cases supported by LLaMA2-Accesso
 
 **Host Local Demo:**
 ```bash
-torchrun --nproc-per-node=1  demos/single-turn.py \
+torchrun --nproc-per-node=1  demos/single_turn.py \
 --llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
 --pretrained_path /path/to/alpaca_finetuned
 ```
@@ -70,7 +81,7 @@ torchrun --nproc-per-node=1  demos/single-turn.py \
 
 **Host Local Demo:**
 ```bash
-torchrun --nproc-per-node=1  demos/multi-turn.py \
+torchrun --nproc-per-node=1  demos/multi_turn.py \
 --llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
 --pretrained_path /path/to/sharegpt_finetuned
 ```
@@ -110,7 +121,7 @@ torchrun --nproc-per-node=1  demos/multi-turn.py \
 
 **Host Local Demo:**
 ```bash
-torchrun --nproc-per-node=1  demos/multi-turn.py \
+torchrun --nproc-per-node=1  demos/multi_turn.py \
 --llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
 --pretrained_path /path/to/lima_finetuned
 ```
@@ -152,6 +163,62 @@ torchrun --nproc-per-node=1  demos/multi-turn.py \
 > 
 >
 > [*More examples here*](./examples/finetune/sg/dialog_lima.md)
+
+---
+
+### Single-turn instruction-tuning of LLaMA2-7B on gorilla
+**Script:** 
++ [exps/finetune/sg/dialog_gorilla.sh](../accessory/exps/finetune/sg/gorilla.sh)
+
+**Data:**
++ https://github.com/ShishirPatil/gorilla/blob/main/data/apibench/tensorflow_train.json
++ run [tools/data_conversion/to_alpaca/gorilla.py](../accessory/tools/data_conversion/to_alpaca/gorilla.py) to reformat original data.
+
+**Model Release:**
++ [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/gorilla/consolidated.00-of-01.model.pth)
+
+**Host Local Demo:**
+```bash
+torchrun --nproc-per-node=1  demos/single_turn.py \
+--llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
+--pretrained_path /path/to/gorilla_finetuned
+```
+
+**Example:**
+
+> *Instruction:*
+> 
+> I am working on a project where I need to cluster similar images of street art. How can I get the relevant feature vectors from these images for clustering?
+> 
+> *Answer:*
+> 
+> <<\<domain\>>>: Image feature vector,
+> 
+> <<\<api_call\>>>: hub.KerasLayer('https://tfhub.dev/google/imagenet/mobilenet_v2_100_224/feature_vector/4'),
+> 
+> <<\<api_provider\>>>: TensorFlow Hub,
+> 
+> <<\<explanation\>>>: This API call loads a pre-trained MobileNetV2 model from TensorFlow Hub, which has been trained on the ImageNet dataset. This model is used for extracting feature vectors from images. You can feed your street art images into this model to obtain feature vectors, which can then be used for clustering. 
+> 
+> <<\<code\>>>: 
+> ```
+> import tensorflow as tf
+> import tensorflow_hub as hub
+> model = tf.keras.Sequential([
+>     hub.KerasLayer('https://tfhub.dev/google/imagenet/mobilenet_v2_100_224/feature_vector/4',
+>                    input_shape=(224, 224, 3),
+>                    trainable=False)
+> ])
+> 
+> image = tf.keras.preprocessing.image.load_img('path/to/image.jpg', target_size=(224, 224))
+> image_array = tf.keras.preprocessing.image.img_to_array(image)
+> image_array = tf.expand_dims(image_array, 0)
+> 
+> features = model.predict(image_array)
+> ```
+>
+> [*More examples here*](./examples/finetune/sg/gorilla.md)
+
 ---
 
 *More use cases coming soon...*

@@ -31,11 +31,11 @@
 See [docs/install.md](./docs/install.md). 
 
 ## Training & Inference
-See [docs/finetune.md](./docs/finetune.md). 
+See [docs/pretrain.md](./docs/pretrain.md) and [docs/finetune.md](./docs/finetune.md). 
 
 ## Demos
-* instruction-tuned LLaMA2: [alpaca.md](./docs/examples/finetune/sg/alpaca.md).
-* Chatbot LLaMA2: [dialog_sharegpt.md](./docs/examples/finetune/sg/dialog_sharegpt.md) & [dialog_lima.md](./docs/examples/finetune/sg/dialog_lima.md) & [llama2-chat.md](./docs/examples/finetune/sg/llama2-chat.md).
+* instruction-tuned LLaMA2: [alpaca](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/alpaca.html) & [gorilla](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/gorilla.html).
+* Chatbot LLaMA2: [dialog_sharegpt](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/dialog_sharegpt.html) & [dialog_lima](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/dialog_lima.html) & [llama2-chat](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/llama2-chat.html).
 
 ## Core Contributors
 
