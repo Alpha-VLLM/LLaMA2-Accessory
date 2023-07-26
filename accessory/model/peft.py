@@ -34,6 +34,22 @@ class LoraColumnParallelLinear(ColumnParallelLinear):
             output += self.lora_b(self.lora_a(input_))
         return output
 
+    @staticmethod
+    def from_non_lora(layer: ColumnParallelLinear, **kwargs) -> LoraColumnParallelLinear:
+        new_layer_kwargs = dict(
+            in_features=layer.in_features,
+            out_features=layer.out_features,
+            bias=layer.bias is not None,
+            gather_output=layer.gather_output,
+            init_method=lambda x: x,
+            keep_master_weight_for_test=layer.master_weight is not None,
+        )
+        new_layer_kwargs.update(kwargs)
+        layer_with_lora = LoraColumnParallelLinear(**new_layer_kwargs)
+        layer_with_lora.weight.data.copy_(layer.weight)
+        if layer_with_lora.bias is not None:
+            layer_with_lora.bias.data.copy_(layer.weight)
+        return layer_with_lora
 
 class LoraRowParallelLinear(RowParallelLinear):
     """RowParallelLinear with LoRA support"""
@@ -59,3 +75,30 @@ class LoraRowParallelLinear(RowParallelLinear):
         if self.lora_rank > 0:
             output += self.lora_b(self.lora_a(input_))
         return output
+
+    @staticmethod
+    def from_non_lora(layer: RowParallelLinear, **kwargs) -> LoraRowParallelLinear:
+        new_layer_kwargs = dict(
+            in_features=layer.in_features,
+            out_features=layer.out_features,
+            bias=layer.bias is not None,
+            input_is_parallel=layer.input_is_parallel,
+            init_method=lambda x: x,
+            keep_master_weight_for_test=layer.master_weight is not None,
+        )
+        new_layer_kwargs.update(kwargs)
+        layer_with_lora = LoraRowParallelLinear(**new_layer_kwargs)
+        layer_with_lora.weight.data.copy_(layer.weight)
+        if layer_with_lora.bias is not None:
+            layer_with_lora.bias.data.copy_(layer.weight)
+        return layer_with_lora
+
+def wrap_lora(layer: nn.Module, **kwargs):
+    base_module_to_lora_module = [
+        (ColumnParallelLinear, LoraColumnParallelLinear),
+        (RowParallelLinear, LoraRowParallelLinear),
+    ]
+    for base_module, lora_module in base_module_to_lora_module:
+        if isinstance(layer, base_module):
+            return lora_module.from_non_lora(layer, **kwargs)
+    raise NotImplementedError(f"LoRA wrapping for layer of type {type(layer)} is not implemented.")
