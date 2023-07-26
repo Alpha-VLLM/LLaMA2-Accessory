@@ -75,3 +75,7 @@ See [docs/pretrain.md](./docs/pretrain.md) and [docs/finetune.md](./docs/finetun
 + [@declare-lab](https://github.com/declare-lab) for [flacuna](https://github.com/declare-lab/flacuna)
 + [@Google](https://github.com/google) for [Bard](https://bard.google.com/)
 </details>
+
+## License
+
+Llama 2 is licensed under the [LLAMA 2 Community License](LICENSE_llama2), Copyright (c) Meta Platforms, Inc. All Rights Reserved.
