@@ -11,7 +11,7 @@ def get_args_parser():
     parser.add_argument('--output_path', default='./output',
                         help='path where to save')
     
-    parser.add_argument('--operate_type', default='apply', choices=['extract', 'apply'])
+    parser.add_argument('--operate_type', default='apply', choices=['extract', 'delta', 'peft'])
     return parser
 
 def calculate_weight_delta(original_model, fine_tuned_model):
@@ -42,17 +42,17 @@ def merge_weights_and_save(original_model, delta_weights):
     delta_weights_dict = {key: val.float() for key, val in delta_weights['model'].items()}
     new_state_dict = {}
 
-    flag = 0 # delta or not
-    for key, val in delta_weights_dict.items():
-        if key in original_state_dict:
-            new_state_dict[key] = val + original_state_dict[key]
-            flag = 1
-        else:
-            new_state_dict[key] = val
-    if flag == 0:
+    if args.operate_type == 'delta':
+        for key, val in delta_weights_dict.items():
+            if key in original_state_dict:
+                new_state_dict[key] = val + original_state_dict[key]
+            else:
+                new_state_dict[key] = val
+    elif args.operate_type == 'peft':
         for key, val in original_state_dict.items():
             new_state_dict[key] = val
-
+        for key, val in delta_weights_dict.items():
+            new_state_dict[key] = val
     consolidated_model_state_dict = {
         "model": {key: val.half() for key, val in new_state_dict.items()},
     }
@@ -77,6 +77,6 @@ model_delta = torch.load(args.delta_path)
 
 if args.operate_type == 'extract':
     calculate_weight_delta(model_base, model_delta)
-elif args.operate_type == 'apply':
+else:
     merge_weights_and_save(model_base, model_delta)
 
