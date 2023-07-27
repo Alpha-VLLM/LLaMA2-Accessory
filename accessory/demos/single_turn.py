@@ -1,4 +1,3 @@
-import functools
 import sys
 import os
 sys.path.append(os.path.abspath(__file__).rsplit('/', 2)[0])

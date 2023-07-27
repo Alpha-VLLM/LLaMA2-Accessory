@@ -81,7 +81,7 @@ torchrun --nproc-per-node=1  demos/single_turn.py \
 
 **Host Local Demo:**
 ```bash
-torchrun --nproc-per-node=1  demos/multi_turn.py \
+python demos/multi_turn.py \
 --llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
 --pretrained_path /path/to/sharegpt_finetuned
 ```
@@ -121,7 +121,7 @@ torchrun --nproc-per-node=1  demos/multi_turn.py \
 
 **Host Local Demo:**
 ```bash
-torchrun --nproc-per-node=1  demos/multi_turn.py \
+python demos/multi_turn.py \
 --llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
 --pretrained_path /path/to/lima_finetuned
 ```

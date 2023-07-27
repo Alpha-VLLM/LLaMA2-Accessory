@@ -1,9 +1,11 @@
+import sys
+import os
+sys.path.append(os.path.abspath(__file__).rsplit('/', 2)[0])
+
 import argparse
 import multiprocessing as mp
 import numpy as np
-import sys
-import time
-from typing import List, Optional, Iterator
+from typing import List, Optional
 
 import torch
 import torch.distributed as dist
@@ -16,55 +18,6 @@ from util.misc import setup_for_distributed, load_pretrained
 from model.meta import MetaModel
 from data.conversation.lib import conv_templates, SeparatorStyle
 
-
-def stream_generate_dialog(
-    model: torch.nn.Module, prompt: str, model_max_seq_len: int,
-    max_gen_len: int, temperature: float, top_p: float, conv_sep: str,
-) -> Iterator[str]:
-    tokenizer = model.tokenizer
-    model = model.llma
-
-    def sample_top_p(probs, p):
-        probs_sort, probs_idx = torch.sort(probs, dim=-1, descending=True)
-        probs_sum = torch.cumsum(probs_sort, dim=-1)
-        mask = probs_sum - probs_sort > p
-        probs_sort[mask] = 0.0
-        probs_sort.div_(probs_sort.sum(dim=-1, keepdim=True))
-        next_token = torch.multinomial(probs_sort, num_samples=1)
-        next_token = torch.gather(probs_idx, -1, next_token)
-        return next_token
-    
-    prompt_tokens = tokenizer.encode(prompt, bos=True, eos=False)
-    max_context_len = model_max_seq_len - max_gen_len
-    prompt_tokens = prompt_tokens[-max_context_len:]
-    prompt_tokens = torch.LongTensor(prompt_tokens).cuda().unsqueeze(0)
-    start_pos = 0
-    history_tokens = []
-    returned_pos = 0
-    for pos in range(prompt_tokens.size(1), prompt_tokens.size(1) + max_gen_len):
-        logits = model.forward_inference(prompt_tokens, start_pos=start_pos)
-        start_pos = pos
-        if temperature > 0:
-            probs = torch.softmax(logits / temperature, dim=-1)
-            next_token = sample_top_p(probs, top_p)
-        else:
-            next_token = torch.argmax(logits, dim=-1)
-        next_token = next_token.item()
-        history_tokens.append(next_token)
-        history = tokenizer.decode(history_tokens)
-        if next_token == tokenizer.eos_id:
-            break
-        stop_pos = history.find(conv_sep)
-        if stop_pos != -1:
-            history = history[:stop_pos]
-            break
-        prompt_tokens = torch.LongTensor([[next_token]]).cuda()
-        
-        if len(history) >= 10:
-            yield {"text": history[:-10], "end_of_content": False}
-
-    history = history.rstrip() + "\n"
-    yield {"text": history, "end_of_content": True}
 
 def model_worker(
     rank: int, args: argparse.Namespace, barrier: mp.Barrier,
@@ -114,13 +67,23 @@ def model_worker(
         for user, bot in chatbot:
             conv.append_message(conv.roles[0], user)
             conv.append_message(conv.roles[1], bot)
-        for stream_response in stream_generate_dialog(
-            model, conv.get_prompt(), args.model_max_seq_len,
-            max_gen_len, temperature, top_p,
-            conv.sep if conv.sep_style == SeparatorStyle.SINGLE else conv.sep2,
-        ):
-            if response_queue is not None:
-                response_queue.put(stream_response)
+        # print(conv.get_prompt())
+
+        with torch.cuda.amp.autocast(dtype=torch.bfloat16):
+            for stream_response in model.stream_generate(
+                conv.get_prompt(), None,
+                max_gen_len, temperature, top_p
+            ):
+                end_pos = stream_response['text'].find(conv.sep if conv.sep_style == SeparatorStyle.SINGLE else conv.sep2)
+                if end_pos != -1:
+                    stream_response['text'] = stream_response['text'][:end_pos].rstrip()+"\n"
+                    stream_response['end_of_content'] = True
+                if response_queue is not None:
+                    response_queue.put(stream_response)
+
+                if stream_response['end_of_content']:
+                    break
+
 
 def gradio_worker(
     request_queues: List[mp.Queue], response_queue: mp.Queue,
@@ -143,7 +106,6 @@ def gradio_worker(
     def stream_model_output(chatbot, max_gen_len, gen_t, top_p):
         for queue in request_queues:
             queue.put((chatbot, max_gen_len, gen_t, top_p))
-        chatbot[-1][1] = ""
         while True:
             content_piece = response_queue.get()
             chatbot[-1][1] = content_piece["text"]
@@ -198,7 +160,7 @@ if __name__ == "__main__":
     group.add_argument("--gpu_ids", type=int, nargs="+",
                        help="A list of space-separated gpu ids to run the model on. "
                             "The model will span across GPUs in tensor-parallel mode.")
-    group.add_argument("--n_gpus", type=int,
+    group.add_argument("--n_gpus", type=int, default=1,
                        help="Number of GPUs to run the model on. Equivalent to --gpu_ids 0 1 2 ... n-1")
     parser.add_argument("--tokenizer_path", type=str, required=True,
                         help="Path to the tokenizer.model file provided along with the LLaMA model.")

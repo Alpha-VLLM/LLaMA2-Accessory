@@ -77,7 +77,7 @@ class MetaModel(nn.Module):
     def generate(
         self,
         prompts: list[str],
-        images,
+        images: list,
         max_gen_len: int,
         temperature: float = 0.8,
         top_p: float = 0.95,
@@ -102,7 +102,7 @@ class MetaModel(nn.Module):
         start_pos = min_prompt_size
         prev_pos = 0
         for cur_pos in range(start_pos, total_len):
-            logits = self.llma.forward_inference(tokens[:, :cur_pos], 0, images)
+            logits = self.llma.forward_inference(tokens[:, prev_pos:cur_pos], prev_pos, images if prev_pos == 0 else None)
             if temperature > 0:
                 probs = torch.softmax(logits / temperature, dim=-1)
                 next_token = self.sample_top_p(probs, top_p)
@@ -130,6 +130,48 @@ class MetaModel(nn.Module):
                 pass
             decoded.append(self.tokenizer.decode(t))
         return decoded
+
+
+    def stream_generate(
+        self,
+        prompt: str,
+        images,
+        max_gen_len: int,
+        temperature: float = 0.8,
+        top_p: float = 0.95,
+    ):
+        params = self.llma.params
+
+        prompt_tokens = self.tokenizer.encode(prompt, bos=True, eos=False)
+
+        prompt_size = len(prompt_tokens)
+
+        total_len = min(params.max_seq_len, max_gen_len + prompt_size)
+
+        tokens = torch.full([total_len], self.tokenizer.pad_id).cuda().long()
+
+        tokens[:len(prompt_tokens)] = torch.tensor(prompt_tokens).long()
+        start_pos = prompt_size
+        prev_pos = 0
+        generate_util = start_pos
+        for cur_pos in range(start_pos, total_len):
+            logits = self.llma.forward_inference(tokens[None, prev_pos:cur_pos], prev_pos, images if prev_pos == 0 else None)
+            if temperature > 0:
+                probs = torch.softmax(logits / temperature, dim=-1)
+                next_token = self.sample_top_p(probs, top_p)
+            else:
+                next_token = torch.argmax(logits, dim=-1)
+            next_token = next_token.item()
+
+            if next_token == self.tokenizer.eos_id:
+                break
+
+            tokens[cur_pos] = next_token
+            prev_pos = cur_pos
+            generate_util = cur_pos + 1
+            yield {"text": self.tokenizer.decode(tokens[start_pos:generate_util].tolist()), "end_of_content": False}
+
+        yield {"text": self.tokenizer.decode(tokens[start_pos:generate_util].tolist()), "end_of_content": True}
 
 
     def sample_top_p(self, probs, p):

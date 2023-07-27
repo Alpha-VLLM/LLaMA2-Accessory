@@ -190,7 +190,7 @@ class Attention(nn.Module):
             if isinstance(mask, str):
                 if is_causal:
                     mask = self._make_causal_mask(xq.size(2), keys.size(2))
-                    mask = mask.to(scores.device, non_blocking=True)
+                    mask = mask.to(xq.device, non_blocking=True)
                 else:
                     raise NotImplementedError()
             output = F.scaled_dot_product_attention(xq, keys, values, dropout_p=0.0, mask=mask)
