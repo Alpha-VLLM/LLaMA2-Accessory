@@ -31,7 +31,7 @@ def calculate_weight_delta(original_model, fine_tuned_model):
     
     save_path = os.path.join(
         args.output_path,
-        f"consolidated.model.pth",
+        f"consolidated.00-of-01.pth",  # TODO fix multi GPU
     )
     
     torch.save(consolidated_model_state_dict, save_path)
@@ -55,7 +55,7 @@ def merge_weights_and_save(original_model, delta_weights):
 
     save_path = os.path.join(
         args.output_path,
-        f"consolidated.model.pth",
+        f"consolidated.00-of-01.pth",  # TODO fix multi GPU
     )
 
     torch.save(consolidated_model_state_dict, save_path)
