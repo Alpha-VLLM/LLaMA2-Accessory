@@ -42,12 +42,16 @@ def merge_weights_and_save(original_model, delta_weights):
     delta_weights_dict = {key: val.float() for key, val in delta_weights['model'].items()}
     new_state_dict = {}
 
-    for key, val in original_state_dict.items():
-        if key in delta_weights_dict:
-            new_state_dict[key] = val + delta_weights_dict[key]
+    flag = 0 # delta or not
+    for key, val in delta_weights_dict.items():
+        if key in original_state_dict:
+            new_state_dict[key] = val + original_state_dict[key]
+            flag = 1
         else:
             new_state_dict[key] = val
-
+    if flag == 0:
+        for key, val in original_state_dict.items():
+            new_state_dict[key] = val
 
     consolidated_model_state_dict = {
         "model": {key: val.half() for key, val in new_state_dict.items()},
