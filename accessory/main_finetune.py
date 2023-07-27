@@ -37,6 +37,7 @@ from engine_finetune import train_one_epoch
 from torch.utils.data import Dataset
 from data.alpaca import FinetuneDataset, transform_train, FinetuneDistSampler
 from data.conversation.dataset import FinetuneDialogDataset
+from data.llama2_chat import FinetuneLlam2ChatDataset
 
 
 
@@ -86,6 +87,8 @@ def get_args_parser():
                         help='max token length')
     parser.add_argument('--dialog', action="store_true", default=False,
                         help='whether use dialog dataset')
+    parser.add_argument('--with_llama2_chat', action="store_true", default=False,
+                        help='whether use llama2_chat format dialog dataset')
     parser.add_argument('--data_config', default='/path/to/data/config/yaml', type=str,
                         help='data config path')
 
@@ -219,7 +222,12 @@ def main(args):
 
     # data
     if args.dialog:
-        DatasetClass = FinetuneDialogDataset
+        if not args.with_llama2_chat:
+            # use Vicuna's format
+            DatasetClass = FinetuneDialogDataset
+        else:
+            # use llama2_chat's format
+            DatasetClass = FinetuneLlam2ChatDataset
     else:
         DatasetClass = FinetuneDataset
     dataset_train = DatasetClass(args.data_config, transform_train,
