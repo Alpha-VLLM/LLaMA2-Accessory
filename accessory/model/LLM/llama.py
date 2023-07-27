@@ -305,6 +305,7 @@ class Transformer(nn.Module):
         )
 
         self.image_words = 0
+        self.cache_image_words = 0 # for inference
         if with_visual:
             print("build llama model with clip")
             torch.set_default_tensor_type(torch.cuda.HalfTensor)
@@ -401,10 +402,19 @@ class Transformer(nn.Module):
         if image is not None:
             assert start_pos == 0
             image_tokens = self.encode_image(image)
+            self.cache_image_words = image_tokens.shape[1]
             h = torch.cat((image_tokens, h), dim=1)
             seqlen = h.shape[1]
-
-        freqs_cis = self.freqs_cis[start_pos: start_pos + seqlen]
+            freqs_cis = self.freqs_cis[0: seqlen]
+        else:
+            if start_pos == 0:
+                self.cache_image_words = 0
+                freqs_cis = self.freqs_cis[0: seqlen]
+            else:
+                # if image was not None when start_pos=0,
+                # the offset should be added to start_pos within later forward_inference calls
+                start_pos = start_pos + self.cache_image_words
+                freqs_cis = self.freqs_cis[start_pos: start_pos + seqlen]
 
         # Despite that "causal" also works for seqlen == 1, keep it to None for possibly
         # better performance
