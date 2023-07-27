@@ -52,7 +52,7 @@ def merge_weights_and_save(original_model, delta_weights):
         for key, val in original_state_dict.items():
             new_state_dict[key] = val
         for key, val in delta_weights_dict.items():
-            new_state_dict[key] = val
+            new_state_dict['llma.'+key] = val
     consolidated_model_state_dict = {
         "model": {key: val.half() for key, val in new_state_dict.items()},
     }
