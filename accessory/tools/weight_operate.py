@@ -30,7 +30,7 @@ def calculate_weight_delta(original_model, fine_tuned_model):
     }
     
     save_path = os.path.join(
-        args.output_dir,
+        args.output_path,
         f"consolidated.model.pth",
     )
     
@@ -54,7 +54,7 @@ def merge_weights_and_save(original_model, delta_weights):
     }
 
     save_path = os.path.join(
-        args.output_dir,
+        args.output_path,
         f"consolidated.model.pth",
     )
 
@@ -65,8 +65,8 @@ def merge_weights_and_save(original_model, delta_weights):
 args = get_args_parser().parse_args()
 
 
-if not os.path.exists(args.output_dir):
-    os.makedirs(args.output_dir)
+if not os.path.exists(args.output_path):
+    os.makedirs(args.output_path)
 
 model_base = torch.load(args.pretrained_path)
 model_delta = torch.load(args.delta_path)
