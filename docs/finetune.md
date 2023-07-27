@@ -2,6 +2,16 @@
 
 This document demonstrates the fine-tuning use cases supported by LLaMA2-Accessory
 
+## Contents
+* [Prerequisites](#prerequisites)
+* [How to Apply Delta Weights](#how-to-apply-delta-weights)
+* [Full-Parameter Fine-tuning](#full-parameter-fine-tuning)
+  - [Single-turn instruction-tuning of LLaMA2-7B on alpaca](#single-turn-instruction-tuning-of-llama2-7b-on-alpaca)
+  - [Multi-turn instruction-tuning of LLaMA2-7B on ShareGPT](#multi-turn-instruction-tuning-of-llama2-7b-on-sharegpt)
+  - [Multi-turn instruction-tuning of LLaMA2-7B-Chat on ShareGPT](#multi-turn-instruction-tuning-of-llama2-7b-chat-on-sharegpt)
+  - [Multi-turn instruction-tuning of LLaMA2-7B on LIMA](#multi-turn-instruction-tuning-of-llama2-7b-on-lima)
+  - [Single-turn instruction-tuning of LLaMA2-7B on gorilla](#single-turn-instruction-tuning-of-llama2-7b-on-gorilla)
+
 > ## Prerequisites
 >
 > To run our provided experiment scripts on you own machine, please first adjust the following configurations:
@@ -125,6 +135,66 @@ python demos/multi_turn.py \
 > **Assistant:** "My name is Jimmy, and I am a master's student pursuing a degree in computer science. I have had the opportunity to work on various projects, one of which was an image classification model called CLSModel. Through this project, I gained valuable experience and knowledge that has helped me grow as a computer scientist."
 >
 > [*More examples here*](./examples/finetune/sg/dialog_sharegpt.md)
+
+---
+
+### Multi-turn instruction-tuning of LLaMA2-7B-Chat on ShareGPT
+
+**Script:**
+
++ [exps/finetune/sg/llama2_chat_sharegpt.sh](../accessory/exps/finetune/sg/llama2_chat_sharegpt.sh)
+
+**Data:**
+
++ Please collect and process the data on your own. [Here](../data_example/ShareGPT.json) is a toy example showing the proper format of the data file.
+
+**Model Release:**
+
++ [checkpoint (TODO)]()
+
+**Host Local Demo:**
+
+```bash
+python demos/llama2_chat.py \
+--llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
+--pretrained_path /path/to/llama2_chat_sharegpt
+```
+
+**Example:**
+
+> **Human:** Thanks for your work, it's pretty pretty helpful.
+> My conda environment: `mmcv 0.2.16`, `cuda 11.1`, `torch 1.8.0`, `RTX 3080`.
+> 
+> When in config.py use `roi_layer=dict(type='RoIAlign', out_size=7, sample_num=2)`, I can only use two gpu, when use four, then print an error, "THCudaCheck FAIL file=ReDet/mmdet/ops/roi_align/src/roi_ane=292 error=700 : an illegal memory access was encountered." But it's ok for use `roi_layer=dict(type='RoIPool', out_size=7)` to fully use 4 gpu it's so weird.
+>
+> Therefore I am sure there is a bug left in `roi_align_kernel.cu`, I am debugging it out now.
+> Any idea? thx
+>
+> **Assistant:** It's possible that there is a bug in the `roi_align_kernel.cu` file that is causing the issue when using four GPUs. It's also possible that there is a compatibility issue between the versions of the libraries you are using.
+>
+> One thing you can try is to check the memory layout of the input data and the kernel parameters to see if there is any mismatch that could cause the illegal memory access error.
+>
+> Another thing you can try is to use a different version of the `torch` library that is compatible with your CUDA version (version 11.1) and see if the issue persists.
+>
+> You can also try to use `torch.cuda.device` to specify the GPU you want to use, instead of relying on the default behavior of the `torch.cuda.current_device()` function.
+> 
+> It's also possible that the issue is not related to the code you provided and it could be related to other parts of the code or the environment you are running it on.
+>
+> I hope this helps, let me know if you have any other questions.
+>
+> **Human:** Can you give me some suggestions on how to debug CUDA error?
+>
+> **Assistant:** Sure, here are some general suggestions for debugging CUDA errors:
+>
+> * Check the error message: The error message usually contains information about the specific error that occurred and can often help you determine the root cause of the problem.
+> * Use the CUDA debugger: The CUDA debugger is a tool that allows you to step through your code and inspect the state of the GPU and memory at each step. It can help you identify memory access errors and other issues.
+> * Check the memory layout: Make sure that the memory layout of your data is compatible with the kernel parameters. For example, if the kernel expects the data to be aligned to a certain boundary, make sure that your data is aligned accordingly.
+> * Use profiling tools: Profiling tools like nvprof can help you identify performance bottlenecks and memory usage in your code.
+> * ...
+>
+> These are just a few general suggestions for debugging CUDA errors. The specific steps you need to take will depend on the specific error message and the code you are working with.
+> 
+> [*More examples here*](./examples/finetune/sg/llama2-chat.md)
 
 ---
 
