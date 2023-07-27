@@ -42,9 +42,9 @@ def merge_weights_and_save(original_model, delta_weights):
     delta_weights_dict = {key: val.float() for key, val in delta_weights['model'].items()}
     new_state_dict = {}
 
-    for key, val in delta_weights_dict.items():
-        if key in original_state_dict:
-            new_state_dict[key] = val + original_state_dict[key]
+    for key, val in original_state_dict.items():
+        if key in delta_weights_dict:
+            new_state_dict[key] = val + delta_weights_dict[key]
         else:
             new_state_dict[key] = val
 
