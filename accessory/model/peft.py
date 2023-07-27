@@ -47,8 +47,8 @@ class LoraColumnParallelLinear(ColumnParallelLinear):
         new_layer_kwargs.update(kwargs)
         layer_with_lora = LoraColumnParallelLinear(**new_layer_kwargs)
         layer_with_lora.weight.data.copy_(layer.weight)
-        if layer_with_lora.bias is not None:
-            layer_with_lora.bias.data.copy_(layer.weight)
+        if layer_with_lora.bias is not None and layer.bias is not None:
+            layer_with_lora.bias.data.copy_(layer.bias)
         return layer_with_lora
 
 class LoraRowParallelLinear(RowParallelLinear):
@@ -89,8 +89,8 @@ class LoraRowParallelLinear(RowParallelLinear):
         new_layer_kwargs.update(kwargs)
         layer_with_lora = LoraRowParallelLinear(**new_layer_kwargs)
         layer_with_lora.weight.data.copy_(layer.weight)
-        if layer_with_lora.bias is not None:
-            layer_with_lora.bias.data.copy_(layer.weight)
+        if layer_with_lora.bias is not None and layer.bias is not None:
+            layer_with_lora.bias.data.copy_(layer.bias)
         return layer_with_lora
 
 def wrap_lora(layer: nn.Module, **kwargs):
