@@ -378,8 +378,10 @@ class Transformer(nn.Module):
         h = self.tok_embeddings(examples)
         self.freqs_cis = self.freqs_cis.to(h.device)
 
+        image_words = 0
         if image is not None:
             image_tokens = self.encode_image(image)
+            image_words = image_tokens.shape[1]
             h = torch.cat((image_tokens, h), dim=1)
             seqlen = h.shape[1]
 
@@ -387,7 +389,7 @@ class Transformer(nn.Module):
         for layer in self.layers:
             h = layer(h, start_pos=0, freqs_cis=freqs_cis, mask="causal")
         h = self.norm(h)
-        output = self.output(h[:, image_tokens.size(1):, :])
+        output = self.output(h[:, image_words:, :])
         return output
 
 
