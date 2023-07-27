@@ -141,8 +141,10 @@ class MetaModel(nn.Module):
         top_p: float = 0.95,
     ):
         params = self.llma.params
-
-        prompt_tokens = self.tokenizer.encode(prompt, bos=True, eos=False)
+        if isinstance(prompt, list):
+            prompt_tokens = prompt
+        else:
+            prompt_tokens = self.tokenizer.encode(prompt, bos=True, eos=False)
 
         prompt_size = len(prompt_tokens)
 
