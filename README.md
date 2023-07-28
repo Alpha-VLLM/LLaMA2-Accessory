@@ -36,7 +36,7 @@ See [docs/pretrain.md](./docs/pretrain.md) and [docs/finetune.md](./docs/finetun
 ## Demos
 * Instruction-tuned LLaMA2: [alpaca](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/alpaca.html) & [gorilla](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/gorilla.html).
 * Chatbot LLaMA2: [dialog_sharegpt](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/dialog_sharegpt.html) & [dialog_lima](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/dialog_lima.html) & [llama2-chat](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/llama2-chat.html).
-* Multimodal LLaMA2:
+* Multimodal LLaMA2: [in-context](https://alpha-vllm.github.io/demo_presentation/examples/finetune/mm/in-context.html)
 
 <img src="./docs/examples/finetune/mm/multimodal_2.png" width="80%" />
 <img src="./docs/examples/finetune/mm/multimodal_3.png" width="80%" />
@@ -73,7 +73,7 @@ If you find our code and paper useful, please kindly cite:
 + [@facebookresearch](https://github.com/facebookresearch) for [llama](https://github.com/facebookresearch/llama)
 + [@OpenGVLab](https://github.com/OpenGVLab) for [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter)
 <details><summary>Show More</summary>
- 
+
 + [@facebookresearch](https://github.com/facebookresearch) for [ImageBind](https://github.com/facebookresearch/ImageBind) & [LIMA](https://huggingface.co/datasets/64bits/lima_vicuna_format)
 + [@Instruction-Tuning-with-GPT-4](https://github.com/Instruction-Tuning-with-GPT-4) for [GPT-4-LLM](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
 + [@tatsu-lab](https://github.com/tatsu-lab) for [stanford_alpaca](https://github.com/tatsu-lab/stanford_alpaca)
