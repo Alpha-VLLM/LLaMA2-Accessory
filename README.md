@@ -34,8 +34,11 @@ See [docs/install.md](./docs/install.md).
 See [docs/pretrain.md](./docs/pretrain.md) and [docs/finetune.md](./docs/finetune.md). 
 
 ## Demos
-* instruction-tuned LLaMA2: [alpaca](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/alpaca.html) & [gorilla](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/gorilla.html).
+* Instruction-tuned LLaMA2: [alpaca](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/alpaca.html) & [gorilla](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/gorilla.html).
 * Chatbot LLaMA2: [dialog_sharegpt](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/dialog_sharegpt.html) & [dialog_lima](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/dialog_lima.html) & [llama2-chat](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/llama2-chat.html).
+* Multimodal LLaMA2:
+
+<img src="./docs/examples/finetune/mm/multimodal_1.png" width="80%" />
 
 ## Core Contributors
 
