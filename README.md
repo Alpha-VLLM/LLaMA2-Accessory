@@ -41,6 +41,29 @@ See [docs/pretrain.md](./docs/pretrain.md) and [docs/finetune.md](./docs/finetun
 
 [Chris Liu](https://github.com/ChrisLiu6), [Ziyi Lin](https://github.com/linziyi96), [Guian Fang](https://github.com/Enderfga), [Jiaming Han](https://github.com/csuhan), [Renrui Zhang](https://github.com/ZrrSkywalker), [Wenqi Shao](https://github.com/wqshao126), [Peng Gao](https://github.com/gaopengpjlab)
 
+## Hiring Announcement
+
+🔥 **We are hiring** interns, postdocs, and full-time researchers at the **General Vision Group, Shanghai AI Lab**, with a focus on multi-modality and vision foundation models. If you are interested, please contact [gaopengcuhk@gmail.com](mailto:gaopengcuhk@gmail.com).
+
+## Citation
+If you find our LLaMA-Adapter code and paper useful, please kindly cite:
+```bash
+@article{zhang2023llamaadapter,
+  title = {LLaMA-Adapter: Efficient Fine-tuning of Language Models with Zero-init Attention},
+  author={Zhang, Renrui and Han, Jiaming and Liu, Chris and Gao, Peng and Zhou, Aojun and Hu, Xiangfei and Yan, Shilin and Lu, Pan and Li, Hongsheng and Qiao, Yu},
+  journal={arXiv preprint arXiv:2303.16199},
+  year={2023}
+}
+```
+```bash
+@article{gao2023llamaadapterv2,
+  title = {LLaMA-Adapter V2: Parameter-Efficient Visual Instruction Model},
+  author={Gao, Peng and Han, Jiaming and Zhang, Renrui and Lin, Ziyi and Geng, Shijie and Zhou, Aojun and Zhang, Wei and Lu, Pan and He, Conghui and Yue, Xiangyu and Li, Hongsheng and Qiao, Yu},
+  journal={arXiv preprint arXiv:2304.15010},
+  year={2023}
+}
+```
+
 ## Acknowledgement
 + [@facebookresearch](https://github.com/facebookresearch) for [llama](https://github.com/facebookresearch/llama)
 + [@OpenGVLab](https://github.com/OpenGVLab) for [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter)
