@@ -38,7 +38,9 @@ See [docs/pretrain.md](./docs/pretrain.md) and [docs/finetune.md](./docs/finetun
 * Chatbot LLaMA2: [dialog_sharegpt](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/dialog_sharegpt.html) & [dialog_lima](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/dialog_lima.html) & [llama2-chat](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/llama2-chat.html).
 * Multimodal LLaMA2:
 
-<img src="./docs/examples/finetune/mm/multimodal_1.png" width="80%" />
+<img src="./docs/examples/finetune/mm/multimodal_2.png" width="80%" />
+<img src="./docs/examples/finetune/mm/multimodal_3.png" width="80%" />
+<img src="./docs/examples/finetune/mm/multimodal_4.png" width="80%" />
 
 ## Core Contributors
 
