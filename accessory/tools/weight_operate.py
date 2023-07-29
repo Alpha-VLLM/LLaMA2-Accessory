@@ -11,7 +11,7 @@ def get_args_parser():
     parser.add_argument('--output_path', default='./output',
                         help='path where to save')
     
-    parser.add_argument('--operate_type', default='apply', choices=['extract', 'delta', 'peft'])
+    parser.add_argument('--operate_type', default='apply', choices=['extract', 'apply'])
     return parser
 
 def calculate_weight_delta(original_model, fine_tuned_model):
@@ -20,10 +20,8 @@ def calculate_weight_delta(original_model, fine_tuned_model):
     delta_state_dict = {}
 
     for key, val in fine_tuned_state_dict.items():
-        if key[5:] in original_state_dict:
-            delta_state_dict[key] = (val - original_state_dict[key[5:]])
-        else:
-            delta_state_dict[key] = val
+        delta_state_dict[key] = val - original_state_dict.get(key[5:], 0)
+
 
     consolidated_model_state_dict = {
         "model": {key: val.half() for key, val in delta_state_dict.items()}
@@ -42,17 +40,12 @@ def merge_weights_and_save(original_model, delta_weights):
     delta_weights_dict = {key: val.float() for key, val in delta_weights['model'].items()}
     new_state_dict = {}
 
-    if args.operate_type == 'delta':
-        for key, val in delta_weights_dict.items():
-            if key[5:] in original_state_dict:
-                new_state_dict[key] = val + original_state_dict[key[5:]]
-            else:
-                new_state_dict[key] = val
-    elif args.operate_type == 'peft':
-        for key, val in original_state_dict.items():
-            new_state_dict['llma.'+key] = val
-        for key, val in delta_weights_dict.items():
-            new_state_dict[key] = val
+    for key, val in original_state_dict.items():
+        new_state_dict['llma.'+key] = val
+    for key, val in delta_weights_dict.items():
+        new_state_dict[key] = val + new_state_dict.get(key, 0)
+
+
     consolidated_model_state_dict = {
         "model": {key: val.half() for key, val in new_state_dict.items()},
     }
