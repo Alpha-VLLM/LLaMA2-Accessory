@@ -50,7 +50,7 @@ def get_args_parser():
     # Model parameters
     parser.add_argument('--llama_type', default='llama', type=str, metavar='MODEL',
                         help='Name of model to train')
-    parser.add_argument('--llama_config', default='params.json', type=str, nargs="+",
+    parser.add_argument('--llama_config', default=['params.json'], nargs="+",
                         help='Path to llama model config. If multiple jsons are given, their union will be used. '
                              'When the same key appears more than once, its last appearance is adopted.')
 

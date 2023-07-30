@@ -90,7 +90,7 @@ def train_one_epoch(model: torch.nn.Module,
                 loss_scaler=loss_scaler, dataset_state=dataset_state)
 
         # validation
-        if (data_iter_step + 1) % 10000 == 0 or data_iter_step == 20:
+        if (data_iter_step + 1) % 10000 == 0:
             val_one_epoch(model, val_loader, epoch, log_writer=log_writer, args=args)
             model.train(True)
 

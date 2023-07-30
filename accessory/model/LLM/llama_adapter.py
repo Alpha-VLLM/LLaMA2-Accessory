@@ -44,6 +44,10 @@ class ModelArgs:
 
     prefix_layers: Optional[int] = None # prefix, set to n_layers by default
     prefix_len: int = 30
+    v_embed_dim = 768 # latent dim for clip projection layer
+    v_depth = 8 # number of perceiver layers for clip projection
+    v_num_heads = 16
+    v_mlp_ratio = 4.0
 
     lora_rank: int = -1 # lora
 
@@ -186,9 +190,9 @@ class Attention(nn.Module):
             and (mask is None or (is_causal and keys.size(1) == xq.size(1)))  # supported mask
         )
         if prefix is not None:
-            prefix_k = self.wk(prefix).repeat(bsz, 1, 1).view(bsz, self.args.prefix_len, self.n_local_heads,
+            prefix_k = self.wk(prefix).view(bsz, self.args.prefix_len, self.n_local_heads,
                                                                self.head_dim)
-            prefix_v = self.wv(prefix).repeat(bsz, 1, 1).view(bsz, self.args.prefix_len, self.n_local_heads,
+            prefix_v = self.wv(prefix).view(bsz, self.args.prefix_len, self.n_local_heads,
                                                                self.head_dim)
 
         if use_flash:
@@ -348,7 +352,17 @@ class Transformer(nn.Module):
             # in_dim = 3
             self.clip_proj = nn.Linear(in_dim, params.dim)
             self.clip_proj_norm = nn.LayerNorm(params.dim)
-            self.image_words = 257
+            self.image_words = 0 # images does not occupy LLM input tokens with llama_adapter
+
+            assert params.prefix_len > 0, "llama_adapter needs prefix if multi modal"
+            self.visual_query = torch.nn.Parameter(torch.zeros(params.prefix_len, params.v_embed_dim))
+            torch.nn.init.normal_(self.visual_query)
+            from timm.models.vision_transformer import Block as ViTBlock
+            self.visual_blocks = nn.ModuleList([
+                ViTBlock(params.v_embed_dim, params.v_num_heads, params.v_mlp_ratio, qkv_bias=True)
+                for _ in range(params.v_depth)])
+            self.visual_proj = nn.Linear(params.v_embed_dim, params.dim)
+            self.visual_proj_norm = nn.LayerNorm(params.dim)
 
         # prefix tuning with zero-init attention
         if params.prefix_len > 0:
@@ -363,6 +377,7 @@ class Transformer(nn.Module):
         else:
             self.prefix_layers = 0
 
+        self.cache_actual_prefix = None
         self.set_default_trainability()
 
 
@@ -411,23 +426,35 @@ class Transformer(nn.Module):
         return x
 
 
-    def encode_image(self, image):
-        # return self.patch_embed(image)
-        image_tokens = self.clip_encode_image(image)
-        image_tokens = self.clip_proj_norm(self.clip_proj(image_tokens))
-        return image_tokens
+    def encode_image(self, imgs):
+        clip_feats = self.clip_encode_image(imgs)
+        clip_feats = self.clip_proj_norm(self.clip_proj(clip_feats.float()))
+
+        visual_query = self.visual_query.unsqueeze(
+            0).repeat(len(imgs), 1, 1)
+        visual_query = torch.cat([visual_query, clip_feats], dim=1)
+        for block in self.visual_blocks:
+            visual_query = block(visual_query)
+
+        visual_query = visual_query[:, :self.query_len, :]
+        visual_query = self.visual_proj(visual_query)
+        visual_query = self.visual_proj_norm(visual_query)
+
+        return visual_query
 
 
     def forward(self, examples, image=None):
         self._destroy_kv_cache()  # training always disables kv cache
+        self.cache_actual_prefix = None # training always disables prefix cache
         _bsz, seqlen = examples.shape
         h = self.tok_embeddings(examples)
         self.freqs_cis = self.freqs_cis.to(h.device)
 
         if image is not None:
-            image_tokens = self.encode_image(image)
-            h = torch.cat((image_tokens, h), dim=1)
-            seqlen = h.shape[1]
+            visual_query = self.encode_image(image)
+            actual_prefix = self.prefix + visual_query.unsqueeze(0) # [layers, bsz, seq, dim]
+        else:
+            actual_prefix = self.prefix.repeat(1, _bsz, 1, 1)
 
         freqs_cis = self.freqs_cis[:seqlen]
         for layer in self.layers[:-1 * self.prefix_layers]:
@@ -435,7 +462,7 @@ class Transformer(nn.Module):
         prefix_index = 0
         for layer in self.layers[-1 * self.prefix_layers:]:
             prefix_gate_this_layer = self.prefix_gate[prefix_index]
-            prefix_this_layer = self.prefix[prefix_index]
+            prefix_this_layer = actual_prefix[prefix_index]
             h = layer(h, start_pos=0, freqs_cis=freqs_cis, mask="causal",
                       prefix=prefix_this_layer, prefix_gate=prefix_gate_this_layer)
             prefix_index += 1
@@ -455,12 +482,12 @@ class Transformer(nn.Module):
 
         if image is not None:
             assert start_pos == 0
-            image_tokens = self.encode_image(image) # todo perceiver
-            h = torch.cat((image_tokens, h), dim=1) # todo perceiver
-            seqlen = h.shape[1]
-            freqs_cis = self.freqs_cis[0: seqlen]
-        else:
-            freqs_cis = self.freqs_cis[start_pos: start_pos + seqlen]
+            visual_query = self.encode_image(image)
+            self.cache_actual_prefix = self.prefix + visual_query.unsqueeze(0)
+        elif start_pos == 0:
+            self.cache_actual_prefix = self.prefix.repeat(1, _bsz, 1, 1)
+
+        freqs_cis = self.freqs_cis[start_pos: start_pos + seqlen]
 
         # Despite that "causal" also works for seqlen == 1, keep it to None for possibly
         # better performance
@@ -471,7 +498,7 @@ class Transformer(nn.Module):
         prefix_index = 0
         for layer in self.layers[-1 * self.prefix_layers:]:
             prefix_gate_this_layer = self.prefix_gate[prefix_index]
-            prefix_this_layer = self.prefix[prefix_index]
+            prefix_this_layer = self.cache_actual_prefix[prefix_index]
             h = layer(h, start_pos=start_pos, freqs_cis=freqs_cis, mask=mask,
                       prefix=prefix_this_layer, prefix_gate=prefix_gate_this_layer)
             prefix_index += 1
@@ -487,5 +514,3 @@ class Transformer(nn.Module):
     def _destroy_kv_cache(self) -> None:
         for layer in self.layers:
             layer.attention.destroy_kv_cache()
-
-
