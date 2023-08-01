@@ -216,14 +216,15 @@ torchrun --nproc-per-node=1  demos/single_turn.py \
 
 Tuning scripts used here can be found in: [Zero-init Attenion](../accessory/exps/finetune/sg/gorilla_llamaAdapter.sh)(i.e. LLaMA-adapter), [Bias-norm Tuning](../accessory/exps/finetune/sg/gorilla_llamaPeft_normBias.sh), [LoRA + Bias-norm](../accessory/exps/finetune/sg/gorilla_llamaPeft_normBiasLora.sh).
 
-| Methods       | TensorFlow Hub      | TensorFlow Hub
-| ------------- | ------------------- | ------------------ |
-|               | overall $\uparrow$ | hallu $\downarrow$ |
-| Official      | 83.79               | 5.40               |
-| Full finetune | 88.84               | 0.14               |
-| Zero-init Attenion | 84.97               | 1.04               |
-| Bias-norm Tuning | 80.36               | 7.29               |
-| LoRA + Bias-norm | 87.95               | 2.38               |
+| Methods (TensorFlow Hub) | Overall ↑ | Hallu ↓ |
+| ------------------------ | --------- | ------- |
+| Official                 | 83.79     | 5.40    |
+| Full finetune            | 88.84     | 0.14    |
+| Zero-init Attention      | 84.97     | 1.04    |
+| Bias-norm Tuning         | 80.36     | 7.29    |
+| LoRA + Bias-norm         | 87.95     | 2.38    |
+
+
 
 
 **Example:**
