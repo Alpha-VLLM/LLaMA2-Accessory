@@ -143,8 +143,11 @@ class Attention(nn.Module):
         self.flash = configs.global_configs.USE_FLASH_ATTENTION
         self.k_cache, self.v_cache = None, None
 
-    def forward(self, x: torch.Tensor, start_pos: int, freqs_cis: torch.Tensor, mask: Union[torch.Tensor, str, None],
-                prefix: Optional[torch.Tensor]=None, prefix_gate: Optional[torch.Tensor]=None) -> torch.Tensor:
+    def forward(
+        self, x: torch.Tensor, start_pos: int, freqs_cis: torch.Tensor,
+        mask: Union[torch.Tensor, str, None],
+        prefix: Optional[torch.Tensor]=None, prefix_gate: Optional[torch.Tensor]=None
+    ) -> torch.Tensor:
         """
         Supported mask spec:
         1. Float tensor: The tensor is added to the attention score matrix.
@@ -309,8 +312,11 @@ class TransformerBlock(nn.Module):
     def _forward_attention(self, x, start_pos, freqs_cis, mask, prefix, prefix_gate):
         return x + self.attention(self.attention_norm(x), start_pos, freqs_cis, mask, prefix, prefix_gate)
 
-    def forward(self, x: torch.Tensor, start_pos: int, freqs_cis: torch.Tensor, mask: Optional[torch.Tensor],
-                prefix: Optional[torch.Tensor]=None, prefix_gate: Optional[torch.Tensor]=None):
+    def forward(
+        self, x: torch.Tensor, start_pos: int, freqs_cis: torch.Tensor,
+        mask: Optional[torch.Tensor],
+        prefix: Optional[torch.Tensor]=None, prefix_gate: Optional[torch.Tensor]=None
+    ) -> torch.Tensor:
         h = self._forward_attention(x, start_pos, freqs_cis, mask, prefix, prefix_gate)
         out = self._forward_ffn(h)
         return out
