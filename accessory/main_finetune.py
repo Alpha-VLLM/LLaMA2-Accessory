@@ -67,7 +67,7 @@ def get_args_parser():
 
     # Optimizer parameters
     parser.add_argument('--weight_decay', type=float, default=0.02,
-                        help='weight decay (default: 0.05)')
+                        help='weight decay (default: 0.02)')
 
     parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
                         help='learning rate (absolute lr)')
