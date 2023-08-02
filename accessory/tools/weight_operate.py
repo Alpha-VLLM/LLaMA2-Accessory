@@ -14,7 +14,7 @@ def get_args_parser():
     parser.add_argument('--operate_type', default='apply', choices=['extract', 'apply'])
     return parser
 
-def calculate_weight_delta(original_model, fine_tuned_model):
+def calculate_weight_delta(original_model, fine_tuned_model, num, max_num):
     original_state_dict = {key: val.float() for key, val in original_model.items()}
     fine_tuned_state_dict = {key: val.float() for key, val in fine_tuned_model['model'].items()}
     delta_state_dict = {}
@@ -29,13 +29,13 @@ def calculate_weight_delta(original_model, fine_tuned_model):
     
     save_path = os.path.join(
         args.output_path,
-        f"consolidated.00-of-01.model.pth",  # TODO fix multi GPU
+        f"consolidated.{num:02d}-of-{max_num:02d}.model.pth", 
     )
     
     torch.save(consolidated_model_state_dict, save_path)
 
 
-def merge_weights_and_save(original_model, delta_weights):
+def merge_weights_and_save(original_model, delta_weights, num, max_num):
     original_state_dict = {key: val.float() for key, val in original_model.items()}
     delta_weights_dict = {key: val.float() for key, val in delta_weights['model'].items()}
     new_state_dict = {}
@@ -52,7 +52,7 @@ def merge_weights_and_save(original_model, delta_weights):
 
     save_path = os.path.join(
         args.output_path,
-        f"consolidated.00-of-01.model.pth",  # TODO fix multi GPU
+        f"consolidated.{num:02d}-of-{max_num:02d}.model.pth",  
     )
 
     torch.save(consolidated_model_state_dict, save_path)
@@ -65,11 +65,22 @@ args = get_args_parser().parse_args()
 if not os.path.exists(args.output_path):
     os.makedirs(args.output_path)
 
-model_base = torch.load(args.pretrained_path)
-model_delta = torch.load(args.delta_path)
+pretrained_list = [path for path in os.listdir(args.pretrained_path) if path.startswith("consolidated.") and path.endswith(".pth")]
+pretrained_list.sort()
+delta_list = [path for path in os.listdir(args.delta_path) if path.startswith("consolidated.") and path.endswith("model.pth")]
+delta_list.sort()
 
-if args.operate_type == 'extract':
-    calculate_weight_delta(model_base, model_delta)
-else:
-    merge_weights_and_save(model_base, model_delta)
+assert len(pretrained_list) == len(delta_list)  
+max_checkpoint = len(pretrained_list)
+print(f"Found {max_checkpoint} checkpoints in {args.pretrained_path} and {args.delta_path}")
+
+for i in range(max_checkpoint):
+    print(f"Processing checkpoint {i+1}/{max_checkpoint}")
+    model_base = torch.load(os.path.join(args.pretrained_path, pretrained_list[i]))
+    model_delta = torch.load(os.path.join(args.delta_path, delta_list[i]))
+
+    if args.operate_type == 'extract':
+        calculate_weight_delta(model_base, model_delta, i , max_checkpoint)
+    else:
+        merge_weights_and_save(model_base, model_delta, i , max_checkpoint)
 
