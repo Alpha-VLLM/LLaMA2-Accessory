@@ -364,8 +364,10 @@ class Transformer(nn.Module):
 
 
     def encode_image(self, image):
-        # return self.patch_embed(image)
-        image_tokens = self.clip_encode_image(image)
+        with torch.cuda.amp.autocast(enabled=False):
+            image = image.half()
+            image_tokens = self.clip_encode_image(image)
+            image = image.to(self.clip_proj.weight.dtype)
         image_tokens = self.clip_proj_norm(self.clip_proj(image_tokens))
         return image_tokens
 
