@@ -9,6 +9,8 @@ import torch
 import torch.distributed as dist
 import gradio as gr
 
+from PIL import Image
+
 from util import misc
 from fairscale.nn.model_parallel import initialize as fs_init
 
