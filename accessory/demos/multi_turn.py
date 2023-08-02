@@ -50,12 +50,17 @@ def model_worker(
     # set the print behavior.
     setup_for_distributed(rank == 0)
 
-    torch.set_default_tensor_type(torch.cuda.HalfTensor)
     model = MetaModel(
         args.llama_type, args.llama_config, args.tokenizer_path,
         with_visual=False, max_seq_len=args.model_max_seq_len,
     )
-    torch.set_default_tensor_type(torch.FloatTensor)
+    target_dtype = {
+        "bf16": torch.bfloat16,
+        "fp16": torch.float16,
+    }[args.dtype]
+    for n, p in model.named_parameters():
+        p.data = p.data.to(target_dtype)
+    model.cuda().eval()
     print(f"Loading pretrained weights from {args.pretrained_path}")
     load_pretrained(args.pretrained_path, args.pretrained_type, model)
     print(f"Model = {str(model)}")
@@ -178,6 +183,8 @@ if __name__ == "__main__":
                         help="A port used by the PyTorch distributed module to initialize.")
     parser.add_argument("--master_addr", type=str, default="127.0.0.1",
                         help="An address used by the PyTorch distributed module to initialize.")
+    parser.add_argument("--dtype", type=str, choices=["fp16", "bf16"], default="bf16",
+                        help="The dtype used for model weights and inference.")
     args = parser.parse_args()
 
     # check and setup gpu_ids to use
