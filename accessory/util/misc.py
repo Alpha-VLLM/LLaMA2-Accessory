@@ -346,7 +346,7 @@ def save_checkpoint(output_dir, args, model, optimizer, loss_scaler, dataset_sta
             StateDictType.FULL_STATE_DICT,
             FullStateDictConfig(rank0_only=True, offload_to_cpu=True),
     ):
-        # run saving in seperate functions to save memory
+        # run saving in separate functions to save memory
         def _save_model():
             model_trainable_params = model.get_trainable_params()
             model_trainable_params = ['.'.join([_ for _ in key.split('.') if not _.startswith('_')])
@@ -415,7 +415,7 @@ def save_checkpoint(output_dir, args, model, optimizer, loss_scaler, dataset_sta
 
 def resume_stage1(args, model_without_FSDP):
     """
-    split resume into two seperate stages since resuming from a full model state has to be done before FSDP model init
+    split resume into two separate stages since resuming from a full model state has to be done before FSDP model init
     :param args:
     :param model_without_FSDP:
     :return:
