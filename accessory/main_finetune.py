@@ -32,6 +32,7 @@ from apex.optimizers import FusedAdam
 
 import util.misc as misc
 from util.misc import NativeScalerWithGradNormCount as NativeScaler
+from util.tensor_type import default_tensor_type, promote_trainable_params_to_fp32
 from model.meta import MetaModel
 from engine_finetune import train_one_epoch
 from torch.utils.data import Dataset
@@ -67,7 +68,7 @@ def get_args_parser():
 
     # Optimizer parameters
     parser.add_argument('--weight_decay', type=float, default=0.02,
-                        help='weight decay (default: 0.05)')
+                        help='weight decay (default: 0.02)')
 
     parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
                         help='learning rate (absolute lr)')
@@ -150,8 +151,15 @@ def main(args):
     dp_group = fs_init.get_data_parallel_group()
 
     # define the model
-    model = MetaModel(args.llama_type, args.llama_config,
-                      args.tokenizer_path, with_visual=not args.no_visual)
+    mixed_precision_dtype = {
+        "fp16": torch.float16,
+        "bf16": torch.bfloat16,
+        "tf32": torch.float32,
+    }[args.precision]
+    with default_tensor_type(dtype=mixed_precision_dtype, device="cuda"):
+        model = MetaModel(args.llama_type, args.llama_config,
+                          args.tokenizer_path, with_visual=not args.no_visual)
+    promote_trainable_params_to_fp32(model)
     print(f"load pretrained from {args.pretrained_path}")
     misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
     print("Unwrapped Model = %s" % str(model))
@@ -160,11 +168,6 @@ def main(args):
     if args.resume:
         misc.resume_stage1(args, model_without_FSDP=model)
 
-    mixed_precision_dtype = {
-        "fp16": torch.float16,
-        "bf16": torch.bfloat16,
-        "tf32": torch.float32,
-    }[args.precision]
     TransformerBlock = type(model.llma.layers[0])
     # ignored_named_parameters = {name: param for name, param in model.named_parameters() if not param.requires_grad}
     # print(ignored_named_parameters.keys())

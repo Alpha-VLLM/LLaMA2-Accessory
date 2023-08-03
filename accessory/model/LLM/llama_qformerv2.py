@@ -18,9 +18,8 @@ from fairscale.nn.model_parallel.layers import (
 )
 
 from apex.normalization import FusedRMSNorm as RMSNorm
-import open_clip
+from transformers import Blip2Processor, Blip2Model
 
-from util.tensor_type import default_tensor_type
 import configs.global_configs
 if configs.global_configs.USE_FLASH_ATTENTION:
     from flash_attn import flash_attn_func
@@ -135,7 +134,7 @@ class Attention(nn.Module):
         """
         Supported mask spec:
         1. Float tensor: The tensor is added to the attention score matrix.
-        2. Boolean tensor: Substitute the ``True`` values with ``0.0`` and ``False`` values with 
+        2. Boolean tensor: Substitute the ``True`` values with ``0.0`` and ``False`` values with
            ``-inf``, then process in the same way as the float tensor.
         3. str: Currently the only supported choice is ``causal``, for which each token attends
            to all tokens appearing no later than itself. Our implementation assumes the query and
@@ -308,16 +307,20 @@ class Transformer(nn.Module):
         self.image_words = 0
         self.cache_image_words = 0 # for inference
         if with_visual:
-            print("build llama model with clip")
-            with default_tensor_type(dtype=torch.half):
-                self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
-            for name, param in self.clip.named_parameters():
-                param.requires_grad = False
-            in_dim = self.clip.visual.proj.shape[1]
-            # in_dim = 3
-            self.clip_proj = nn.Linear(in_dim, params.dim)
-            self.clip_proj_norm = nn.LayerNorm(params.dim)
-            self.image_words = 257
+            print("build llama model with qformerv2")
+            self.qformer = Blip2Model.from_pretrained("./blip2_opt2.7b/", torch_dtype=torch.float16)
+
+            self.qformer.language_projection = None
+            self.qformer.language_model = None
+
+            self.qformer_proj = nn.Sequential(
+                nn.Linear(768, params.dim),
+                nn.LayerNorm(params.dim)
+            )
+            self.image_words = 32
+            # add image tags
+            self.start_img = nn.Parameter(torch.rand(1, 1, params.dim))
+            self.end_img = nn.Parameter(torch.rand(1, 1, params.dim))
 
         self.set_default_trainability()
 
@@ -325,7 +328,7 @@ class Transformer(nn.Module):
     def get_trainable_params(self):
         trainable = {}
         for name, para in self.named_parameters():
-            if not name.startswith("clip."):
+            if not name.startswith("qformer."):
                 trainable[name] = para
 
         return trainable
@@ -338,39 +341,14 @@ class Transformer(nn.Module):
             value.requires_grad = True
 
 
-    @torch.no_grad()
-    def clip_encode_image(self, x):
-        # modified from CLIP
-        x = self.clip.visual.conv1(x)  # shape = [*, width, grid, grid]
-        # shape = [*, width, grid ** 2]
-        x = x.reshape(x.shape[0], x.shape[1], -1)
-        x = x.permute(0, 2, 1)  # shape = [*, grid ** 2, width]
-        x = torch.cat([self.clip.visual.class_embedding.to(x.dtype) + torch.zeros(x.shape[0], 1,
-                      x.shape[-1], dtype=x.dtype, device=x.device), x], dim=1)  # shape = [*, grid ** 2 + 1, width]
-        x = x + self.clip.visual.positional_embedding.to(x.dtype)
-        x = self.clip.visual.ln_pre(x)
-
-        x = x.permute(1, 0, 2)  # NLD -> LND
-        x = self.clip.visual.transformer(x)
-        x = x.permute(1, 0, 2)  # LND -> NLD
-
-        # preserve all spatial tokens
-        x = self.clip.visual.ln_post(x[:, :, :])
-
-        if self.clip.visual.proj is not None:
-            x = x @ self.clip.visual.proj
-
-        return x
 
 
     def encode_image(self, image):
-        with torch.cuda.amp.autocast(enabled=False):
-            image = image.half()
-            image_tokens = self.clip_encode_image(image)
-            image = image.to(self.clip_proj.weight.dtype)
-        image_tokens = self.clip_proj_norm(self.clip_proj(image_tokens))
-        return image_tokens
-
+        # [B, 32, 768]
+        with torch.no_grad():
+            image_feats = self.qformer.get_qformer_features(pixel_values=image)
+        image_feats = self.qformer_proj(image_feats.last_hidden_state)
+        return image_feats
 
     def forward(self, examples, image=None):
         self._destroy_kv_cache()  # training always disables kv cache
@@ -380,9 +358,10 @@ class Transformer(nn.Module):
 
         image_words = 0
         if image is not None:
+            h_bos, h_caption = h[:, :1], h[:, 1:]
             image_tokens = self.encode_image(image)
-            image_words = image_tokens.shape[1]
-            h = torch.cat((image_tokens, h), dim=1)
+            h = torch.cat((h_bos, self.start_img.expand(_bsz, -1, -1), image_tokens, self.end_img.expand(_bsz, -1, -1), h_caption), dim=1)
+            image_words = image_tokens.shape[1] + 1 + 1
             seqlen = h.shape[1]
 
         freqs_cis = self.freqs_cis[:seqlen]
@@ -403,9 +382,10 @@ class Transformer(nn.Module):
 
         if image is not None:
             assert start_pos == 0
+            h_bos, h_caption = h[:, :1], h[:, 1:]
             image_tokens = self.encode_image(image)
-            self.cache_image_words = image_tokens.shape[1]
-            h = torch.cat((image_tokens, h), dim=1)
+            self.cache_image_words = image_tokens.shape[1] + 1 + 1
+            h = torch.cat((h_bos, self.start_img.repeat(_bsz, 1, 1), image_tokens, self.start_img.repeat(_bsz, 1, 1), h_caption), dim=1)
             seqlen = h.shape[1]
             freqs_cis = self.freqs_cis[0: seqlen]
         else:
