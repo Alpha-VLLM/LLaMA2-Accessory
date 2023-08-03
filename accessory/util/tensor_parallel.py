@@ -28,7 +28,7 @@ defined BEFORE the item of the parent class.
 To correctly save and load the checkpoints we expect each newly involved tensor parallel layer
 to be registered in this list.
 """
-_MODEL_PARALLEL_MODULES: List[Type[nn.Module], Dict[str, int]] = [
+_MODEL_PARALLEL_MODULES: List[Tuple[Type[nn.Module], Dict[str, int]]] = [
     (ColumnParallelLinear, {"weight": 0, "bias": 0}),
     (RowParallelLinear, {"weight": 1, "bias": -1}),
     (ParallelEmbedding, {"weight": 1}),
@@ -68,7 +68,10 @@ def _load_checkpoint_and_merge_ranks(
     ckpt_shards = []
     merged_ckpt = OrderedDict()
     for shard_id in range(local_shard_st, local_shard_ed):
-        ckpt_shards.append(torch.load(ckpt_files[shard_id], map_location="cpu"))
+        shard = torch.load(ckpt_files[shard_id], map_location="cpu")
+        if "model" in shard and isinstance(shard["model"], dict):
+            shard = shard["model"]
+        ckpt_shards.append(shard)
 
     for key in list(ckpt_shards[0].keys()):
         param_shards = [shard[key] for shard in ckpt_shards]
@@ -77,12 +80,15 @@ def _load_checkpoint_and_merge_ranks(
             if max_diff > 0.:
                 print(
                     "WARNING! Found unequal replicas of non-tensor-parallel params: "
-                    f"name={key}, ranks={','.join(range(local_shard_st, local_shard_ed))}, "
-                    f"max_diff={max_diff}."
+                    f"name={key}, ranks={','.join(str(x) for x in range(local_shard_st, local_shard_ed))}, "
+                    f"max_diff={max_diff}.",
+                    force=True,
                 )
-            merged_ckpt[key] = ckpt_shards[0][key]
+            merged_ckpt[key] = param_shards[0]
         else:
             merged_ckpt[key] = torch.cat(param_shards, dim=weight_parallel_dim[key])
+
+        # delete the original weights to avoid 2x memory usage.
         for shard in ckpt_shards:
             del shard[key]
     
@@ -158,7 +164,7 @@ def load_tensor_parallel_model(
             if format == "meta_ori":
                 fn = f"consolidated.{i:02d}.pth"
             else:
-                fn = f"consolidated.{i:02d}-of-{ckpt_mp_world_size:02d}.pth"
+                fn = f"consolidated.{i:02d}-of-{ckpt_mp_world_size:02d}.model.pth"
             full_path = os.path.join(path, fn)
             assert os.path.isfile(full_path), f"\"{full_path}\" is not a file."
             ckpt_files.append(full_path)
