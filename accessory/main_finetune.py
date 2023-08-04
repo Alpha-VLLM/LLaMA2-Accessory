@@ -158,7 +158,8 @@ def main(args):
     }[args.precision]
     with default_tensor_type(dtype=mixed_precision_dtype, device="cpu"):
         model = MetaModel(args.llama_type, args.llama_config,
-                          args.tokenizer_path, with_visual=not args.no_visual)
+                          args.tokenizer_path, with_visual=not args.no_visual,
+                          max_seq_len=args.max_words)
     promote_trainable_params_to_fp32(model)
     misc.print_trainable_params(model)
     print(f"load pretrained from {args.pretrained_path}")
