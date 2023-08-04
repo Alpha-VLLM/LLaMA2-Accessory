@@ -16,6 +16,7 @@ from fairscale.nn.model_parallel.layers import (
     RowParallelLinear,
     ColumnParallelLinear
 )
+from ..peft import LoraColumnParallelLinear, LoraRowParallelLinear
 
 from apex.normalization import FusedRMSNorm as RMSNorm
 from transformers import Blip2Processor, Blip2Model
@@ -40,6 +41,10 @@ class ModelArgs:
 
     max_batch_size: int = 32
     max_seq_len: int = 2048
+
+    lora_rank: int = -1 # lora
+
+    bias_tuning: bool = True  # bias
 
 
 def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0):
@@ -93,33 +98,37 @@ class Attention(nn.Module):
         self.n_rep = self.n_local_heads // self.n_local_kv_heads
         self.head_dim = args.dim // args.n_heads
 
-        self.wq = ColumnParallelLinear(
+        self.wq = LoraColumnParallelLinear(
             args.dim,
             args.n_heads * self.head_dim,
-            bias=False,
+            bias=args.bias_tuning,
             gather_output=False,
             init_method=default_linear_init,
+            lora_rank=args.lora_rank
         )
-        self.wk = ColumnParallelLinear(
+        self.wk = LoraColumnParallelLinear(
             args.dim,
             self.n_kv_heads * self.head_dim,
-            bias=False,
+            bias=args.bias_tuning,
             gather_output=False,
             init_method=default_linear_init,
+            lora_rank=args.lora_rank
         )
-        self.wv = ColumnParallelLinear(
+        self.wv = LoraColumnParallelLinear(
             args.dim,
             self.n_kv_heads * self.head_dim,
-            bias=False,
+            bias=args.bias_tuning,
             gather_output=False,
             init_method=default_linear_init,
+            lora_rank=args.lora_rank
         )
-        self.wo = RowParallelLinear(
+        self.wo = LoraRowParallelLinear(
             args.n_heads * self.head_dim,
             args.dim,
-            bias=False,
+            bias=args.bias_tuning,
             input_is_parallel=True,
             init_method=default_linear_init,
+            lora_rank=args.lora_rank
         )
 
         self.args = args
@@ -223,6 +232,7 @@ class FeedForward(nn.Module):
         hidden_dim: int,
         multiple_of: int,
         ffn_dim_multiplier: Optional[float],
+        args: ModelArgs,
     ):
         super().__init__()
         hidden_dim = int(2 * hidden_dim / 3)
@@ -231,14 +241,17 @@ class FeedForward(nn.Module):
             hidden_dim = int(ffn_dim_multiplier * hidden_dim)
         hidden_dim = multiple_of * ((hidden_dim + multiple_of - 1) // multiple_of)
 
-        self.w1 = ColumnParallelLinear(
-            dim, hidden_dim, bias=False, gather_output=False, init_method=default_linear_init
+        self.w1 = LoraColumnParallelLinear(
+            dim, hidden_dim, bias=args.bias_tuning, gather_output=False,
+            init_method=default_linear_init, lora_rank=args.lora_rank
         )
-        self.w2 = RowParallelLinear(
-            hidden_dim, dim, bias=False, input_is_parallel=True, init_method=default_linear_init
+        self.w2 = LoraRowParallelLinear(
+            hidden_dim, dim, bias=args.bias_tuning, input_is_parallel=True,
+            init_method=default_linear_init, lora_rank=args.lora_rank
         )
-        self.w3 = ColumnParallelLinear(
-            dim, hidden_dim, bias=False, gather_output=False, init_method=default_linear_init
+        self.w3 = LoraColumnParallelLinear(
+            dim, hidden_dim, bias=args.bias_tuning, gather_output=False,
+            init_method=default_linear_init, lora_rank=args.lora_rank
         )
 
     # @torch.compile
@@ -261,6 +274,7 @@ class TransformerBlock(nn.Module):
             hidden_dim=4 * args.dim,
             multiple_of=args.multiple_of,
             ffn_dim_multiplier=args.ffn_dim_multiplier,
+            args=args
         )
         self.layer_id = layer_id
         self.attention_norm = RMSNorm(args.dim, eps=args.norm_eps)
@@ -282,6 +296,7 @@ class TransformerBlock(nn.Module):
 
 
 class Transformer(nn.Module):
+    is_peft = True
     def __init__(self, params: ModelArgs, with_visual=False):
         super().__init__()
         self.params = params
@@ -329,7 +344,9 @@ class Transformer(nn.Module):
         trainable = {}
         for name, para in self.named_parameters():
             if not name.startswith("qformer."):
-                trainable[name] = para
+                trainable_key_words = ['norm', 'bias', 'lora']
+                if any([_ in name for _ in trainable_key_words]):
+                    trainable[name] = para
 
         return trainable
 
@@ -337,7 +354,9 @@ class Transformer(nn.Module):
     def set_default_trainability(self):
         for key, value in self.named_parameters():
             value.requires_grad = False
+            value.data = value.data.half()
         for key, value in self.get_trainable_params().items():
+            value.data = value.data.float()
             value.requires_grad = True
 
 
