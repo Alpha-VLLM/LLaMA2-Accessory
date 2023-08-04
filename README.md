@@ -8,7 +8,7 @@
 🚀**LLaMA2-Accessory** is an open-source toolkit for pre-training, fine-tuning and deployment of **Large Language Models (LLMs)** and **mutlimodal LLMs**. This repo is mainly inherited from [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter) with more advanced features.🧠
 
 ## News
-- **[2023.08.05]** Exciting news! We've just open-sourced **multi-modal** LLaMa2 with Qformer's full and peft fine-tune code. Introducing two groundbreaking models: [Stage One](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/finetune/mm/caption_llamaQformerv2_13b/) - A cutting-edge caption model, trained on COYO/LAION/CC3M/CC12M/SBU dataset; [Stage Two](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/finetune/mm/alpacaLlava_llamaQformerv2_13b/) - A more advanced version, fine-tuned with GPT4LLM/LLaVa directives! 🔥🔥🔥
+- **[2023.08.05]** We release the multimodel fine-tuning codes and checkpoints🔥🔥🔥
 - **[2023.07.23]** Initial release 📌
 
 ## Features
