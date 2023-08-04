@@ -265,4 +265,27 @@ Tuning scripts used here can be found in: [Zero-init Attenion](../accessory/exps
 
 ---
 
+### Two-Stage Training of Multi-Model LLaMA 2
+
+**Script:**
+
++ The code for the first stage will be released soon.
++ [exps/finetune/mm/alpacaLlava_llamaQformerv2_13B.sh](../accessory/exps/finetune/mm/alpacaLlava_llamaQformerv2_13B.sh)
+
+**Model Release:**
+
+[Stage One](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/caption_llamaQformerv2_13b/) - Fine-tuned on large scale image-text pairs (COYO/LAION/CC3M/CC12M/SBU); 
+
+[Stage Two](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/alpacaLlava_llamaQformerv2_13b/) - Further multi-modal instruction-following fine-tuning on GPT-4-LLM/LLaVa.
+
+**Host Local Demo:**
+
+```bash
+torchrun --nproc-per-node=2  demos/single_turn_mm.py \
+--llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
+--pretrained_path /path/to/multimodel_llama
+```
+
+
+
 *More use cases coming soon...*
