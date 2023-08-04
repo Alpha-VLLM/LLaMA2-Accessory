@@ -337,9 +337,7 @@ class Transformer(nn.Module):
     def set_default_trainability(self):
         for key, value in self.named_parameters():
             value.requires_grad = False
-            value.data = value.data.half()
         for key, value in self.get_trainable_params().items():
-            value.data = value.data.float()
             value.requires_grad = True
 
 

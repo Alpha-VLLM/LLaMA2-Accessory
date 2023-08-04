@@ -20,6 +20,7 @@ from fairscale.nn.model_parallel.layers import (
 from apex.normalization import FusedRMSNorm as RMSNorm
 import open_clip
 
+from util.tensor_type import default_tensor_type
 import configs.global_configs
 if configs.global_configs.USE_FLASH_ATTENTION:
     from flash_attn import flash_attn_func
@@ -308,9 +309,8 @@ class Transformer(nn.Module):
         self.cache_image_words = 0 # for inference
         if with_visual:
             print("build llama model with clip")
-            torch.set_default_tensor_type(torch.cuda.HalfTensor)
-            self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
-            torch.set_default_tensor_type(torch.FloatTensor)
+            with default_tensor_type(dtype=torch.half):
+                self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
             for name, param in self.clip.named_parameters():
                 param.requires_grad = False
             in_dim = self.clip.visual.proj.shape[1]
@@ -334,9 +334,7 @@ class Transformer(nn.Module):
     def set_default_trainability(self):
         for key, value in self.named_parameters():
             value.requires_grad = False
-            value.data = value.data.half()
         for key, value in self.get_trainable_params().items():
-            value.data = value.data.float()
             value.requires_grad = True
 
 
@@ -366,8 +364,10 @@ class Transformer(nn.Module):
 
 
     def encode_image(self, image):
-        # return self.patch_embed(image)
-        image_tokens = self.clip_encode_image(image)
+        with torch.cuda.amp.autocast(enabled=False):
+            image = image.half()
+            image_tokens = self.clip_encode_image(image)
+            image = image.to(self.clip_proj.weight.dtype)
         image_tokens = self.clip_proj_norm(self.clip_proj(image_tokens))
         return image_tokens
 

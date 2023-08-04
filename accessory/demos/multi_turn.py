@@ -14,7 +14,9 @@ from fairscale.nn.model_parallel import initialize as fs_init
 
 import gradio as gr
 
-from util.misc import setup_for_distributed, load_pretrained
+from util.misc import setup_for_distributed
+from util.tensor_parallel import load_tensor_parallel_model
+from util.tensor_type import default_tensor_type
 from model.meta import MetaModel
 from data.conversation.lib import conv_templates, SeparatorStyle
 
@@ -50,14 +52,18 @@ def model_worker(
     # set the print behavior.
     setup_for_distributed(rank == 0)
 
-    torch.set_default_tensor_type(torch.cuda.HalfTensor)
-    model = MetaModel(
-        args.llama_type, args.llama_config, args.tokenizer_path,
-        with_visual=False, max_seq_len=args.model_max_seq_len,
-    )
-    torch.set_default_tensor_type(torch.FloatTensor)
+    target_dtype = {
+        "bf16": torch.bfloat16,
+        "fp16": torch.float16,
+    }[args.dtype]
+    with default_tensor_type(dtype=target_dtype, device="cuda"):
+        model = MetaModel(
+            args.llama_type, args.llama_config, args.tokenizer_path,
+            with_visual=False, max_seq_len=args.model_max_seq_len,
+        )
+    model.eval()
     print(f"Loading pretrained weights from {args.pretrained_path}")
-    load_pretrained(args.pretrained_path, args.pretrained_type, model)
+    load_tensor_parallel_model(model, args.pretrained_path, args.pretrained_type)
     print(f"Model = {str(model)}")
 
     barrier.wait()
@@ -67,22 +73,29 @@ def model_worker(
         for user, bot in chatbot:
             conv.append_message(conv.roles[0], user)
             conv.append_message(conv.roles[1], bot)
-        # print(conv.get_prompt())
 
-        with torch.cuda.amp.autocast(dtype=torch.bfloat16):
-            for stream_response in model.stream_generate(
-                conv.get_prompt(), None,
-                max_gen_len, temperature, top_p
-            ):
-                end_pos = stream_response['text'].find(conv.sep if conv.sep_style == SeparatorStyle.SINGLE else conv.sep2)
-                if end_pos != -1:
-                    stream_response['text'] = stream_response['text'][:end_pos].rstrip()+"\n"
-                    stream_response['end_of_content'] = True
-                if response_queue is not None:
-                    response_queue.put(stream_response)
+        for stream_response in model.stream_generate(
+            conv.get_prompt(), None,
+            max_gen_len, temperature, top_p
+        ):
+            conv_sep = conv.sep if conv.sep_style == SeparatorStyle.SINGLE else conv.sep2
+            end_pos = stream_response["text"].find(conv_sep)
+            if end_pos != -1:
+                stream_response["text"] = stream_response['text'][:end_pos].rstrip() + "\n"
+                stream_response["end_of_content"] = True
 
-                if stream_response['end_of_content']:
-                    break
+            # keep a few characters if not end_of_content to avoid sending part of conv_sep
+            # before all of it is generated.
+            if not stream_response["end_of_content"]:
+                if len(stream_response["text"]) < len(conv_sep):
+                    continue
+                stream_response["text"] = stream_response["text"][:-len(conv_sep)]
+
+            if response_queue is not None:
+                response_queue.put(stream_response)
+
+            if stream_response["end_of_content"]:
+                break
 
 
 def gradio_worker(
@@ -178,6 +191,8 @@ if __name__ == "__main__":
                         help="A port used by the PyTorch distributed module to initialize.")
     parser.add_argument("--master_addr", type=str, default="127.0.0.1",
                         help="An address used by the PyTorch distributed module to initialize.")
+    parser.add_argument("--dtype", type=str, choices=["fp16", "bf16"], default="bf16",
+                        help="The dtype used for model weights and inference.")
     args = parser.parse_args()
 
     # check and setup gpu_ids to use

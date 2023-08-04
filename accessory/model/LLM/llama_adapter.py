@@ -24,6 +24,7 @@ import open_clip
 import configs.global_configs
 if configs.global_configs.USE_FLASH_ATTENTION:
     from flash_attn import flash_attn_func
+from util.tensor_type import default_tensor_type
 
 default_linear_init = functools.partial(nn.init.kaiming_uniform_, a=math.sqrt(5))
 
@@ -349,9 +350,8 @@ class Transformer(nn.Module):
         self.image_words = 0
         if with_visual:
             print("build llama model with clip")
-            torch.set_default_tensor_type(torch.cuda.HalfTensor)
-            self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
-            torch.set_default_tensor_type(torch.FloatTensor)
+            with default_tensor_type(dtype=torch.half):
+                self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
             for name, param in self.clip.named_parameters():
                 param.requires_grad = False
             in_dim = self.clip.visual.proj.shape[1]
@@ -401,9 +401,7 @@ class Transformer(nn.Module):
     def set_default_trainability(self):
         for key, value in self.named_parameters():
             value.requires_grad = False
-            value.data = value.data.half()
         for key, value in self.get_trainable_params().items():
-            value.data = value.data.float()
             value.requires_grad = True
 
 
