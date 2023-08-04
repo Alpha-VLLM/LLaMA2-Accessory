@@ -160,6 +160,7 @@ def main(args):
         model = MetaModel(args.llama_type, args.llama_config,
                           args.tokenizer_path, with_visual=not args.no_visual)
     promote_trainable_params_to_fp32(model)
+    misc.print_trainable_params(model)
     print(f"load pretrained from {args.pretrained_path}")
     misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
     print("Unwrapped Model = %s" % str(model))

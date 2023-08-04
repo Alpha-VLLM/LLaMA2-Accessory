@@ -48,7 +48,6 @@ class MetaModel(nn.Module):
         for name, param in self.named_parameters():
             is_model_parallel = getattr(param, "is_model_parallel", False)
             if param.requires_grad:
-                print(f"Trainable param: {name}, local_size: {param.shape}, model_parallel: {is_model_parallel}, dtype: {param.dtype}")
                 if is_model_parallel:
                     param_count_all += param.numel() * fs_init.get_model_parallel_world_size()
                 else:

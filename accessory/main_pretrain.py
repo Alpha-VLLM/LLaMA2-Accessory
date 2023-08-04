@@ -157,6 +157,7 @@ def main(args):
         model = MetaModel(args.llama_type, args.llama_config,
                           args.tokenizer_path, with_visual=False)
     promote_trainable_params_to_fp32(model)
+    misc.print_trainable_params(model)
     if args.pretrained_path:
         print(f"load pretrained from {args.pretrained_path}")
         misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
