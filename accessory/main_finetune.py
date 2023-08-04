@@ -156,7 +156,7 @@ def main(args):
         "bf16": torch.bfloat16,
         "tf32": torch.float32,
     }[args.precision]
-    with default_tensor_type(dtype=mixed_precision_dtype, device="cuda"):
+    with default_tensor_type(dtype=mixed_precision_dtype, device="cpu"):
         model = MetaModel(args.llama_type, args.llama_config,
                           args.tokenizer_path, with_visual=not args.no_visual)
     promote_trainable_params_to_fp32(model)
