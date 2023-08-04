@@ -7,6 +7,7 @@ from model.tokenizer import Tokenizer
 import copy
 import torchvision.transforms as transforms
 import numpy as np
+import os
 
 
 try:
@@ -60,7 +61,25 @@ class FinetuneDataset(Dataset):
         print(self.config)
         group_ann = {}
         for meta_path, meta_type in self.config['META']:
-            meta_l = json.load(open(meta_path))
+            meta_ext = os.path.splitext(meta_path)[-1]
+            if meta_ext == ".json":
+                with open(meta_path) as f:
+                    meta_l = json.load(f)
+            elif meta_ext == ".jsonl":
+                meta_l = []
+                with open(meta_path) as f:
+                    for i, line in enumerate(f):
+                        try:
+                            meta_l.append(json.loads(line))
+                        except json.decoder.JSONDecodeError as e:
+                            print(f"Error decoding the following jsonl line ({i}):\n{line.rstrip()}", force=True)
+                            raise e
+            else:
+                raise NotImplementedError(
+                    f"Unknown meta file extension: \"{meta_ext}\". Currently, .json and .jsonl files are supported. "
+                    "If you are using a supported format, please set the file extension so that the proper parsing "
+                    "routine can be called."
+                )
             if meta_type not in group_ann:
                 group_ann[meta_type] = []
             print(f"{meta_path}, type{meta_type}: len {len(meta_l)}")
