@@ -306,7 +306,7 @@ torchrun --nproc-per-node=2  demos/single_turn_mm.py \
 >
 > A group of flamingos standing on top of a lush green field.
 >
-> ![](.\examples\finetune\mm\caption2.jpg)
+> ![](./examples/finetune/mm/caption2.jpg)
 >
 > *Answer:* (prefix prompt is 'The author')
 >
@@ -314,7 +314,7 @@ torchrun --nproc-per-node=2  demos/single_turn_mm.py \
 >
 > ##### Stage Two
 >
-> ![](.\examples\finetune\mm\instruction.jpg)
+> ![](./examples/finetune/mm/instruction.jpg)
 >
 > *Instruction:*
 >
