@@ -1,3 +1,4 @@
+[TOC]
 # Fine-tuning
 
 This document demonstrates the fine-tuning use cases supported by LLaMA2-Accessory
@@ -285,7 +286,36 @@ torchrun --nproc-per-node=2  demos/single_turn_mm.py \
 --llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
 --pretrained_path /path/to/multimodel_llama
 ```
+**Example:**
 
+> ##### Stage One
+>
+> ![](.\examples\finetune\mm\caption1.jpg)
+>
+> *Answer:* (without prefix prompt)
+>
+> A group of flamingos standing on top of a lush green field.
+>
+> ![](.\examples\finetune\mm\caption2.jpg)
+>
+> *Answer:* (prefix prompt is 'The author')
+>
+> The author of this painting is Vincent Van Gogh.
+>
+> ##### Stage Two
+>
+> ![](.\examples\finetune\mm\instruction.jpg)
+>
+> *Instruction:*
+>
+> Describe the image
+>
+> *Answer:*
+>
+> The image features a colorful background with a large, eye-catching banner displaying the "Summer Power Sale." The banner has a blue, yellow, and pink color scheme, and the text is in a bold, modern font. The sale sign has a prominent "50" symbol, indicating the discount or promotional offer. The overall design of the banner is visually appealing and effectively conveys the message of the summer, limited-time offer to potential customers.
+>
+> 
 
+---
 
 *More use cases coming soon...*
