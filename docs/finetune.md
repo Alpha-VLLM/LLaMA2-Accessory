@@ -300,7 +300,7 @@ torchrun --nproc-per-node=2  demos/single_turn_mm.py \
 
 > ##### Stage One
 >
-> ![](.\examples\finetune\mm\caption1.jpg)
+> ![](./examples/finetune/mm/caption1.jpg)
 >
 > *Answer:* (without prefix prompt)
 >
