@@ -2,10 +2,10 @@
   * [Prerequisites](#prerequisites)
   * [How to Apply Delta Weights](#how-to-apply-delta-weights)
   * [Full-Parameter Fine-tuning](#full-parameter-fine-tuning)
-    + [Single-turn instruction-tuning of LLaMA2-7B on alpaca](#single-turn-instruction-tuning-of-llama2-7b-on-alpaca)
+    + [Single-turn instruction-tuning of LLaMA2-7B on Alpaca](#single-turn-instruction-tuning-of-llama2-7b-on-Alpaca)
     + [Multi-turn instruction-tuning of LLaMA2-7B on ShareGPT](#multi-turn-instruction-tuning-of-llama2-7b-on-sharegpt)
     + [Multi-turn instruction-tuning of LLaMA2-7B on LIMA](#multi-turn-instruction-tuning-of-llama2-7b-on-lima)
-    + [Single-turn instruction-tuning of LLaMA2-7B on gorilla](#single-turn-instruction-tuning-of-llama2-7b-on-gorilla)
+    + [Single-turn instruction-tuning of LLaMA2-7B on Gorilla](#single-turn-instruction-tuning-of-llama2-7b-on-Gorilla)
     + [Two-Stage Training of Multi-Model LLaMA 2](#two-stage-training-of-multi-model-llama-2)
         * [Stage One](#stage-one)
         * [Stage Two](#stage-two)
@@ -55,7 +55,7 @@ This document demonstrates the fine-tuning use cases supported by LLaMA2-Accesso
 
 ## Full-Parameter Fine-tuning
 
-### Single-turn instruction-tuning of LLaMA2-7B on alpaca
+### Single-turn instruction-tuning of LLaMA2-7B on Alpaca
 
 **Script:**
 
