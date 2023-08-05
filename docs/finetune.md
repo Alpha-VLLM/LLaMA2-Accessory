@@ -300,17 +300,19 @@ torchrun --nproc-per-node=2  demos/single_turn_mm.py \
 
 > ##### Stage One
 >
+> **Without prefix prompt**
+> 
 > ![](./examples/finetune/mm/caption1.jpg)
 >
-> *Answer:* (without prefix prompt)
+> *Answer*: A group of flamingos standing on top of a lush green field.
 >
-> A group of flamingos standing on top of a lush green field.
->
+> **With prefix prompt**
+> 
 > ![](./examples/finetune/mm/caption2.jpg)
 >
-> *Answer:* (prefix prompt is 'The author')
+> prefix prompt: 'The author'
 >
-> The author of this painting is Vincent Van Gogh.
+> *Answer*: The author of this painting is Vincent Van Gogh.
 >
 > ##### Stage Two
 >
@@ -318,7 +320,7 @@ torchrun --nproc-per-node=2  demos/single_turn_mm.py \
 >
 > *Instruction:*
 >
-> Describe the image
+> Describe the image.
 >
 > *Answer:*
 >
