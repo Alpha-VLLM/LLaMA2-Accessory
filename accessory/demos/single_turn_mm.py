@@ -53,7 +53,7 @@ model = MetaModel(args.llama_type, args.llama_config, args.tokenizer_path, with_
 print(f"load pretrained from {args.pretrained_path}")
 misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
 print("Model = %s" % str(model))
-model.cuda().half()
+model.bfloat16().cuda()
 
 
 @ torch.inference_mode()
@@ -66,7 +66,7 @@ def generate(
 ):
     if img_path is not None:
         image = Image.open(img_path).convert('RGB')
-        image = transform_train(image).unsqueeze(0).cuda()
+        image = transform_train(image).unsqueeze(0)
     else:
         image = None
 
@@ -75,7 +75,10 @@ def generate(
 
     dist.barrier()
     dist.broadcast_object_list([_prompt, image, max_gen_len, gen_t, top_p])
-    with torch.cuda.amp.autocast():
+
+    if image is not None:
+        image = image.cuda()
+    with torch.cuda.amp.autocast(dtype=torch.bfloat16):
         results = model.generate([_prompt], image, max_gen_len=max_gen_len, temperature=gen_t, top_p=top_p)
     text_output = results[0].strip()
     print(text_output)
@@ -125,7 +128,9 @@ def worker_func():
         input_data = [None for _ in range(5)]
         dist.broadcast_object_list(input_data)
         _prompt, image, max_gen_len, gen_t, top_p = input_data
-        with torch.cuda.amp.autocast():
+        if image is not None:
+            image = image.cuda()
+        with torch.cuda.amp.autocast(dtype=torch.bfloat16):
             _ = model.generate([_prompt], image, max_gen_len=max_gen_len, temperature=gen_t, top_p=top_p, )
 
 
