@@ -210,8 +210,8 @@ python demos/multi_turn.py \
 
 + Here we take tensorflowhub as example, other subset can be handled in similar way:
 + Download data from https://github.com/ShishirPatil/gorilla/blob/main/data/apibench/tensorflow_train.json
-+ run [tools/data_conversion/to_alpaca/gorilla.py](../accessory/tools/data_conversion/to_alpaca/gorilla.py) with specified `--data_path` to reformat original data.
-+ Make sure [gorilla.yaml](accessory/configs/data/finetune/sg/gorilla.yaml) is correctly specified to formatted data file.
++ Run [tools/data_conversion/to_alpaca/gorilla.py](../accessory/tools/data_conversion/to_alpaca/gorilla.py) with specified `--data_path` to reformat original data.
++ Make sure [gorilla.yaml](../accessory/configs/data/finetune/sg/gorilla.yaml) is correctly specified to formatted data file.
 
 **Model Release:**
 
