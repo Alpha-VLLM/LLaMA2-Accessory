@@ -303,13 +303,13 @@ torchrun --nproc-per-node=2  demos/single_turn_mm.py \
 > ##### Stage One
 >
 > **Without prefix prompt**
-> 
+>
 > ![](./examples/finetune/mm/caption1.jpg)
 >
 > *Answer*: A group of flamingos standing on top of a lush green field.
 >
 > **With prefix prompt**
-> 
+>
 > ![](./examples/finetune/mm/caption2.jpg)
 >
 > prefix prompt: 'The author'
@@ -318,17 +318,34 @@ torchrun --nproc-per-node=2  demos/single_turn_mm.py \
 >
 > ##### Stage Two
 >
-> ![](./examples/finetune/mm/instruction.jpg)
+> ![](./examples/finetune/mm/instruction3.jpg)
 >
 > *Instruction:*
 >
-> Describe the image.
+> What is the food in the picture? Provide recipes for making the food in the picture.
 >
 > *Answer:*
 >
-> The image features a colorful background with a large, eye-catching banner displaying the "Summer Power Sale." The banner has a blue, yellow, and pink color scheme, and the text is in a bold, modern font. The sale sign has a prominent "50" symbol, indicating the discount or promotional offer. The overall design of the banner is visually appealing and effectively conveys the message of the summer, limited-time offer to potential customers.
+> The food in the picture is a set of macaroons, which is a type of small, round, and crispy pastry. Macaroons are typically made with ingredients such as almond flour, butter, sugar, and egg whites. There are several recipes available online for making these delicious treats, such as the following:
 >
-> 
+> **Almond-covered Macaroons:**
+>
+> **Ingredients:**
+>
+> - 1 cup of almond flour
+> - 1/2 cup of granulated sugar
+> - 1/4 cup of unsalted butter, melted
+> - 1 teaspoon of vanilla extract
+> - a few drops of food coloring (optional)
+>
+> **Instructions:**
+>
+> 1. Preheat your oven to 350°F (175°C). Line a baking sheet with parchment paper.
+> 2. In a large mixing bowl, mix together the almond flour, granulated sugar, and melted butter. Add the vanilla extract and mix well.
+> 3. Add a few drops of food coloring, if using, and mix again.
+> 4. Scoop small portions of the mixture and place them on the prepared baking sheet, ensuring enough space between each macaroon.
+>
+> [*More examples here*](./examples/finetune/mm/alpacaLlava_llamaQformerv2_13b.md)
 
 ---
 
