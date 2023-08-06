@@ -222,7 +222,7 @@ class Attention(nn.Module):
                     mask = mask.to(xq.device, non_blocking=True)
                 else:
                     raise NotImplementedError()
-            output = F.scaled_dot_product_attention(xq, keys, values, dropout_p=0.0, mask=mask)
+            output = F.scaled_dot_product_attention(xq, keys, values, dropout_p=0.0, attn_mask=mask)
 
             if prefix is not None:
                 prefix_k = prefix_k.transpose(1, 2)
