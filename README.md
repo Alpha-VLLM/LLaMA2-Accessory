@@ -27,13 +27,13 @@
   - 👁‍🗨 Visual Encoders: [CLIP](https://github.com/openai/CLIP), [Q-Former](https://github.com/salesforce/LAVIS) and [ImageBind](https://github.com/facebookresearch/ImageBind).
   - 🧩 LLMs: LLaMA and LLaMA2.
 
+## Setup
 
-## Installation
+For environment installation, refer to [docs/install.md](./docs/install.md).
 
-See [docs/install.md](./docs/install.md). 
+## Model Usage
 
-## Training & Inference
-See [docs/pretrain.md](./docs/pretrain.md) and [docs/finetune.md](./docs/finetune.md). 
+Instructions for model training, inference, and fine-tuning can be found in [docs/pretrain.md](./docs/pretrain.md), [docs/inference.md](./docs/inference.md), and [docs/finetune.md](./docs/finetune.md), respectively.
 
 ## Demos
 * Instruction-tuned LLaMA2: [alpaca](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/alpaca.html) & [gorilla](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/gorilla.html).
