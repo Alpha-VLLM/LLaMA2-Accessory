@@ -334,8 +334,6 @@ class Transformer(nn.Module):
             self.clip_proj_norm = nn.LayerNorm(params.dim)
             self.image_words = 257
 
-        self.set_default_trainability()
-
 
     def get_trainable_params(self):
         trainable = {}
@@ -346,13 +344,6 @@ class Transformer(nn.Module):
                     trainable[name] = para
 
         return trainable
-
-
-    def set_default_trainability(self):
-        for key, value in self.named_parameters():
-            value.requires_grad = False
-        for key, value in self.get_trainable_params().items():
-            value.requires_grad = True
 
 
     @torch.no_grad()

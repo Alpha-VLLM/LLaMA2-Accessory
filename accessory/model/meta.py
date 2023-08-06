@@ -15,7 +15,7 @@ class MetaModel(nn.Module):
     """
     def __init__(
         self, llama_type: str, llama_config: List[str], tokenizer_path: str,
-        with_visual: bool = False, max_seq_len: int = 2048,
+        with_visual: bool = False, max_seq_len: int = 2048
     ) -> None:
         super().__init__()
 
@@ -39,6 +39,8 @@ class MetaModel(nn.Module):
         model = Transformer(model_args, with_visual=with_visual)
         self.llma = model
 
+        self._set_default_trainability()
+
         self.is_peft = getattr(model, "is_peft", False)
         print(f"Model is Peft: {self.is_peft}")
 
@@ -53,12 +55,19 @@ class MetaModel(nn.Module):
                 else:
                     param_count_all += param.numel()
                 param_count_local += param.numel()
-        print(f"Parameter count : {param_count_local} (local rank), {param_count_all} (all).")
+        print(f"Trainable parameter count : {param_count_local} (local rank), {param_count_all} (all).")
 
 
     def get_trainable_params(self):
         llma_trainable = self.llma.get_trainable_params()
         return {"llma." + name: param for name, param in llma_trainable.items()}
+
+
+    def _set_default_trainability(self):
+        for key, value in self.named_parameters():
+            value.requires_grad = False
+        for key, value in self.get_trainable_params().items():
+            value.requires_grad = True
 
 
     def forward(self, examples, labels, images=None):

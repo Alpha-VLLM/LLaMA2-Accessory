@@ -337,8 +337,6 @@ class Transformer(nn.Module):
             self.start_img = nn.Parameter(torch.rand(1, 1, params.dim))
             self.end_img = nn.Parameter(torch.rand(1, 1, params.dim))
 
-        self.set_default_trainability()
-
 
     def get_trainable_params(self):
         trainable = {}
@@ -349,17 +347,6 @@ class Transformer(nn.Module):
                     trainable[name] = para
 
         return trainable
-
-
-    def set_default_trainability(self):
-        for key, value in self.named_parameters():
-            value.requires_grad = False
-            value.data = value.data.half()
-        for key, value in self.get_trainable_params().items():
-            value.data = value.data.float()
-            value.requires_grad = True
-
-
 
 
     def encode_image(self, image):
