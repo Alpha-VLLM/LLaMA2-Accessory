@@ -439,7 +439,7 @@ def resume_stage1(args, model_without_FSDP):
             )
 
             consolidated_model_state_dict = torch.load(consilidated_model_checkpoint_path, map_location='cpu')
-            model_without_FSDP.load_state_dict(consolidated_model_state_dict['model'])
+            model_without_FSDP.load_state_dict(consolidated_model_state_dict['model'], strict=False)
             print(f"load model from {consolidated_model_state_dict}")
 
 
