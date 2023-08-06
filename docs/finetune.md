@@ -2,7 +2,7 @@
   * [Prerequisites](#prerequisites)
   * [How to Apply Delta Weights](#how-to-apply-delta-weights)
   * [Full-Parameter Fine-tuning](#full-parameter-fine-tuning)
-    + [Single-turn instruction-tuning of LLaMA2-7B on Alpaca](#single-turn-instruction-tuning-of-llama2-7b-on-Alpaca)
+    + [Single-turn instruction-tuning of LLaMA2-7B on Alpaca](#single-turn-instruction-tuning-of-llama2-7b-on-alpaca)
     + [Multi-turn instruction-tuning of LLaMA2-7B on ShareGPT](#multi-turn-instruction-tuning-of-llama2-7b-on-sharegpt)
     + [Multi-turn instruction-tuning of LLaMA2-7B on LIMA](#multi-turn-instruction-tuning-of-llama2-7b-on-lima)
     + [Single-turn instruction-tuning of LLaMA2-7B on Gorilla](#single-turn-instruction-tuning-of-llama2-7b-on-Gorilla)
@@ -39,11 +39,14 @@ This document demonstrates the fine-tuning use cases supported by LLaMA2-Accesso
 > + Point `llama_config` in `.sh` to the model parameter file (usually named as `params.json`) that differentiates model sizes (7B, 13B, ...)
 > + Point `tokenizer_path` in `.sh` to the tokenizer file (usually named as `tokenizer.model`)
 > + The `data_config` argument in the `.sh` file points to a `.yaml` file defining the fine-tuning datasets. You need to first download the data and modify the paths in `.yaml` to the correct location
+> + LLaMA models of different model sizes use different *model parallel sizes*. For example, LLaMA 7B's default model parallel size is 1, and LLaMA 13B's default model parallel size is 2. Thus, if you want to modify a script from training 7B models to training 13B models, the model_parallel parameter should be modified accordingly.
+>   + If you just train your model from scratch (i.e. do not load any pre-trained checkpoints), you may change the model parallel size arbitrarily based on your needs. However, if you do load some pre-trained checkpoints, it is important to guarantee that the model parallel size is set to be consistent with the checkpoints. 
 
 > ## How to Apply Delta Weights
 >
-> We release checkpoints as delta weights to comply with the LLaMA2 model license. You can add our delta to the original LLaMA2 weights to obtain the finetuned weights. Instructions:
->
+> **We release checkpoints as delta weights to comply with the LLaMA2 model license**. To use our provided weights for inference or further tuning, please first add our delta to the original LLaMA2 weights to obtain the full weights:
+> 
+> Instructions:
 > 1. After agreeing to the License, Acceptable Use Policy, and Meta's privacy policy, proceed to download the LLaMA2 weights from [here](https://ai.meta.com/resources/models-and-libraries/llama-downloads/).
 > 2. Utilize the following scripts to obtain finetuned weights by applying our delta. Make sure to download the delta weights from the [model release page](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory).
 >    ```bash
