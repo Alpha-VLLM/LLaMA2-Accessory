@@ -16,17 +16,37 @@ Before running the inference code, users must ensure that they have correctly in
 > **We release checkpoints as delta weights to comply with the LLaMA2 model license**. To use our provided weights for inference or further tuning, please first add our delta to the original LLaMA2 weights to obtain the full weights:
 >
 > Instructions:
+>
 > 1. After agreeing to the License, Acceptable Use Policy, and Meta's privacy policy, proceed to download the LLaMA2 weights from [here](https://ai.meta.com/resources/models-and-libraries/llama-downloads/).
 > 2. Utilize the following scripts to obtain finetuned weights by applying our delta. Make sure to download the delta weights from the [model release page](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory).
 >    ```bash
+>    # For Download
+>    python tools/download.py  --model_name check/in/release/page --input_type sg/or/mm --output_path path/to/save --model_size 7B/13B/70B --down_config
 >    # For Merging
 >    python tools/weight_operate.py  --pretrained_path /path/to/llama2/ --delta_path /path/to/delta --output_path /path/to/finetuned
 >    # For Separation
 >    python tools/weight_operate.py  --pretrained_path /path/to/llama2/ --delta_path /path/to/finetuned --output_path /path/to/delta --operate_type extract
 >    ```
+>    **Model Name (Continuously Updated!)**
 >    
-
-
+>    ```sh
+>    └─finetune
+>        ├─mm
+>        │  ├─alpacaLlava_llamaQformerv2Peft_13b
+>        │  ├─alpacaLlava_llamaQformerv2_13b
+>        │  └─caption_llamaQformerv2_13b
+>        └─sg
+>            ├─alpaca
+>            ├─alpaca_llamaPeft_normBias
+>            ├─dialog_lima
+>            ├─dialog_sharegpt
+>            ├─dialog_sharegpt_70b
+>            ├─dialog_wizardLM
+>            └─gorilla
+>    ```
+>    
+>    
+>
 
 ## Inference Scenarios
 

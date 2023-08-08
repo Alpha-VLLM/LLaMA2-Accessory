@@ -308,7 +308,7 @@ class Transformer(nn.Module):
         self.cache_image_words = 0 # for inference
         if with_visual:
             print("build llama model with qformerv2")
-            self.qformer = Blip2Model.from_pretrained("./blip2_opt2.7b/", torch_dtype=torch.float16, device_map="cuda")
+            self.qformer = Blip2Model.from_pretrained("Salesforce/blip2-opt-2.7b", torch_dtype=torch.float16, device_map="cuda")
 
             self.qformer.language_projection = None
             self.qformer.language_model = None
