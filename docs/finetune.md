@@ -1,12 +1,13 @@
-- [Prerequisites](#prerequisites)
-- [Full-Parameter Fine-tuning](#full-parameter-fine-tuning)
-  * [Single-turn instruction-tuning of LLaMA2-7B on Alpaca](#single-turn-instruction-tuning-of-llama2-7b-on-alpaca)
-  * [Multi-turn instruction-tuning of LLaMA2-7B on ShareGPT](#multi-turn-instruction-tuning-of-llama2-7b-on-sharegpt)
-  * [Multi-turn instruction-tuning of LLaMA2-7B on LIMA](#multi-turn-instruction-tuning-of-llama2-7b-on-lima)
-  * [Single-turn instruction-tuning of LLaMA2-7B on Gorilla](#single-turn-instruction-tuning-of-llama2-7b-on-gorilla)
-  * [Two-Stage Training of Multi-Model LLaMA 2](#two-stage-training-of-multi-model-llama-2)
-      - [Stage One](#stage-one)
-      - [Stage Two](#stage-two)
+  * [Prerequisites](#prerequisites)
+  * [Full-Parameter Fine-tuning](#full-parameter-fine-tuning)
+    + [Single-turn instruction-tuning of LLaMA2-7B on Alpaca](#single-turn-instruction-tuning-of-llama2-7b-on-alpaca)
+    + [Single-turn instruction-tuning of LLaMA2-7B on Gorilla](#single-turn-instruction-tuning-of-llama2-7b-on-gorilla)
+    + [Multi-turn instruction-tuning of LLaMA2-7B on ShareGPT](#multi-turn-instruction-tuning-of-llama2-7b-on-sharegpt)
+    + [Multi-turn instruction-tuning of LLaMA2-7B on LIMA](#multi-turn-instruction-tuning-of-llama2-7b-on-lima)
+    + [Multi-turn instruction-tuning of LLaMA2-7B on WizardLM](#multi-turn-instruction-tuning-of-llama2-7b-on-wizardlm)
+    + [Two-Stage Training of Multi-Model LLaMA 2](#two-stage-training-of-multi-model-llama-2)
+        * [Stage One](#stage-one)
+        * [Stage Two](#stage-two)
 
 # Fine-tuning
 
