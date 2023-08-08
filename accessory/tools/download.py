@@ -38,7 +38,7 @@ if __name__ == '__main__':
     max_num = num_files_map[args.model_size]
 
     for num in range(max_num):
-        file_name = f"consolidated.{num:02d}-of-{max_num:02d}.model-diff.pth.pth"
+        file_name = f"consolidated.{num:02d}-of-{max_num:02d}.model-diff.pth"
         download_file(repo_id, subfolder, file_name, args.output_path)
 
     print(f"{args.model_size} model files downloaded successfully to {args.output_path}")
