@@ -18,7 +18,6 @@
   - 🌈 Multi-modal fine-tuning with image-text pairs ([LAION](https://laion.ai/blog/laion-5b/), [COYO](https://github.com/kakaobrain/coyo-dataset) and more), interleaved image-text data ([MMC4](https://github.com/allenai/mmc4) and [OBELISC](https://github.com/huggingface/OBELISC)) and visual instruction data ([LLaVA](https://github.com/haotian-liu/LLaVA), [Shrika](https://github.com/shikras/shikra), [Bard](https://bard.google.com/))
   - 🔧 LLM for API Control ([GPT4Tools](https://github.com/StevenGrove/GPT4Tools) and [Gorilla](https://github.com/ShishirPatil/gorilla)).
 * **⚡Efficient Optimization and Deployment**
-
   - 🚝 Parameter-efficient fine-tuning with [Zero-init Attenion](https://github.com/OpenGVLab/LLaMA-Adapter) and [Bias-norm Tuning](https://github.com/OpenGVLab/LLaMA-Adapter).
   - 💻 Fully Sharded Data Parallel ([FSDP](https://engineering.fb.com/2021/07/15/open-source/fsdp/)), [Flash Attention 2](https://github.com/Dao-AILab/flash-attention) and [QLoRA](https://github.com/artidoro/qlora).
 * **🏋️‍♀️Support More Visual Encoders and LLMs**
@@ -28,11 +27,15 @@
 
 ## Setup
 
-For environment installation, refer to [docs/install.md](./docs/install.md).
+:gear: For environment installation, please refer to [docs/install.md](./docs/install.md).
 
 ## Model Usage
 
-Instructions for model training, inference, and fine-tuning can be found in [docs/pretrain.md](./docs/pretrain.md), [docs/inference.md](./docs/inference.md), and [docs/finetune.md](./docs/finetune.md), respectively.
+:robot: Instructions for model training, inference, and fine-tuning are available in [docs/pretrain.md](./docs/pretrain.md), [docs/inference.md](./docs/inference.md), and [docs/finetune.md](./docs/finetune.md), respectively.
+
+## Frequently Asked Questions (FAQ)
+
+:question: Encountering issues or have further questions? Find answers to common inquiries [here](./docs/faq.md). We're here to assist you!
 
 ## Demos
 * Instruction-tuned LLaMA2: [alpaca](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/alpaca.html) & [gorilla](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/gorilla.html).
