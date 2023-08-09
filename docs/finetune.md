@@ -3,6 +3,7 @@
     + [Single-turn instruction-tuning of LLaMA2-7B on Alpaca](#single-turn-instruction-tuning-of-llama2-7b-on-alpaca)
     + [Single-turn instruction-tuning of LLaMA2-7B on Gorilla](#single-turn-instruction-tuning-of-llama2-7b-on-gorilla)
     + [Multi-turn instruction-tuning of LLaMA2-7B on ShareGPT](#multi-turn-instruction-tuning-of-llama2-7b-on-sharegpt)
+    + [Multi-turn instruction-tuning of LLaMA2-70B on ShareGPT](#multi-turn-instruction-tuning-of-llama2-70b-on-sharegpt)
     + [Multi-turn instruction-tuning of LLaMA2-7B on LIMA](#multi-turn-instruction-tuning-of-llama2-7b-on-lima)
     + [Multi-turn instruction-tuning of LLaMA2-7B on WizardLM](#multi-turn-instruction-tuning-of-llama2-7b-on-wizardlm)
     + [Two-Stage Training of Multi-Model LLaMA 2](#two-stage-training-of-multi-model-llama-2)
@@ -205,7 +206,47 @@ python demos/multi_turn.py \
 > [*More examples here*](./examples/finetune/sg/dialog_sharegpt.md)
 
 ---
+### Multi-turn instruction-tuning of LLaMA2-70B on ShareGPT
 
+**Script:**
+
++ The code for the exps will be released soon.
+
+**Data:**
+
++ Please collect and process the data on your own. [Here](../data_example/ShareGPT.json) is a toy example showing the proper format of the data file.
+
+**Model Release:**
+
++ [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/sg/dialog_sharegpt_70b)
+
+**Host Local Demo:**
+
+```bash
+python demos/multi_turn.py \
+--llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
+--pretrained_path /path/to/sharegpt_finetuned --n_gpus 4
+```
+
+**Example:**
+
+> A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions.
+>
+> **Human:** Describe a room with three switches, controlling three lamps in another room. You can only enter the controlled room once. How can you determine which switch controls each lamp?
+>
+> **Assistant:** To determine which switch controls each lamp, you can use a process of elimination. Here's one possible approach:
+>
+> 1. Enter the controlled room and take note of the positions of the lamps. Are they all on or off?
+> 2. If all lamps are off, turn on switch 1 and enter the controlled room again. If one of the lamps turns on, you know that switch 1 controls that lamp.
+> 3. If the lamp does not turn on, turn off switch 1 and repeat the process with switch 2. If a lamp turns on, you know that switch 2 controls that lamp.
+>4. If no lamp turns on with switch 2, turn off switch 2 and repeat the process with switch 3. If a lamp turns on, you know that switch 3 controls that lamp.
+> 5. If no lamp turns on with any of the switches, it's possible that there is a problem with the wiring or the lamps themselves.
+>
+> By following this process, you should be able to determine which switch controls each lamp.
+>
+> [*More examples here*](./examples/finetune/sg/dialog_sharegpt_70b.md)
+
+---
 ### Multi-turn instruction-tuning of LLaMA2-7B on LIMA
 
 **Script:**

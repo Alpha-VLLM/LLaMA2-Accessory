@@ -1,6 +1,6 @@
 ## Demos of Chatbot LLaMA2 fine-tuned using the wizardLM dataset.
 
-1. **coding**
+### 1.**coding**
 
 ```python
 Write a quicksort code. You need to use C++ as the programming language and generate a function called quicksort.
@@ -130,7 +130,7 @@ Analyze a text using the NLTK library, calculate word frequencies, and display t
 >
 > In this example, the most common words are "the" and "quick" which appear 3 times each. The least common word is "over" which appears only once.
 
-2.**Text Generation**
+### 2.**Text Generation**
 
 ```python
 Please write an email about a summer trip.
@@ -158,7 +158,7 @@ Please write an email about a summer trip.
 >
 > [Your name]
 
-3.**Question Answering**
+### 3.**Question Answering**
 
 ```python
 Explain the basic principles of relativity.
@@ -176,7 +176,7 @@ Explain the basic principles of relativity.
 >
 > These principles form the foundation of both special relativity and general relativity. Special relativity deals with objects moving at constant velocities, while general relativity extends these principles to include the effects of gravity and accelerating objects. The theory of relativity has had a profound impact on the fields of physics and astronomy, and has led to many important discoveries and breakthroughs in our understanding of the universe.
 
-4.**Summary Generation**
+### 4.**Summary Generation**
 
 ```python
 Summarize the following passage into 150 words.
@@ -191,7 +191,7 @@ It would be fatal for the nation to overlook the urgency of the moment. This swe
 
 > The passage is a speech given by Martin Luther King Jr. during the March on Washington for Jobs and Freedom in 1963. King discusses the history of the African American community and how they have been denied their rights and freedoms. He explains that although the Emancipation Proclamation was a significant step towards freedom, African Americans are still not free a hundred years later. King highlights the ongoing issues of segregation and discrimination that African Americans face in American society. He emphasizes the urgency of the moment and the need for immediate action to address the issues of justice and equality. King's speech is a powerful call to action and a reminder of the importance of fighting for what is right.
 
-5.**Dialogue Simulation**
+### 5.**Dialogue Simulation**
 
 ```python
 Simulate a conversation about the importance of sustainable energy between two characters.
@@ -217,7 +217,7 @@ Simulate a conversation about the importance of sustainable energy between two c
 >
 > Character 2: Absolutely. It's a small step, but we can all do our part to contribute to a more sustainable future.
 
-6.**Poetry Creation**
+### 6.**Poetry Creation**
 
 ```python
 Create an eight-line poem inspired by the scenery of autumn.
@@ -228,7 +228,7 @@ Create an eight-line poem inspired by the scenery of autumn.
 > Nature's artistry spread,
 > Autumn's beauty all around.
 
-7.**Future Speculation**
+### 7.**Future Speculation**
 
 ```python
 Describe your vision of the world 100 years from now, including changes in technology, society, and the environment.
@@ -246,7 +246,7 @@ Describe your vision of the world 100 years from now, including changes in techn
 >
 > Overall, the world will be more interconnected, more technologically advanced, and more socially conscious than it is today. However, there will still be many challenges to overcome, and it will be up to future generations to continue building on the progress we make today.
 
-8.**Science Fiction Story Start**
+### 8.**Science Fiction Story Start**
 
 ```python
 On a distant planet far from Earth, a young explorer discovers an ancient and mysterious structure. He decides to approach and investigate.
@@ -264,7 +264,7 @@ On a distant planet far from Earth, a young explorer discovers an ancient and my
 >
 > As he makes his way back to his ship, he can't wait to return to Earth and share his discovery with the rest of the scientific community. He knows that this could be a breakthrough that will change the way we understand the universe.
 
-9.**Twist Ending**
+### 9.**Twist Ending**
 
 ```python
 Tell a story of a hero who ultimately fails but brings about positive change through that failure.
@@ -280,7 +280,7 @@ Tell a story of a hero who ultimately fails but brings about positive change thr
 >
 > In the end, Jack was remembered not for his defeat, but for his determination and bravery. He may not have been able to save the day in the traditional sense, but he had still done something heroic. He had inspired others to take action and make a difference, and that was something that could never be taken away from him.
 
-10.**Puzzle Solving**
+### 10.**Puzzle Solving**
 
 ```python
 Describe a room with three switches, controlling three lamps in another room. You can only enter the controlled room once. How can you determine which switch controls each lamp?
@@ -288,7 +288,7 @@ Describe a room with three switches, controlling three lamps in another room. Yo
 
 > One possible way to determine which switch controls each lamp is to use a technique called "parallel testing". This involves turning on two switches at the same time and then entering the controlled room immediately to see which lamp is on. If the two lamps that were turned on are not both on, then one of the switches must control the other lamp. This process can be repeated with one switch at a time until all switches are tested. The final result is that each switch is associated with one and only one lamp.
 
-11.**Algorithm Explanation**
+### 11.**Algorithm Explanation**
 
 ```python
 Explain how the backpropagation algorithm works in the context of deep learning.
@@ -304,7 +304,7 @@ Explain how the backpropagation algorithm works in the context of deep learning.
 >
 > Once the network is trained on the training data, it can be used to make predictions on new, unseen data. The backpropagation algorithm can also be used to fine-tune the network by adjusting the weights and biases further based on new data or by using techniques such as transfer learning.
 
-12.**Environmental Impact**
+### 12.**Environmental Impact**
 
 ```python
 Discuss the projected effects of climate change on global food production and propose mitigation strategies.
