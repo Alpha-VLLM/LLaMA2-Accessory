@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 from huggingface_hub import hf_hub_download
 
 def download_file(repo_id, subfolder, filename, local_dir):
@@ -33,6 +34,8 @@ if __name__ == '__main__':
         download_file(repo_id, 'config', 'tokenizer.model', args.output_path)
         param_file = f"{args.model_size}_params.json"
         download_file(repo_id, 'config', param_file, args.output_path)
+        if args.model_name == None:
+            sys.exit("Model name not specified, only configuration files were downloaded.")
 
     num_files_map = {'7B': 1, '13B': 2, '70B': 8}
     max_num = num_files_map[args.model_size]
@@ -41,4 +44,4 @@ if __name__ == '__main__':
         file_name = f"consolidated.{num:02d}-of-{max_num:02d}.model-diff.pth"
         download_file(repo_id, subfolder, file_name, args.output_path)
 
-    print(f"{args.model_size} model files downloaded successfully to {args.output_path}")
+    print(f"{args.model_name} model files downloaded successfully to {args.output_path}")
