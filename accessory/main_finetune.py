@@ -39,6 +39,8 @@ from torch.utils.data import Dataset
 from data.alpaca import FinetuneDataset, transform_train, FinetuneDistSampler
 from data.conversation.dataset import FinetuneDialogDataset
 
+from util.quant import quantize
+from util.tensor_parallel import load_tensor_parallel_model
 
 
 def get_args_parser():
@@ -121,6 +123,8 @@ def get_args_parser():
     parser.add_argument('--precision', type=str, choices=['fp16', 'bf16', 'tf32'], default='bf16')
     parser.add_argument('--checkpointing', action="store_true", default=False,
                         help="enable gradient checkopointing")
+    parser.add_argument('--quant', action="store_true", default=False,
+                        help="enable quantization")
 
     return parser
 
@@ -163,7 +167,21 @@ def main(args):
     promote_trainable_params_to_fp32(model)
     misc.print_trainable_params(model)
     print(f"load pretrained from {args.pretrained_path}")
-    misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
+    if args.quant:
+        print("Quantizing model to 4bit!")
+        load_tensor_parallel_model(model, args.pretrained_path, args.pretrained_type)
+        from transformers.utils.quantization_config import BitsAndBytesConfig
+        quantization_config = BitsAndBytesConfig.from_dict(
+            config_dict={
+                "load_in_8bit": False, 
+                "load_in_4bit": True, 
+                "bnb_4bit_quant_type": "nf4",
+            },
+            return_unused_kwargs=False,
+        )
+        quantize(model, quantization_config)
+    else:
+        misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
     print("Unwrapped Model = %s" % str(model))
 
     # resume stage1
