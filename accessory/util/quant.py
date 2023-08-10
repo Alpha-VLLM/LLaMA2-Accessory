@@ -91,7 +91,7 @@ def quantize(
         quant_conf : BitsAndBytesConfig,
 ):
     module_list = [_ for _ in model.named_modules()]
-    for name, module in tqdm(module_list):
+    for name, module in tqdm(module_list, desc="Qunatization Process"):
         if isinstance(module, (LoraColumnParallelLinear, LoraRowParallelLinear,
                                ColumnParallelLinear, RowParallelLinear)):
             # 1. Initialize quantization operator

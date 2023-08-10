@@ -80,6 +80,43 @@ def model_worker(
     print(f"Model = {str(model)}")
 
     barrier.wait()
+
+    if args.raw_interact:
+        content1 = "Assuming you are a native English speaker, please rewrite the content I provided to make it more concise and professional. Do not change the willingness of the sentence. Don't reply with anything other than the revised sentence.\n" + \
+                    "My content is:\n" + \
+                    "I want study math everyday because I like it. It makes me feel very good. I do not like English because it is hard. I can not remember the words"
+        conv = conv_templates["v1"].copy()
+        conv.append_message(conv.roles[0], content1)
+        conv.append_message(conv.roles[1], "")
+        max_gen_len, temperature, top_p = (1024, 0.1, 0.75)
+        for stream_response in model.stream_generate(
+                conv.get_prompt(), None,
+                max_gen_len, temperature, top_p
+            ):
+            conv_sep = conv.sep if conv.sep_style == SeparatorStyle.SINGLE else conv.sep2
+            end_pos = stream_response["text"].find(conv_sep)
+            if end_pos != -1:
+                stream_response["text"] = stream_response['text'][:end_pos].rstrip() + "\n"
+                stream_response["end_of_content"] = True
+
+            # keep a few characters if not end_of_content to avoid sending part of conv_sep
+            # before all of it is generated.
+            if not stream_response["end_of_content"]:
+                if len(stream_response["text"]) < len(conv_sep):
+                    continue
+                stream_response["text"] = stream_response["text"][:-len(conv_sep)]
+
+            if response_queue is not None:
+                print(stream_response["text"])
+                response_queue.put(stream_response)
+
+            if stream_response["end_of_content"]:
+                print(conv.get_prompt())
+                print(stream_response["text"])
+                break
+        import sys
+        sys.exit(0)
+
     while True:
         chatbot, max_gen_len, temperature, top_p = request_queue.get()
         conv = conv_templates["v1"].copy()
@@ -209,6 +246,7 @@ if __name__ == "__main__":
                         help="The dtype used for model weights and inference.")
     parser.add_argument('--quant', action="store_true", default=False,
                         help="enable quantization")
+    parser.add_argument('--raw_interact', action='store_true', help="input/output in terminal")
     args = parser.parse_args()
 
     # check and setup gpu_ids to use
