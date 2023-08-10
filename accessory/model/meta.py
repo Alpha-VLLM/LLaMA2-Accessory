@@ -151,6 +151,9 @@ class MetaModel(nn.Module):
         params = self.llma.params
 
         prompt_tokens = self.tokenizer.encode(prompt, bos=True, eos=False)
+        # truncate from the left. leave some space for generation.
+        max_prompt_size = params.max_seq_len - max_gen_len
+        prompt_tokens = prompt_tokens[-max_prompt_size:]
 
         prompt_size = len(prompt_tokens)
 
