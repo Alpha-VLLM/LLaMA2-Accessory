@@ -55,7 +55,7 @@ def _tensor_list_max_diff(tensors: List[torch.Tensor]) -> float:
 
 
 def _load_checkpoint_and_merge_ranks(
-    ckpt_files: List[str], weight_parallel_dim: Dict[str, int], verbose: bool = False,
+    ckpt_files: List[str], weight_parallel_dim: Dict[str, int], verbose: bool, format: str,
 ) -> OrderedDict[str, torch.Tensor]:
     mp_rank = fs_init.get_model_parallel_rank()
     mp_world_size = fs_init.get_model_parallel_world_size()
@@ -69,8 +69,10 @@ def _load_checkpoint_and_merge_ranks(
     merged_ckpt = OrderedDict()
     for shard_id in range(local_shard_st, local_shard_ed):
         shard = torch.load(ckpt_files[shard_id], map_location="cpu")
-        if "model" in shard and isinstance(shard["model"], dict):
+        if format == "consolidated" and "model" in shard and isinstance(shard["model"], dict):
             shard = shard["model"]
+        elif format == "meta_ori":
+            shard = dict(("llma." + key, value) for key, value in shard.items())
         ckpt_shards.append(shard)
 
     for key in list(ckpt_shards[0].keys()):
@@ -96,13 +98,13 @@ def _load_checkpoint_and_merge_ranks(
 
 
 def _load_checkpoint_and_split_rank(
-    ckpt_files: List[str], weight_parallel_dim: Dict[str, int], verbose: bool = False,
+    ckpt_files: List[str], weight_parallel_dim: Dict[str, int], verbose: bool, format: str,
 ) -> OrderedDict[str, torch.Tensor]:
     raise NotImplementedError()
 
 
 def _load_checkpoint_and_redistribute_general(
-    ckpt_files: List[str], weight_parallel_dim: Dict[str, int], verbose: bool = False,
+    ckpt_files: List[str], weight_parallel_dim: Dict[str, int], verbose: bool, format: str,
 ) -> OrderedDict[str, torch.Tensor]:
     raise NotImplementedError()
 
@@ -173,22 +175,17 @@ def load_tensor_parallel_model(
         # time as much as possible because we strive for better user experience!
         if ckpt_mp_world_size % mp_world_size == 0:
             local_state_dict = _load_checkpoint_and_merge_ranks(
-                ckpt_files, weight_parallel_dim, verbose
+                ckpt_files, weight_parallel_dim, verbose, format
             )
         elif mp_world_size % ckpt_mp_world_size == 0:
             local_state_dict = _load_checkpoint_and_split_rank(
-                ckpt_files, weight_parallel_dim, verbose
+                ckpt_files, weight_parallel_dim, verbose, format
             )
         else:
             local_state_dict = _load_checkpoint_and_redistribute_general(
-                ckpt_files, weight_parallel_dim, verbose
+                ckpt_files, weight_parallel_dim, verbose, format
             )
-        
-        if format == "meta_ori":
-            local_state_dict = OrderedDict(
-                ("llma." + key, value) for key, value in local_state_dict.items()
-            )
-        
+
         return model.load_state_dict(local_state_dict, strict=False)
 
     else:
