@@ -61,6 +61,8 @@ python demos/single_turn.py \
 --llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
 --pretrained_path /path/to/finetuned
 ```
+Use `--quant` flag to enable 4-bit quantization which performs inference on limited GPU resources.
+Empirically, it allows the 7B model to operate on GPUs with 6GB+ VRAM.
 
 ### Multi-turn Dialogue
 
@@ -71,6 +73,8 @@ python demos/multi_turn.py \
 --llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
 --pretrained_path /path/to/finetuned
 ```
+Use `--quant` flag to enable 4-bit quantization which performs inference on limited GPU resources.
+Empirically, it allows the 7B model to operate on GPUs with 6GB+ VRAM.
 
 ### Multi-modal Dialogue
 
@@ -81,5 +85,7 @@ torchrun --nproc-per-node=2  demos/single_turn_mm.py \
 --llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
 --pretrained_path /path/to/multimodel_llama
 ```
+Use `--quant` flag to enable 4-bit quantization which performs inference on limited GPU resources.
+Empirically, it allows the 7B model to operate on GPUs with 6GB+ VRAM.
 
 Please replace `/path/to/params.json`, `/path/to/tokenizer.model` and `/path/to/finetuned` or `/path/to/multimodel_llama` with your actual file paths.
