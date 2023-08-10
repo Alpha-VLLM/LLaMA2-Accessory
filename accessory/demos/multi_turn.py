@@ -141,8 +141,9 @@ def gradio_worker(
             clear_button = gr.ClearButton([chatbot, msg])
         with gr.Row():
             max_gen_len = gr.Slider(
-                minimum=1, maximum=1024, value=1024, interactive=True,
-                label="Single-turn max length",
+                minimum=1, maximum=args.model_max_seq_len // 2,
+                value=args.model_max_seq_len // 2, interactive=True,
+                label="Single-turn max response length",
             )
             gen_t = gr.Slider(
                 minimum=0, maximum=1, value=0.1, interactive=True,
