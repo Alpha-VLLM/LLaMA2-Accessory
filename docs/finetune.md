@@ -466,4 +466,15 @@ torchrun --nproc-per-node=2  demos/single_turn_mm.py \
 
 ---
 
+# Quantization-Assisted PEFT (Parameter-Efficient Fine-Tuning)
+For users with constrained computing resources, we provide an alternative choice through the quantization of the base model, while retaining only carefully selected trainable parameters.
+## TL;DR
+```bash
+# Enable quantization with flag "--quant"
+torchrun <--some_flags> main_finetune.py <--some_flags> --quant
+```
+## Comparison
+todo: a table shows VRAM
+
+
 *More use cases coming soon...*
