@@ -160,27 +160,45 @@ def main(args):
         "bf16": torch.bfloat16,
         "tf32": torch.float32,
     }[args.precision]
-    with default_tensor_type(dtype=mixed_precision_dtype, device="cpu"):
-        model = MetaModel(args.llama_type, args.llama_config,
-                          args.tokenizer_path, with_visual=not args.no_visual,
-                          max_seq_len=args.max_words)
-    promote_trainable_params_to_fp32(model)
-    misc.print_trainable_params(model)
-    print(f"load pretrained from {args.pretrained_path}")
+    print("Start initialization.")
     if args.quant:
-        print("Quantizing model to 4bit!")
-        load_tensor_parallel_model(model, args.pretrained_path, args.pretrained_type)
         from transformers.utils.quantization_config import BitsAndBytesConfig
-        quantization_config = BitsAndBytesConfig.from_dict(
-            config_dict={
-                "load_in_8bit": False, 
-                "load_in_4bit": True, 
-                "bnb_4bit_quant_type": "nf4",
-            },
-            return_unused_kwargs=False,
-        )
-        quantize(model, quantization_config)
+        for i in range(misc.get_world_size()):
+            if i == misc.get_rank():
+                print(f"## Processing on RANK {i}.", force=True)
+                with default_tensor_type(dtype=mixed_precision_dtype, device="cpu"):
+                    model = MetaModel(args.llama_type, args.llama_config,
+                                    args.tokenizer_path, with_visual=not args.no_visual,
+                                    max_seq_len=args.max_words)
+                promote_trainable_params_to_fp32(model)
+
+                # load pre-trained weights
+                print(f"## Load pretrained from {args.pretrained_path}", force=True)
+                load_tensor_parallel_model(model, args.pretrained_path, args.pretrained_type)
+
+                print("## Quantizing model to 4bit!", force=True)
+                quantization_config = BitsAndBytesConfig.from_dict(
+                    config_dict={
+                        "load_in_8bit": False, 
+                        "load_in_4bit": True, 
+                        "bnb_4bit_quant_type": "nf4",
+                    },
+                    return_unused_kwargs=False,
+                )
+                quantize(model, quantization_config)
+                
+                # will (1) release CPU memory usage, and (2) occupy GPU memory.
+                model.cuda() 
+            torch.distributed.barrier()
     else:
+        with default_tensor_type(dtype=mixed_precision_dtype, device="cpu"):
+            model = MetaModel(args.llama_type, args.llama_config,
+                            args.tokenizer_path, with_visual=not args.no_visual,
+                            max_seq_len=args.max_words)
+        print("Finish initialization.")
+        promote_trainable_params_to_fp32(model)
+        misc.print_trainable_params(model)
+        print(f"load pretrained from {args.pretrained_path}")
         misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
     print("Unwrapped Model = %s" % str(model))
 
