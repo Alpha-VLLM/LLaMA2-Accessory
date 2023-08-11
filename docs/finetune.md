@@ -475,11 +475,13 @@ For users with constrained computing resources, we provide an alternative choice
 torchrun <--some_flags> main_finetune.py <--some_flags> --quant
 ```
 ## Comparison
+LLaMA2-Accessory is available to load in 4 bit (NF4) for both inference and fine-tuning. It highly reduces the requirement of VRAM. We conduct experiments on A100-80GB and give results as follows.
 
-| Model Size | Task   | Precision | Inference Mem. | Tuning Mem. | MMLU |
-|:----------:|:------:|:---------:|:--------------:|:-----------:|:----:|
-| 70B        | Dialog | BF16      | 150 GB         |             |      |
-| 70B        | Dialog | NF4       | 36 GB          | 46 GB       |      |
+| Model Size | Task   | Precision | Batch Size | Inference | Training     | MMLU        |
+|:----------:|:------:|:---------:|:----------:|:---------:|:------------:|:-----------:|
+| 70B        | Dialog | BF16      | 1          | 150 GB    |              | coming soon |
+| 70B        | Dialog | NF4       | 1          | 36 GB     | 46 GB (PEFT) | coming soon |
+
 
 
 *More use cases coming soon...*
