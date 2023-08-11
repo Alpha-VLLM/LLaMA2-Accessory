@@ -15,6 +15,8 @@ from util import misc
 from fairscale.nn.model_parallel import initialize as fs_init
 
 from data.alpaca import transform_train, format_prompt
+from util.tensor_parallel import load_tensor_parallel_model
+from util.quant import quantize
 
 
 def get_args_parser():
@@ -42,6 +44,9 @@ def get_args_parser():
     parser.add_argument('--dist_on_itp', action='store_true')
     parser.add_argument('--dist_url', default='env://',
                         help='url used to set up distributed training')
+    parser.add_argument('--quant', action="store_true", default=False,
+                        help="enable quantization")
+    parser.add_argument('--raw_interact', action='store_true', help="input/output in terminal")
     return parser
 
 args = get_args_parser().parse_args()
@@ -51,8 +56,24 @@ misc.init_distributed_mode(args)
 fs_init.initialize_model_parallel(args.model_parallel_size)
 model = MetaModel(args.llama_type, args.llama_config, args.tokenizer_path, with_visual=True)
 print(f"load pretrained from {args.pretrained_path}")
-misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
-print("Model = %s" % str(model))
+
+if args.quant:
+    load_tensor_parallel_model(model, args.pretrained_path, args.pretrained_type)
+    print("Model = %s" % str(model))
+    print("Quantizing model to 4bit!")
+    from transformers.utils.quantization_config import BitsAndBytesConfig
+    quantization_config = BitsAndBytesConfig.from_dict(
+        config_dict={
+            "load_in_8bit": False, 
+            "load_in_4bit": True, 
+            "bnb_4bit_quant_type": "nf4",
+        },
+        return_unused_kwargs=False,
+    )
+    quantize(model, quantization_config)
+else:
+    misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
+    print("Model = %s" % str(model))
 model.bfloat16().cuda()
 
 
@@ -83,6 +104,16 @@ def generate(
     text_output = results[0].strip()
     print(text_output)
     return text_output
+
+if args.quant and args.raw_interact:
+    while 1:
+        try:
+            img_path = input("Image path => ")
+            prompt = input("Prompt => ")
+            generate(img_path, prompt, None, 128, 0.1, 0.75)
+        except Exception as e:
+            print(e)
+            continue
 
 def create_demo():
     with gr.Blocks() as demo:
