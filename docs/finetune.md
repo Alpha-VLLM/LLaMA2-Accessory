@@ -9,6 +9,7 @@
     + [Two-Stage Training of Multi-Model LLaMA 2](#two-stage-training-of-multi-model-llama-2)
         * [Stage One](#stage-one)
         * [Stage Two](#stage-two)
+  * [Quantization-Assisted Parameter-Efficient Fine-Tuning](#quantization-assisted-parameter-efficient-fine-tuning)
 
 # Fine-tuning
 
@@ -466,7 +467,7 @@ torchrun --nproc-per-node=2  demos/single_turn_mm.py \
 
 ---
 
-# Quantization-Assisted PEFT (Parameter-Efficient Fine-Tuning)
+# Quantization-Assisted Parameter-Efficient Fine-Tuning
 For users with constrained computing resources, we provide an alternative choice through the quantization of the base model, while retaining only carefully selected trainable parameters.
 ## TL;DR
 ```bash
@@ -474,7 +475,11 @@ For users with constrained computing resources, we provide an alternative choice
 torchrun <--some_flags> main_finetune.py <--some_flags> --quant
 ```
 ## Comparison
-todo: a table shows VRAM
+
+| Model Size | Task   | Precision | Inference Mem. | Tuning Mem. | MMLU |
+|:----------:|:------:|:---------:|:--------------:|:-----------:|:----:|
+| 70B        | Dialog | BF16      | 150 GB         |             |      |
+| 70B        | Dialog | NF4       | 36 GB          | 46 GB       |      |
 
 
 *More use cases coming soon...*
