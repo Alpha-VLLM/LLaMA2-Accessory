@@ -43,7 +43,6 @@ def get_args_parser():
     parser.add_argument('--dist_url', default='env://',
                         help='url used to set up distributed training')
     parser.add_argument('--quant', action='store_true', help="enable quantization")
-    parser.add_argument('--raw_interact', action='store_true', help="input/output in terminal")
     return parser
 
 args = get_args_parser().parse_args()
@@ -131,11 +130,6 @@ def worker_func():
         _prompt, image, max_gen_len, gen_t, top_p = input_data
         with torch.cuda.amp.autocast(dtype=torch.bfloat16):
             _ = model.generate([_prompt], image, max_gen_len=max_gen_len, temperature=gen_t, top_p=top_p, )
-
-if args.raw_interact:
-    while 1:
-        prompt = input("INPUT=> ")
-        generate(prompt, None, 128, 0.1, 0.75)
 
 if dist.get_rank() == 0:
     description = f"""
