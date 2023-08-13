@@ -46,7 +46,6 @@ def get_args_parser():
                         help='url used to set up distributed training')
     parser.add_argument('--quant', action="store_true", default=False,
                         help="enable quantization")
-    parser.add_argument('--raw_interact', action='store_true', help="input/output in terminal")
     return parser
 
 args = get_args_parser().parse_args()
@@ -104,16 +103,6 @@ def generate(
     text_output = results[0].strip()
     print(text_output)
     return text_output
-
-if args.quant and args.raw_interact:
-    while 1:
-        try:
-            img_path = input("Image path => ")
-            prompt = input("Prompt => ")
-            generate(img_path, prompt, None, 128, 0.1, 0.75)
-        except Exception as e:
-            print(e)
-            continue
 
 def create_demo():
     with gr.Blocks() as demo:
