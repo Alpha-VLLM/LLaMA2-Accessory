@@ -12,6 +12,7 @@ try:
     import transformers
 except ImportError:
     raise NotImplementedError("transformers must be installed before converting the weights.")
+print("transformers version:", transformers.__version__)
 hf_major_ver, hf_minor_ver = [int(value) for value in transformers.__version__.split(".")[:2]]
 if (hf_major_ver, hf_minor_ver) < (4, 31):
     raise NotImplementedError("Requires transformers >= 4.31.0 to convert the weights.")
@@ -138,6 +139,12 @@ def convert_merged_ckpt_to_hf(
     while f"layers.{num_layers}.attention_norm.weight" in merged_state_dict:
         num_layers += 1
     hf_ckpts = []
+    if "rope.freqs" in merged_state_dict:
+        print("Using inv_freq from the checkpoint.")
+        inv_freq = merged_state_dict.pop("rope.freqs")
+    else:
+        print("Using default inv_freq.")
+        inv_freq = calculate_inv_freq(base=10000, head_dim=params["dim"] // params["n_heads"])
     for i in range(num_layers):
         hf_ckpt_shard = {}
         for src_key, dst_key in [
@@ -155,9 +162,7 @@ def convert_merged_ckpt_to_hf(
             src_key = f"layers.{i}." + src_key
             hf_ckpt_shard[dst_key] = merged_state_dict[src_key]
             del merged_state_dict[src_key]
-        hf_ckpt_shard[f"model.layers.{i}.self_attn.rotary_emb.inv_freq"] = calculate_inv_freq(
-            base=10000, head_dim=params["dim"] // params["n_heads"]
-        )
+        hf_ckpt_shard[f"model.layers.{i}.self_attn.rotary_emb.inv_freq"] = inv_freq
         hf_ckpts.append(hf_ckpt_shard)
     
     hf_ckpts.append({})
@@ -291,6 +296,7 @@ def merge_tensor_parallel_weights(ckpts: List[Dict[str, torch.Tensor]]) -> Dict[
         (".feed_forward.w3.weight", 0),
         ("output.weight", 0),
         ("norm.weight", -1),
+        ("rope.freqs", -1),
     )
     merged_ckpt = {}
     for key in sorted(functools.reduce(lambda x, y: x | y, [ckpt.keys() for ckpt in ckpts])):
