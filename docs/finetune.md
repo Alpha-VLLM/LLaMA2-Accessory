@@ -439,7 +439,7 @@ In stage two, we further tune the model on multi-modal instruction-following dat
 ```bash
 torchrun --nproc-per-node=2  demos/single_turn_mm.py \
 --llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
---pretrained_path /path/to/multimodel_llama
+--pretrained_path /path/to/multimodel_llama --model_parallel_size 2
 ```
 **Example:**
 
