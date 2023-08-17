@@ -397,16 +397,42 @@ python demos/multi_turn.py \
 
 ### Two-Stage Training of Multi-Model LLaMA 2
 
+For multi-modal fine-tuning, we follow a two-stage paradigm
+
+#### Stage1
+
+In stage one, we train the model on large scale image-text pairs
+
 **Script:**
 
 + The code for the first stage will be released soon.
-+ [exps/finetune/mm/alpacaLlava_llamaQformerv2_13B.sh](../accessory/exps/finetune/mm/alpacaLlava_llamaQformerv2_13B.sh)
+
+**Data:**
+
++ COYO/LAION/CC3M/CC12M/SBU
 
 **Model Release:**
 
-[Stage One](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/caption_llamaQformerv2_13b/) - Fine-tuned on large scale image-text pairs (COYO/LAION/CC3M/CC12M/SBU); 
++ [Stage One Checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/caption_llamaQformerv2_13b/)
 
-[Stage Two](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/alpacaLlava_llamaQformerv2_13b/) - Further multi-modal instruction-following fine-tuning on GPT-4-LLM/LLaVa.
+#### Stage2
+
+In stage two, we further tune the model on multi-modal instruction-following data
+
+**Script:**
+
++ [exps/finetune/mm/alpacaLlava_llamaQformerv2_13B.sh](../accessory/exps/finetune/mm/alpacaLlava_llamaQformerv2_13B.sh)
+  + The `--pretrained_path` argument should point to checkpoints saved by stage one instead of original LLaMA
+
+**Data:**
+
++ https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM/blob/main/data/alpaca_gpt4_data.json
++ https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/blob/main/llava_instruct_150k.json
+  + Note that before training, we have converted LLaVA into the single-turn form with [this script](../accessory/tools/llava_to_single_turn.py)
+
+**Model Release:**
+
++ [Stage Two Checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/alpacaLlava_llamaQformerv2_13b/)
 
 **Host Local Demo:**
 
