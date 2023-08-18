@@ -173,6 +173,14 @@ Tuning scripts used here can be found in: [Zero-init Attenion](../accessory/exps
 
 + [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/dialog_sharegpt/consolidated.00-of-01.model-diff.pth)
 
+**Benchmark on OpenCompass:**
+| Model | Overall | Exam | Language | Knowledge | Reasoning | Understanding |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| LLaMA-2-7B | 41.68 | 36.43 | 50.7 | 48.46 | 41.05 | 37.47 |
+| LLaMA-2-7B-ShareGPT | 43.00 | 42.43 | 51.32 | 47.85 | 42.57 | 37.35 |
+
+> Please check [OpenCompass](https://github.com/InternLM/opencompass) for more details.
+
 **Host Local Demo:**
 
 ```bash
