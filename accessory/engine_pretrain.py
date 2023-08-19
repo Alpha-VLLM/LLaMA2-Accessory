@@ -62,7 +62,10 @@ def train_one_epoch(model: torch.nn.Module,
 
         if update_grad:
             assert grad_norm is not None
-            metric_logger.update(grad_norm=grad_norm)
+            if torch.any(torch.isinf(grad_norm)):
+                print("grad norm is inf")
+            else:
+                metric_logger.update(grad_norm=grad_norm)
 
             model.zero_grad(set_to_none=True)
 

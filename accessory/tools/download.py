@@ -20,6 +20,7 @@ def get_args_parser():
     parser.add_argument('--input_type', default='sg', choices=['sg', 'mm'])
     parser.add_argument('--model_size', default='7B', choices=['7B', '13B', '70B'])
     parser.add_argument('--down_config', action="store_true" ,help='download config')
+    parser.add_argument('--down_diff', action="store_true" ,help='download delta weights')
     return parser
 
 if __name__ == '__main__':
@@ -41,7 +42,10 @@ if __name__ == '__main__':
     max_num = num_files_map[args.model_size]
 
     for num in range(max_num):
-        file_name = f"consolidated.{num:02d}-of-{max_num:02d}.model-diff.pth"
+        if args.down_diff:
+            file_name = f"consolidated.{num:02d}-of-{max_num:02d}.model-diff.pth"
+        else:
+            file_name = f"consolidated.{num:02d}-of-{max_num:02d}.model.pth"
         download_file(repo_id, subfolder, file_name, args.output_path)
 
     print(f"{args.model_name} model files downloaded successfully to {args.output_path}")

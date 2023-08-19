@@ -348,17 +348,23 @@ def save_checkpoint(output_dir, args, model, optimizer, loss_scaler, dataset_sta
     ):
         # run saving in separate functions to save memory
         def _save_model():
-            model_trainable_params = model.get_trainable_params()
-            model_trainable_params = ['.'.join([_ for _ in key.split('.') if not _.startswith('_')])
-                                      for key in model_trainable_params.keys()]
             save_dtype = {
                 "fp16": torch.float16,
                 "bf16": torch.bfloat16,
                 "tf32": torch.float,
             }[args.precision]
-            consolidated_model_state_dict = {
-                "model": {key: val.to(save_dtype) for key, val in model.state_dict().items() if key in model_trainable_params},
-            }
+            if getattr(args, "only_save_trainable", False):
+                model_trainable_params = model.get_trainable_params()
+                model_trainable_params = ['.'.join([_ for _ in key.split('.') if not _.startswith('_')])
+                                          for key in model_trainable_params.keys()]
+                consolidated_model_state_dict = {
+                    "model": {key: val.to(save_dtype) for key, val in model.state_dict().items() if key in model_trainable_params},
+                }
+            else:
+                consolidated_model_state_dict = {
+                    "model": {key: val.to(save_dtype) for key, val in model.state_dict().items()},
+                }
+
             save_path = os.path.join(
                 save_dir,
                 f"consolidated.{mp_rank:02d}-of-{mp_world_size:02d}.model.pth",

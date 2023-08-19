@@ -14,7 +14,7 @@ from PIL import Image
 from util import misc
 from fairscale.nn.model_parallel import initialize as fs_init
 
-from data.alpaca import transform_train, format_prompt
+from data.alpaca import transform_val, format_prompt
 from util.tensor_parallel import load_tensor_parallel_model_list
 from util.quant import quantize
 
@@ -84,7 +84,7 @@ def generate(
 ):
     if img_path is not None:
         image = Image.open(img_path).convert('RGB')
-        image = transform_train(image).unsqueeze(0)
+        image = transform_val(image).unsqueeze(0)
     else:
         image = None
 

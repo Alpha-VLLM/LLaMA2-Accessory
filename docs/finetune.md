@@ -174,6 +174,14 @@ Tuning scripts used here can be found in: [Zero-init Attenion](../accessory/exps
 
 + [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/dialog_sharegpt/consolidated.00-of-01.model-diff.pth)
 
+**Benchmark on OpenCompass:**
+| Model | Overall | Exam | Language | Knowledge | Reasoning | Understanding |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| LLaMA-2-7B | 41.68 | 36.43 | 50.7 | 48.46 | 41.05 | 37.47 |
+| LLaMA-2-7B-ShareGPT | 43.00 | 42.43 | 51.32 | 47.85 | 42.57 | 37.35 |
+
+> Please check [OpenCompass](https://github.com/InternLM/opencompass) for more details.
+
 **Host Local Demo:**
 
 ```bash
@@ -398,23 +406,49 @@ python demos/multi_turn.py \
 
 ### Two-Stage Training of Multi-Model LLaMA 2
 
+For multi-modal fine-tuning, we follow a two-stage paradigm
+
+#### Stage1
+
+In stage one, we train the model on large scale image-text pairs
+
 **Script:**
 
 + The code for the first stage will be released soon.
-+ [exps/finetune/mm/alpacaLlava_llamaQformerv2_13B.sh](../accessory/exps/finetune/mm/alpacaLlava_llamaQformerv2_13B.sh)
+
+**Data:**
+
++ COYO/LAION/CC3M/CC12M/SBU
 
 **Model Release:**
 
-[Stage One](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/caption_llamaQformerv2_13b/) - Fine-tuned on large scale image-text pairs (COYO/LAION/CC3M/CC12M/SBU); 
++ [Stage One Checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/caption_llamaQformerv2_13b/)
 
-[Stage Two](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/alpacaLlava_llamaQformerv2_13b/) - Further multi-modal instruction-following fine-tuning on GPT-4-LLM/LLaVa.
+#### Stage2
+
+In stage two, we further tune the model on multi-modal instruction-following data
+
+**Script:**
+
++ [exps/finetune/mm/alpacaLlava_llamaQformerv2_13B.sh](../accessory/exps/finetune/mm/alpacaLlava_llamaQformerv2_13B.sh)
+  + The `--pretrained_path` argument should point to checkpoints saved by stage one instead of original LLaMA
+
+**Data:**
+
++ https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM/blob/main/data/alpaca_gpt4_data.json
++ https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/blob/main/llava_instruct_150k.json
+  + Note that before training, we have converted LLaVA into the single-turn form with [this script](../accessory/tools/llava_to_single_turn.py)
+
+**Model Release:**
+
++ [Stage Two Checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/alpacaLlava_llamaQformerv2_13b/)
 
 **Host Local Demo:**
 
 ```bash
 torchrun --nproc-per-node=2  demos/single_turn_mm.py \
 --llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
---pretrained_path /path/to/multimodel_llama
+--pretrained_path /path/to/multimodel_llama --model_parallel_size 2
 ```
 **Example:**
 
@@ -477,10 +511,10 @@ torchrun <--some_flags> main_finetune.py <--some_flags> --quant
 ## Comparison
 The LLaMA2-Accessory offers the option to load in 4-bit (NF4), optimizing both inference and training processes while significantly minimizing VRAM demands. To assess its impact, we performed experiments using the A100-80GB and obtained the following results.
 
-| Model Size | Task   | Precision | Batch Size | Inference | Training     |
-|:----------:|:------:|:---------:|:----------:|:---------:|:------------:|
-| 70B        | Dialog | BF16      | 1          | 145 GB    | 165 GB (PEFT)|
-| 70B        | Dialog | NF4       | 1          | 36 GB     | 46 GB (PEFT) |
+| Model | Max Length | Dataset | Precision | Batch Size | Inference |    Training   |
+|:-----:|:----------:|:-------:|:---------:|:----------:|:---------:|:-------------:|
+|  70B  |     512    |  Alpaca |    BF16   |      1     |   145 GB  | 165 GB (PEFT) |
+|  70B  |     512    |  Alpaca |    NF4    |      1     |   36 GB   |  46 GB (PEFT) |
 
 
 
