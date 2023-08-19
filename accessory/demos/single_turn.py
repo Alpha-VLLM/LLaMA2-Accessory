@@ -14,7 +14,7 @@ from fairscale.nn.model_parallel import initialize as fs_init
 
 from data.alpaca import transform_train, format_prompt
 from util.quant import quantize
-from util.tensor_parallel import load_tensor_parallel_model
+from util.tensor_parallel import load_tensor_parallel_model_list
 
 
 def get_args_parser():
@@ -27,10 +27,8 @@ def get_args_parser():
     parser.add_argument('--tokenizer_path', type=str, default="../tokenizer.model",
                         help='path to tokenizer.model')
 
-    parser.add_argument('--pretrained_path', default='/path/to/pretrained', type=str,
+    parser.add_argument('--pretrained_path', default='/path/to/pretrained', type=str, nargs="+",
                         help='directory containing pre-trained checkpoints')
-    parser.add_argument('--pretrained_type', type=str, default="consolidated", choices=['consolidated', 'meta_ori'],
-                        help='pretrained checkpoint save format')
 
     parser.add_argument('--device', default='cuda',
                         help='device for inference')
@@ -54,7 +52,7 @@ model = MetaModel(args.llama_type, args.llama_config, args.tokenizer_path, with_
 print(f"load pretrained from {args.pretrained_path}")
 if args.quant:
     print("Quantizing model to 4bit!")
-    load_tensor_parallel_model(model, args.pretrained_path, args.pretrained_type)
+    load_tensor_parallel_model_list(model, args.pretrained_path)
     from transformers.utils.quantization_config import BitsAndBytesConfig
     quantization_config = BitsAndBytesConfig.from_dict(
         config_dict={
@@ -66,7 +64,7 @@ if args.quant:
     )
     quantize(model, quantization_config)
 else:
-    misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
+    load_tensor_parallel_model_list(model, args.pretrained_path)
 print("Model = %s" % str(model))
 model.bfloat16().cuda()
 
