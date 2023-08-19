@@ -511,10 +511,10 @@ torchrun <--some_flags> main_finetune.py <--some_flags> --quant
 ## Comparison
 The LLaMA2-Accessory offers the option to load in 4-bit (NF4), optimizing both inference and training processes while significantly minimizing VRAM demands. To assess its impact, we performed experiments using the A100-80GB and obtained the following results.
 
-| Model Size | Task   | Precision | Batch Size | Inference | Training     |
-|:----------:|:------:|:---------:|:----------:|:---------:|:------------:|
-| 70B        | Dialog | BF16      | 1          | 145 GB    | 165 GB (PEFT)|
-| 70B        | Dialog | NF4       | 1          | 36 GB     | 46 GB (PEFT) |
+| Model | Max Length | Dataset | Precision | Batch Size | Inference |    Training   |
+|:-----:|:----------:|:-------:|:---------:|:----------:|:---------:|:-------------:|
+|  70B  |     512    |  Alpaca |    BF16   |      1     |   145 GB  | 165 GB (PEFT) |
+|  70B  |     512    |  Alpaca |    NF4    |      1     |   36 GB   |  46 GB (PEFT) |
 
 
 
