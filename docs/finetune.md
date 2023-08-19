@@ -9,6 +9,7 @@
     + [Two-Stage Training of Multi-Model LLaMA 2](#two-stage-training-of-multi-model-llama-2)
         * [Stage One](#stage-one)
         * [Stage Two](#stage-two)
+  * [Quantization-Assisted Parameter-Efficient Fine-Tuning](#quantization-assisted-parameter-efficient-fine-tuning)
 
 # Fine-tuning
 
@@ -499,5 +500,22 @@ torchrun --nproc-per-node=2  demos/single_turn_mm.py \
 > [*More examples here*](./examples/finetune/mm/alpacaLlava_llamaQformerv2_13b.md)
 
 ---
+
+# Quantization-Assisted Parameter-Efficient Fine-Tuning
+For users with constrained computing resources, we provide an alternative choice through the quantization of the base model, while retaining only carefully selected trainable parameters.
+## TL;DR
+```bash
+# Enable quantization with flag "--quant"
+torchrun <--some_flags> main_finetune.py <--some_flags> --quant
+```
+## Comparison
+The LLaMA2-Accessory offers the option to load in 4-bit (NF4), optimizing both inference and training processes while significantly minimizing VRAM demands. To assess its impact, we performed experiments using the A100-80GB and obtained the following results.
+
+| Model Size | Task   | Precision | Batch Size | Inference | Training     |
+|:----------:|:------:|:---------:|:----------:|:---------:|:------------:|
+| 70B        | Dialog | BF16      | 1          | 145 GB    | 165 GB (PEFT)|
+| 70B        | Dialog | NF4       | 1          | 36 GB     | 46 GB (PEFT) |
+
+
 
 *More use cases coming soon...*

@@ -81,6 +81,10 @@ Use the `single_turn.py` script for single-turn dialogues:
 python demos/single_turn.py \
 --llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
 --pretrained_path /path/to/finetuned
+
+# (Optional) Quantization-assistant Inference. To run on GPUs with limited VRAM, add the "--quant" flag.
+# For example, less than 7GB of VRAM is required for the 7B model.
+python demos/single_turn.py <--some_flags> --quant
 ```
 
 ### Multi-turn Dialogue
@@ -91,6 +95,10 @@ For multi-turn dialogues, use the `multi_turn.py` script:
 python demos/multi_turn.py \
 --llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
 --pretrained_path /path/to/finetuned
+
+# (Optional) Quantization-assistant Inference. To run on GPUs with limited VRAM, add the "--quant" flag.
+# For example, less than 7GB of VRAM is required for the 7B model.
+python demos/multi_turn.py <--some_flags> --quant
 ```
 
 ### Multi-modal Dialogue
@@ -101,6 +109,10 @@ And for multi-modal dialogues, use the `single_turn_mm.py` script:
 torchrun --nproc-per-node=2  demos/single_turn_mm.py \
 --llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
 --pretrained_path /path/to/multimodel_llama
+
+# (Optional) Quantization-assistant Inference. To run on GPUs with limited VRAM, add the "--quant" flag.
+# For example, less than 7GB of VRAM is required for the 7B model.
+torchrun --nproc-per-node=1  demos/single_turn_mm.py <--some_flags> --quant
 ```
 
 Please replace `/path/to/params.json`, `/path/to/tokenizer.model` and `/path/to/finetuned` or `/path/to/multimodel_llama` with your actual file paths.

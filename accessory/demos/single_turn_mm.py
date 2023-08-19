@@ -15,6 +15,8 @@ from util import misc
 from fairscale.nn.model_parallel import initialize as fs_init
 
 from data.alpaca import transform_val, format_prompt
+from util.tensor_parallel import load_tensor_parallel_model
+from util.quant import quantize
 
 
 def get_args_parser():
@@ -42,6 +44,8 @@ def get_args_parser():
     parser.add_argument('--dist_on_itp', action='store_true')
     parser.add_argument('--dist_url', default='env://',
                         help='url used to set up distributed training')
+    parser.add_argument('--quant', action="store_true", default=False,
+                        help="enable quantization")
     return parser
 
 args = get_args_parser().parse_args()
@@ -51,8 +55,24 @@ misc.init_distributed_mode(args)
 fs_init.initialize_model_parallel(args.model_parallel_size)
 model = MetaModel(args.llama_type, args.llama_config, args.tokenizer_path, with_visual=True)
 print(f"load pretrained from {args.pretrained_path}")
-misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
-print("Model = %s" % str(model))
+
+if args.quant:
+    load_tensor_parallel_model(model, args.pretrained_path, args.pretrained_type)
+    print("Model = %s" % str(model))
+    print("Quantizing model to 4bit!")
+    from transformers.utils.quantization_config import BitsAndBytesConfig
+    quantization_config = BitsAndBytesConfig.from_dict(
+        config_dict={
+            "load_in_8bit": False, 
+            "load_in_4bit": True, 
+            "bnb_4bit_quant_type": "nf4",
+        },
+        return_unused_kwargs=False,
+    )
+    quantize(model, quantization_config)
+else:
+    misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
+    print("Model = %s" % str(model))
 model.bfloat16().cuda()
 
 

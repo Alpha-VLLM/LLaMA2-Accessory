@@ -19,7 +19,7 @@ from util.tensor_parallel import load_tensor_parallel_model
 from util.tensor_type import default_tensor_type
 from model.meta import MetaModel
 from data.conversation.lib import conv_templates, SeparatorStyle
-
+from util.quant import quantize
 
 def model_worker(
     rank: int, args: argparse.Namespace, barrier: mp.Barrier,
@@ -56,17 +56,31 @@ def model_worker(
         "bf16": torch.bfloat16,
         "fp16": torch.float16,
     }[args.dtype]
-    with default_tensor_type(dtype=target_dtype, device="cuda"):
+    with default_tensor_type(dtype=target_dtype, device="cpu" if args.quant else "cuda"):
         model = MetaModel(
             args.llama_type, args.llama_config, args.tokenizer_path,
             with_visual=False, max_seq_len=args.model_max_seq_len,
         )
-    model.eval()
     print(f"Loading pretrained weights from {args.pretrained_path}")
     load_tensor_parallel_model(model, args.pretrained_path, args.pretrained_type)
+    if args.quant:
+        print("Quantizing model to 4bit!")
+        from transformers.utils.quantization_config import BitsAndBytesConfig
+        quantization_config = BitsAndBytesConfig.from_dict(
+            config_dict={
+                "load_in_8bit": False, 
+                "load_in_4bit": True, 
+                "bnb_4bit_quant_type": "nf4",
+            },
+            return_unused_kwargs=False,
+        )
+        quantize(model, quantization_config)
+        model.cuda()
+    model.eval()
     print(f"Model = {str(model)}")
 
     barrier.wait()
+
     while True:
         chatbot, max_gen_len, temperature, top_p = request_queue.get()
         conv = conv_templates["v1"].copy()
@@ -194,6 +208,8 @@ if __name__ == "__main__":
                         help="An address used by the PyTorch distributed module to initialize.")
     parser.add_argument("--dtype", type=str, choices=["fp16", "bf16"], default="bf16",
                         help="The dtype used for model weights and inference.")
+    parser.add_argument('--quant', action="store_true", default=False,
+                        help="enable quantization")
     args = parser.parse_args()
 
     # check and setup gpu_ids to use
