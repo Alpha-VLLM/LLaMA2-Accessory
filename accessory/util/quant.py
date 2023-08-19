@@ -90,7 +90,9 @@ def quantize(
         model : MetaModel,
         quant_conf : BitsAndBytesConfig,
 ):
-    module_list = [_ for _ in model.named_modules()]
+    module_list = [_ for _ in model.named_modules() if isinstance(_[1], 
+                                                                  (LoraColumnParallelLinear, LoraRowParallelLinear,
+                                                                   ColumnParallelLinear, RowParallelLinear))]
     for name, module in tqdm(module_list, desc="Qunatization Process"):
         if isinstance(module, (LoraColumnParallelLinear, LoraRowParallelLinear,
                                ColumnParallelLinear, RowParallelLinear)):

@@ -247,7 +247,7 @@ def load_tensor_parallel_model(
     local_state_dict = load_tensor_parallel_model_state_dict(
         model, path, format, verbose
     )
-    return model.load_state_dict(local_state_dict)
+    return model.load_state_dict(local_state_dict, strict=False)
 
 
 def infer_checkpoint_format_and_mp_size(path: str) -> str:
