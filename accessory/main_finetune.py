@@ -163,7 +163,7 @@ def main(args):
                           args.tokenizer_path, with_visual=not args.no_visual,
                           max_seq_len=args.max_words)
     promote_trainable_params_to_fp32(model)
-    misc.print_trainable_params(model)
+    misc.print_param_status(model)
     print(f"load pretrained from {args.pretrained_path}")
     misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
     print("Unwrapped Model = %s" % str(model))

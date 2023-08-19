@@ -620,8 +620,8 @@ def mark_mp_params(model: torch.nn.Module):
             m.weight.is_model_parallel = True
 
 
-def print_trainable_params(model: torch.nn.Module) -> None:
+def print_param_status(model: torch.nn.Module) -> None:
     for name, param in model.named_parameters():
         is_model_parallel = getattr(param, "is_model_parallel", False)
-        print(f"Trainable param: {name}, local_size: {param.shape}, model_parallel: {is_model_parallel}, dtype: {param.dtype}")
+        print(f"Param {name}: requires_grad {param.requires_grad}, local_size {param.shape}, model_parallel {is_model_parallel}, dtype {param.dtype}")
 
