@@ -59,7 +59,7 @@ This document demonstrates the fine-tuning use cases supported by LLaMA2-Accesso
 
 **Model Release:**
 
-+ [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/alpaca/consolidated.00-of-01.model-diff.pth)
++ [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/alpaca/consolidated.00-of-01.model.pth)
 
 **Host Local Demo:**
 
@@ -98,7 +98,7 @@ torchrun --nproc-per-node=1  demos/single_turn.py \
 
 **Model Release:**
 
-+ [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/gorilla/consolidated.00-of-01.model-diff.pth)
++ [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/gorilla/consolidated.00-of-01.model.pth)
 
 **Host Local Demo:**
 
@@ -172,7 +172,7 @@ Tuning scripts used here can be found in: [Zero-init Attenion](../accessory/exps
 
 **Model Release:**
 
-+ [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/dialog_sharegpt/consolidated.00-of-01.model-diff.pth)
++ [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/dialog_sharegpt/consolidated.00-of-01.model.pth)
 
 **Benchmark on OpenCompass:**
 | Model | Overall | Exam | Language | Knowledge | Reasoning | Understanding |
@@ -268,7 +268,7 @@ python demos/multi_turn.py \
 
 **Model Release:**
 
-+ [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/dialog_lima/consolidated.00-of-01.model-diff.pth)
++ [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/dialog_lima/consolidated.00-of-01.model.pth)
 
 **Host Local Demo:**
 
@@ -328,7 +328,7 @@ python demos/multi_turn.py \
 
 **Model Release:**
 
-+ [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/dialog_wizardLM/consolidated.00-of-01.model-diff.pth)
++ [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/dialog_wizardLM/consolidated.00-of-01.model.pth)
 
 **Host Local Demo:**
 

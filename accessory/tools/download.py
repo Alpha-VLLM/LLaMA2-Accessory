@@ -7,6 +7,9 @@ def download_file(repo_id, subfolder, filename, local_dir):
     try:
         hf_hub_download(repo_id=repo_id, repo_type="model", subfolder=subfolder, filename=filename, resume_download=True, local_dir=local_dir)
     except Exception as e:
+        if args.down_diff:
+            print(f"Error downloading {filename}: {str(e)}. Trying to download non-diff file.")
+            download_file(repo_id, subfolder, filename.replace('-diff', ''), local_dir)
         print(f"Error downloading {filename}: {str(e)}. Please check your arguments.")
         exit(1)
 
