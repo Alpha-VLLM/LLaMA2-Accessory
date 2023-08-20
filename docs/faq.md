@@ -16,6 +16,8 @@ This project relies on [Apex](https://github.com/NVIDIA/apex), which necessitate
 
 ## 3. How to Apply Delta Weights?
 
+**(Please note that the following content may be outdated as we have now fully open-sourced our pre-trained weights)**
+
 We release our checkpoints as delta weights to comply with the LLaMA2 model license. To utilize our provided weights for inference or further tuning, kindly adhere to the following instructions to merge our delta into the original LLaMA2 weights to obtain the full weights:
 
 1. Upon agreeing to the License, Acceptable Use Policy, and Meta's privacy policy, proceed to download the LLaMA2 weights from [here](link).

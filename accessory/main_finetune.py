@@ -173,6 +173,7 @@ def main(args):
                                     args.tokenizer_path, with_visual=not args.no_visual,
                                     max_seq_len=args.max_words)
                 promote_trainable_params_to_fp32(model)
+                misc.print_param_status(model)
 
                 # load pre-trained weights
                 print(f"## Load pretrained from {args.pretrained_path}", force=True)
@@ -199,8 +200,9 @@ def main(args):
                             max_seq_len=args.max_words)
         print("Finish initialization.")
         promote_trainable_params_to_fp32(model)
-        misc.print_trainable_params(model)
+        misc.print_param_status(model)
         print(f"load pretrained from {args.pretrained_path}")
+        load_tensor_parallel_model(model, args.pretrained_path, args.pretrained_type)
         misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
     print("Unwrapped Model = %s" % str(model))
 
