@@ -2,23 +2,24 @@ import sys
 import os
 sys.path.append(os.path.abspath(__file__).rsplit('/', 2)[0])
 
-import argparse
-import multiprocessing as mp
-import numpy as np
-from typing import List, Optional
+import argparse  # noqa: E402
+import multiprocessing as mp  # noqa: E402
+import numpy as np  # noqa: E402
+from typing import List, Optional  # noqa: E402
 
-import torch
-import torch.distributed as dist
+import torch  # noqa: E402
+import torch.distributed as dist  # noqa: E402
 
-from fairscale.nn.model_parallel import initialize as fs_init
+from fairscale.nn.model_parallel import initialize as fs_init  # noqa: E402
 
-import gradio as gr
+import gradio as gr  # noqa: E402
 
-from util.misc import setup_for_distributed
-from util.tensor_parallel import load_tensor_parallel_model
-from util.tensor_type import default_tensor_type
-from model.meta import MetaModel
-from data.conversation.lib import conv_templates, SeparatorStyle
+from util.misc import setup_for_distributed  # noqa: E402
+from util.tensor_parallel import load_tensor_parallel_model_list  # noqa: E402
+from util.tensor_type import default_tensor_type  # noqa: E402
+from model.meta import MetaModel  # noqa: E402
+from data.conversation.lib import conv_templates, SeparatorStyle  # noqa: E402
+from util.quant import quantize  # noqa: E402
 
 
 def model_worker(
@@ -32,17 +33,18 @@ def model_worker(
     Args:
         rank (int): Distributed rank of the worker.
         args (argparse.Namespace): All command line arguments.
-        barrier (multiprocessing.Barrier): A barrier used to delay the start of Web UI
-            to be after the start of the model.
+        barrier (multiprocessing.Barrier): A barrier used to delay the start
+            of Web UI to be after the start of the model.
     """
 
     world_size = len(args.gpu_ids)
     gpu_id = args.gpu_ids[rank]
     dist.init_process_group(
-        backend="nccl", init_method=f"tcp://{args.master_addr}:{args.master_port}",
-        world_size=world_size, rank=rank,
+        backend="nccl", rank=rank, world_size=world_size,
+        init_method=f"tcp://{args.master_addr}:{args.master_port}",
     )
-    print(f"| distributed init on worker {rank}/{world_size}. using gpu: {gpu_id}")
+    print(f"| distributed init on worker {rank}/{world_size}. "
+          f"using gpu: {gpu_id}")
     fs_init.initialize_model_parallel(world_size)
     torch.cuda.set_device(gpu_id)
 
@@ -56,17 +58,32 @@ def model_worker(
         "bf16": torch.bfloat16,
         "fp16": torch.float16,
     }[args.dtype]
-    with default_tensor_type(dtype=target_dtype, device="cuda"):
+    with default_tensor_type(dtype=target_dtype,
+                             device="cpu" if args.quant else "cuda"):
         model = MetaModel(
             args.llama_type, args.llama_config, args.tokenizer_path,
             with_visual=False, max_seq_len=args.model_max_seq_len,
         )
+    print("Loading pretrained weights ...")
+    load_tensor_parallel_model_list(model, args.pretrained_path)
+    if args.quant:
+        print("Quantizing model to 4bit!")
+        from transformers.utils.quantization_config import BitsAndBytesConfig
+        quantization_config = BitsAndBytesConfig.from_dict(
+            config_dict={
+                "load_in_8bit": False,
+                "load_in_4bit": True,
+                "bnb_4bit_quant_type": "nf4",
+            },
+            return_unused_kwargs=False,
+        )
+        quantize(model, quantization_config)
+        model.cuda()
     model.eval()
-    print(f"Loading pretrained weights from {args.pretrained_path}")
-    load_tensor_parallel_model(model, args.pretrained_path, args.pretrained_type)
     print(f"Model = {str(model)}")
 
     barrier.wait()
+
     while True:
         chatbot, max_gen_len, temperature, top_p = request_queue.get()
         conv = conv_templates["v1"].copy()
@@ -78,18 +95,26 @@ def model_worker(
             conv.get_prompt(), None,
             max_gen_len, temperature, top_p
         ):
-            conv_sep = conv.sep if conv.sep_style == SeparatorStyle.SINGLE else conv.sep2
+            conv_sep = (
+                conv.sep
+                if conv.sep_style == SeparatorStyle.SINGLE
+                else conv.sep2
+            )
             end_pos = stream_response["text"].find(conv_sep)
             if end_pos != -1:
-                stream_response["text"] = stream_response['text'][:end_pos].rstrip() + "\n"
+                stream_response["text"] = (
+                    stream_response['text'][:end_pos].rstrip() + "\n"
+                )
                 stream_response["end_of_content"] = True
 
-            # keep a few characters if not end_of_content to avoid sending part of conv_sep
-            # before all of it is generated.
+            # keep a few characters if not end_of_content to avoid sending
+            # part of conv_sep before all of it is generated.
             if not stream_response["end_of_content"]:
                 if len(stream_response["text"]) < len(conv_sep):
                     continue
-                stream_response["text"] = stream_response["text"][:-len(conv_sep)]
+                stream_response["text"] = (
+                    stream_response["text"][:-len(conv_sep)]
+                )
 
             if response_queue is not None:
                 response_queue.put(stream_response)
@@ -103,14 +128,15 @@ def gradio_worker(
     args: argparse.Namespace, barrier: mp.Barrier,
 ) -> None:
     """
-    The gradio worker is responsible for displaying the WebUI and relay the requests to model workers.
-    It should be launched only once.
+    The gradio worker is responsible for displaying the WebUI and relay the
+    requests to model workers. It should be launched only once.
 
     Args:
-        request_queues (List[mp.Queue]): A list of request queues (one for each model worker).
+        request_queues (List[mp.Queue]): A list of request queues (one for
+            each model worker).
         args (argparse.Namespace): All command line arguments.
-        barrier (multiprocessing.Barrier): A barrier used to delay the start of Web UI to be after
-            the start of the model.
+        barrier (multiprocessing.Barrier): A barrier used to delay the start
+            of Web UI to be after the start of the model.
     """
 
     def show_user_input(msg, chatbot):
@@ -138,7 +164,7 @@ def gradio_worker(
         with gr.Row():
             submit_button = gr.Button("Submit", variant="primary")
             undo_button = gr.Button("Undo")
-            clear_button = gr.ClearButton([chatbot, msg])
+            clear_button = gr.ClearButton([chatbot, msg])  # noqa: F841
         with gr.Row():
             max_gen_len = gr.Slider(
                 minimum=1, maximum=args.model_max_seq_len // 2,
@@ -169,42 +195,71 @@ def gradio_worker(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("LLaMA2-Accessory Chat Demo (powered by Gradio)")
+    parser = argparse.ArgumentParser("LLaMA2-Accessory Chat Demo")
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("--gpu_ids", type=int, nargs="+",
-                       help="A list of space-separated gpu ids to run the model on. "
-                            "The model will span across GPUs in tensor-parallel mode.")
-    group.add_argument("--n_gpus", type=int, default=1,
-                       help="Number of GPUs to run the model on. Equivalent to --gpu_ids 0 1 2 ... n-1")
-    parser.add_argument("--tokenizer_path", type=str, required=True,
-                        help="Path to the tokenizer.model file provided along with the LLaMA model.")
-    parser.add_argument("--llama_type", default="llama", type=str, metavar="MODEL",
-                        help="LLaMA model type. Reserved for future use.")
-    parser.add_argument("--llama_config", type=str, required=True, nargs="+",
-                        help="Path to the llama model config json.")
-    parser.add_argument("--model_max_seq_len", type=int, default=2048,
-                        help="Max sequence length accepted by the pretrained model.")
-    parser.add_argument("--pretrained_path", type=str, required=True,
-                        help="Path to the llama model checkpoints.")
-    parser.add_argument('--pretrained_type', type=str, default="consolidated", choices=['consolidated', 'meta_ori'],
-                        help='pretrained checkpoint save format')
-    parser.add_argument("--master_port", type=int, default=23560,
-                        help="A port used by the PyTorch distributed module to initialize.")
-    parser.add_argument("--master_addr", type=str, default="127.0.0.1",
-                        help="An address used by the PyTorch distributed module to initialize.")
-    parser.add_argument("--dtype", type=str, choices=["fp16", "bf16"], default="bf16",
-                        help="The dtype used for model weights and inference.")
+    group.add_argument(
+        "--gpu_ids", type=int, nargs="+",
+        help="A list of space-separated gpu ids to run the model on. "
+             "The model will span across GPUs in tensor-parallel mode."
+    )
+    group.add_argument(
+        "--n_gpus", type=int, default=1,
+        help="Number of GPUs to run the model on. Equivalent to "
+             "--gpu_ids 0 1 2 ... n-1"
+    )
+    parser.add_argument(
+        "--tokenizer_path", type=str, required=True,
+        help="Path to the tokenizer.model file provided along with the LLaMA "
+             "model."
+    )
+    parser.add_argument(
+        "--llama_type", default="llama", type=str, metavar="MODEL",
+        help="LLaMA model type."
+    )
+    parser.add_argument(
+        "--llama_config", type=str, required=True, nargs="+",
+        help="Path to the llama model config json."
+    )
+    parser.add_argument(
+        "--model_max_seq_len", type=int, default=2048,
+        help="Max sequence length accepted by the pretrained model."
+    )
+    parser.add_argument(
+        "--pretrained_path", type=str, required=True, nargs="+",
+        help="Path to the llama model checkpoints. A list of checkpoints is "
+             "supported and will be merged from left to right.")
+    parser.add_argument(
+        "--master_port", type=int, default=23560,
+        help="A port used by the PyTorch distributed module to initialize."
+    )
+    parser.add_argument(
+        "--master_addr", type=str, default="127.0.0.1",
+        help="An address used by the PyTorch distributed module to initialize."
+    )
+    parser.add_argument(
+        "--dtype", type=str, choices=["fp16", "bf16"], default="bf16",
+        help="The dtype used for model weights and inference."
+    )
+    parser.add_argument(
+        "--quant", action="store_true", default=False,
+        help="enable quantization"
+    )
     args = parser.parse_args()
 
     # check and setup gpu_ids to use
     if args.gpu_ids is None:
         if args.n_gpus is None:
             args.n_gpus = 1
-        assert args.n_gpus > 0, "The demo currently must run on a positive number of GPUs."
+        assert args.n_gpus > 0, (
+            "The demo currently must run on a positive number of GPUs."
+        )
         args.gpu_ids = list(range(args.n_gpus))
-    
+
+    # using the default "fork" method messes up some imported libs (e.g.,
+    # pandas)
+    mp.set_start_method("spawn")
+
     # setup the queues and start the model workers
-    mp.set_start_method("spawn")  # using the default "fork" method messes up some imported libs (e.g., pandas)
     request_queues = []
     response_queue = mp.Queue()
     worker_processes = []
