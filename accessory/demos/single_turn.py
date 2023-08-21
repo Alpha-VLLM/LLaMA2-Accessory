@@ -50,9 +50,11 @@ misc.init_distributed_mode(args)
 fs_init.initialize_model_parallel(args.model_parallel_size)
 model = MetaModel(args.llama_type, args.llama_config, args.tokenizer_path, with_visual=False)
 print(f"load pretrained from {args.pretrained_path}")
+load_tensor_parallel_model_list(model, args.pretrained_path)
+
 if args.quant:
     print("Quantizing model to 4bit!")
-    load_tensor_parallel_model_list(model, args.pretrained_path)
+
     from transformers.utils.quantization_config import BitsAndBytesConfig
     quantization_config = BitsAndBytesConfig.from_dict(
         config_dict={
@@ -63,8 +65,7 @@ if args.quant:
         return_unused_kwargs=False,
     )
     quantize(model, quantization_config)
-else:
-    load_tensor_parallel_model_list(model, args.pretrained_path)
+
 print("Model = %s" % str(model))
 model.bfloat16().cuda()
 

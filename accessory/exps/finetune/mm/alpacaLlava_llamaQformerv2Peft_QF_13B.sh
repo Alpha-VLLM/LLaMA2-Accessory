@@ -5,7 +5,6 @@ pretrained_type=consolidated
 llama_config="$2 configs/model/finetune/sg/llamaPeft_normBiasLora.json"
 tokenizer_path="$3"
 data_config=configs/data/finetune/mm/alpaca_llava.yaml
-export IMGPATH=$4
 
 data_parallel=sdp
 model_parallel=1
