@@ -88,8 +88,7 @@ def generate(
         image = None
 
     # text output
-    _prompt = prompt
-    # _prompt = format_prompt(prompt, question_input)
+    _prompt = format_prompt(prompt, question_input)
 
     dist.barrier()
     dist.broadcast_object_list([_prompt, image, max_gen_len, gen_t, top_p])
