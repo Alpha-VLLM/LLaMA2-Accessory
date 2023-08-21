@@ -1,25 +1,26 @@
 #!/bin/bash
 
 pretrained_path=$1
-pretrained_type=consolidated
-llama_config="$2 configs/model/finetune/sg/llamaPeft_normBiasLora.json"
+pretrained_type=meta_ori
+llama_config="$2"
 tokenizer_path="$3"
-data_config=configs/data/finetune/mm/alpaca_llava.yaml
+data_config=configs/data/finetune/sg/platypus.yaml
 
 data_parallel=sdp
 model_parallel=1
 
-exp_name=finetune/mm/alpacaLlava_llamaQformerv2Peft_QF_13B
+exp_name=finetune/sg/platypus_normBias_QF_70B
 echo "exp name: $exp_name"
 mkdir -p output/"$exp_name"
 
 torchrun --master_port=1112 --nproc_per_node=8 main_finetune.py \
---output_dir output/"$exp_name" --epochs 3 --warmup_epochs 0.2 \
---batch_size 16 --accum_iter 1 --num_workers 16 \
+--output_dir output/"$exp_name" --epochs 4 --warmup_epochs 1 \
+--batch_size 4 --accum_iter 1 --num_workers 24 \
 --max_words 512 \
---lr 0.00005 --min_lr 0.000005 --clip_grad 2 --weight_decay 0.02 \
+--lr 0.00003 --min_lr 0.000005 --clip_grad 2 --weight_decay 0.02 \
 --data_parallel "$data_parallel" --model_parallel_size "$model_parallel" --checkpointing \
---llama_type llama_qformerv2_peft --llama_config $llama_config --tokenizer_path "$tokenizer_path" \
+--llama_type llama_peft --llama_config "$llama_config" --tokenizer_path "$tokenizer_path" \
+--no_visual \
 --pretrained_path "$pretrained_path" --pretrained_type="$pretrained_type" \
 --data_config $data_config \
 --quant --only_save_trainable \
