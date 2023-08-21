@@ -9,7 +9,7 @@ data_config=configs/data/finetune/sg/platypus.yaml
 data_parallel=sdp
 model_parallel=1
 
-exp_name=finetune/sg/platypus_normBias_QF_70B
+exp_name=finetune/sg/platypus_normBias_QF
 echo "exp name: $exp_name"
 mkdir -p output/"$exp_name"
 
