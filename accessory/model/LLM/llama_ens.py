@@ -9,6 +9,7 @@ import functools
 import torch
 from torch import nn
 import torch.nn.functional as F
+import torch.distributed as dist
 
 import fairscale.nn.model_parallel.initialize as fs_init
 from fairscale.nn.model_parallel.layers import (
@@ -16,10 +17,11 @@ from fairscale.nn.model_parallel.layers import (
     RowParallelLinear,
     ColumnParallelLinear
 )
-from ..peft import LoraColumnParallelLinear, LoraRowParallelLinear
 
 from apex.normalization import FusedRMSNorm as RMSNorm
 from transformers import Blip2Processor, Blip2Model
+import open_clip
+
 
 import configs.global_configs
 if configs.global_configs.USE_FLASH_ATTENTION:
@@ -46,10 +48,6 @@ class ModelArgs:
 
     rope_scaling: Optional[float] = None
 
-    lora_rank: int = -1 # lora
-
-    bias_tuning: bool = True  # bias
-
 
 class Attention(nn.Module):
     def __init__(self, args: ModelArgs):
@@ -61,37 +59,33 @@ class Attention(nn.Module):
         self.n_rep = self.n_local_heads // self.n_local_kv_heads
         self.head_dim = args.dim // args.n_heads
 
-        self.wq = LoraColumnParallelLinear(
+        self.wq = ColumnParallelLinear(
             args.dim,
             args.n_heads * self.head_dim,
-            bias=args.bias_tuning,
+            bias=False,
             gather_output=False,
             init_method=default_linear_init,
-            lora_rank=args.lora_rank
         )
-        self.wk = LoraColumnParallelLinear(
+        self.wk = ColumnParallelLinear(
             args.dim,
             self.n_kv_heads * self.head_dim,
-            bias=args.bias_tuning,
+            bias=False,
             gather_output=False,
             init_method=default_linear_init,
-            lora_rank=args.lora_rank
         )
-        self.wv = LoraColumnParallelLinear(
+        self.wv = ColumnParallelLinear(
             args.dim,
             self.n_kv_heads * self.head_dim,
-            bias=args.bias_tuning,
+            bias=False,
             gather_output=False,
             init_method=default_linear_init,
-            lora_rank=args.lora_rank
         )
-        self.wo = LoraRowParallelLinear(
+        self.wo = RowParallelLinear(
             args.n_heads * self.head_dim,
             args.dim,
-            bias=args.bias_tuning,
+            bias=False,
             input_is_parallel=True,
             init_method=default_linear_init,
-            lora_rank=args.lora_rank
         )
 
         self.args = args
@@ -195,7 +189,6 @@ class FeedForward(nn.Module):
         hidden_dim: int,
         multiple_of: int,
         ffn_dim_multiplier: Optional[float],
-        args: ModelArgs,
     ):
         super().__init__()
         hidden_dim = int(2 * hidden_dim / 3)
@@ -204,17 +197,14 @@ class FeedForward(nn.Module):
             hidden_dim = int(ffn_dim_multiplier * hidden_dim)
         hidden_dim = multiple_of * ((hidden_dim + multiple_of - 1) // multiple_of)
 
-        self.w1 = LoraColumnParallelLinear(
-            dim, hidden_dim, bias=args.bias_tuning, gather_output=False,
-            init_method=default_linear_init, lora_rank=args.lora_rank
+        self.w1 = ColumnParallelLinear(
+            dim, hidden_dim, bias=False, gather_output=False, init_method=default_linear_init
         )
-        self.w2 = LoraRowParallelLinear(
-            hidden_dim, dim, bias=args.bias_tuning, input_is_parallel=True,
-            init_method=default_linear_init, lora_rank=args.lora_rank
+        self.w2 = RowParallelLinear(
+            hidden_dim, dim, bias=False, input_is_parallel=True, init_method=default_linear_init
         )
-        self.w3 = LoraColumnParallelLinear(
-            dim, hidden_dim, bias=args.bias_tuning, gather_output=False,
-            init_method=default_linear_init, lora_rank=args.lora_rank
+        self.w3 = ColumnParallelLinear(
+            dim, hidden_dim, bias=False, gather_output=False, init_method=default_linear_init
         )
 
     # @torch.compile
@@ -237,7 +227,6 @@ class TransformerBlock(nn.Module):
             hidden_dim=4 * args.dim,
             multiple_of=args.multiple_of,
             ffn_dim_multiplier=args.ffn_dim_multiplier,
-            args=args
         )
         self.layer_id = layer_id
         self.attention_norm = RMSNorm(args.dim, eps=args.norm_eps)
@@ -259,7 +248,6 @@ class TransformerBlock(nn.Module):
 
 
 class Transformer(nn.Module):
-    is_peft = True
     def __init__(self, params: ModelArgs, with_visual=False):
         super().__init__()
         self.params = params
@@ -295,7 +283,32 @@ class Transformer(nn.Module):
                 nn.Linear(768, params.dim),
                 nn.LayerNorm(params.dim)
             )
-            self.image_words = 32
+
+            print("build llama model with clip")
+            self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
+            self.clip.transformer = None
+
+            print("build llama model with openclip")
+            self.openclip_convnext_xxl, _, _ = open_clip.create_model_and_transforms(
+                "convnext_xxlarge", pretrained="laion2b_s34b_b82k_augreg_soup"
+            )
+            self.openclip_convnext_xxl = self.openclip_convnext_xxl.visual.trunk
+            self.openclip_convnext_xxl.head.global_pool = nn.Identity()
+            self.openclip_convnext_xxl.head.flatten = nn.Identity()
+
+            print("build llama model with dinov2")
+            import os.path
+            if os.path.exists("/mnt/petrelfs/gaopeng/.cache/torch/hub/facebookresearch_dinov2_main"):
+                self.dinov2_vitg14 = torch.hub.load("/mnt/petrelfs/gaopeng/.cache/torch/hub/facebookresearch_dinov2_main", "dinov2_vitg14", source="local")
+            else:
+                self.dinov2_vitg14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14")
+
+            self.visual_proj = nn.Sequential(
+                nn.Linear(3072 + 1024 + 1536, params.dim),
+                nn.LayerNorm(params.dim),
+            )
+
+            self.image_words = 30 + 257 + 2
             # add image tags
             self.start_img = nn.Parameter(torch.rand(1, 1, params.dim))
             self.end_img = nn.Parameter(torch.rand(1, 1, params.dim))
@@ -303,20 +316,114 @@ class Transformer(nn.Module):
 
     def get_trainable_params(self):
         trainable = {}
+        no_train_prefix = ["qformer.", "openclip_convnext_xxl.", "clip.", "dinov2_vitg14."]
         for name, para in self.named_parameters():
-            if not name.startswith("qformer."):
-                trainable_key_words = ['norm', 'bias', 'lora']
-                if any([_ in name for _ in trainable_key_words]):
-                    trainable[name] = para
+            if not any([name.startswith(_) for _ in no_train_prefix]):
+                trainable[name] = para
+            else:
+                print(f'not trainable {name}')
 
         return trainable
 
+    @torch.no_grad()
+    def clip_encode_image(self, x):
+        # modified from CLIP
+        x = self.clip.visual.conv1(x)  # shape = [*, width, grid, grid]
+        # shape = [*, width, grid ** 2]
+        x = x.reshape(x.shape[0], x.shape[1], -1)
+        x = x.permute(0, 2, 1)  # shape = [*, grid ** 2, width]
+        x = torch.cat([self.clip.visual.class_embedding.to(x.dtype) + torch.zeros(x.shape[0], 1,
+                                                                                  x.shape[-1], dtype=x.dtype,
+                                                                                  device=x.device), x],
+                      dim=1)  # shape = [*, grid ** 2 + 1, width]
+        x = x + self.clip.visual.positional_embedding.to(x.dtype)
+        x = self.clip.visual.ln_pre(x)
+
+        x = x.permute(1, 0, 2)  # NLD -> LND
+        x = self.clip.visual.transformer(x)
+        x = x.permute(1, 0, 2)  # LND -> NLD
+
+        # preserve all spatial tokens
+        x = self.clip.visual.ln_post(x[:, :, :])
+
+        # if self.clip.visual.proj is not None:
+        #    x = x @ self.clip.visual.proj
+
+        return x
 
     def encode_image(self, image):
         # [B, 32, 768]
+        self.clip.eval()
+        self.openclip_convnext_xxl.eval()
+        image = image.half()
+        image_bs = image.size(0)
+        mp_world_size = fs_init.get_model_parallel_world_size()
+        mp_rank = fs_init.get_model_parallel_rank()
+        # assert image_bs % mp_world_size == 0
+
+        n_pad_items = (mp_world_size - image_bs % mp_world_size) % mp_world_size
+        padded_image = torch.cat([image, image[:1].expand(n_pad_items, *image.size()[1:])], dim=0)
+        padded_image_bs = padded_image.shape[0]
+
+        local_image_bs = padded_image_bs // mp_world_size
+        local_image = padded_image[local_image_bs * mp_rank: local_image_bs * (mp_rank + 1)]
         with torch.no_grad():
-            image_feats = self.qformer.get_qformer_features(pixel_values=image)
-        image_feats = self.qformer_proj(image_feats.last_hidden_state)
+            local_image_feats = self.qformer.get_qformer_features(pixel_values=local_image).last_hidden_state
+            image_feats = torch.zeros([padded_image_bs, *local_image_feats.size()[1:]],
+                                      device=local_image_feats.device, dtype=local_image_feats.dtype)
+            dist.all_gather_into_tensor(image_feats, local_image_feats, group=fs_init.get_model_parallel_group())
+
+            local_clip_image_feats = self.clip_encode_image(local_image)
+            local_convnext_image_feats = self.openclip_convnext_xxl(
+                F.interpolate(local_image, size=(256, 256))
+            )
+            assert local_convnext_image_feats.size()[1:] == (3072, 8, 8)
+            local_convnext_image_feats = local_convnext_image_feats.repeat_interleave(
+                2, dim=-1
+            ).repeat_interleave(
+                2, dim=-2
+            )  # (3072, 16, 16)
+            local_convnext_image_feats = local_convnext_image_feats.flatten(-2).permute(0, 2, 1)  # (*, 256, 3072)
+            local_convnext_image_feats = torch.cat([
+                local_convnext_image_feats.mean(dim=1, keepdim=True),  # add gap as cls token
+                local_convnext_image_feats,
+            ], dim=1)  # (*, 257, 3072)
+
+            clip_mean = torch.Tensor([0.48145466, 0.4578275, 0.40821073]).to(local_image, non_blocking=True).view(3,
+                                                                                                                  1,
+                                                                                                                  1)
+            clip_std = torch.Tensor([0.26862954, 0.26130258, 0.27577711]).to(local_image, non_blocking=True).view(3,
+                                                                                                                  1,
+                                                                                                                  1)
+            dinov2_mean = torch.Tensor([0.485, 0.456, 0.406]).to(local_image, non_blocking=True).view(3, 1, 1)
+            dinov2_std = torch.Tensor([0.229, 0.224, 0.225]).to(local_image, non_blocking=True).view(3, 1, 1)
+            local_dinov2_image_feats = self.dinov2_vitg14.forward_features(
+                (local_image * clip_std + clip_mean - dinov2_mean) / dinov2_std
+            )
+            local_dinov2_image_feats = torch.cat([
+                local_dinov2_image_feats["x_norm_clstoken"].unsqueeze(1),
+                local_dinov2_image_feats["x_norm_patchtokens"],
+            ], dim=1)
+            local_ens_image_feats = torch.cat([
+                local_clip_image_feats,
+                local_convnext_image_feats,
+                local_dinov2_image_feats,
+            ], dim=2)  # (*, 257, 5632)
+
+            ens_image_feats = torch.zeros([padded_image_bs, *local_ens_image_feats.size()[1:]],
+                                          device=local_ens_image_feats.device, dtype=local_ens_image_feats.dtype)
+            dist.all_gather_into_tensor(ens_image_feats, local_ens_image_feats,
+                                        group=fs_init.get_model_parallel_group())
+
+            ens_image_feats = ens_image_feats.float()[:image_bs]
+            image_feats = image_feats.float()[:image_bs]
+
+        image_feats = self.qformer_proj(image_feats)
+        ens_image_feats = self.visual_proj(ens_image_feats)
+        image_feats = torch.cat([image_feats, ens_image_feats], dim=1)
+        # image_feats = torch.zeros([image.size(0), 32, 768], dtype=torch.half, device=image.device)
+        # image_feats = self.qformer_proj(image_feats)
+
         return image_feats
 
     def forward(self, examples, image=None):
