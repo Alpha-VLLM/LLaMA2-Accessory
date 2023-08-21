@@ -506,7 +506,7 @@ For users with constrained computing resources, we provide an alternative choice
 ## TL;DR
 ```bash
 # Enable quantization with flag "--quant"
-torchrun <--some_flags> main_finetune.py <--some_flags> --quant
+torchrun <--some_flags> main_finetune.py <--some_flags> --quant --
 ```
 For more details, please check [alpacaLlava_llamaQformerv2Peft_QF_13B](https://github.com/Alpha-VLLM/LLaMA2-Accessory/blob/main/accessory/exps/finetune/mm/alpacaLlava_llamaQformerv2Peft_QF_13B.sh).
 ## Comparison
@@ -521,9 +521,9 @@ The LLaMA2-Accessory offers the option to load in 4-bit (NF4), optimizing both i
 
 ### GPU hours of fine-tuning
 Note that we use 8x A100-80GB GPU cards for fine-tuning.
-|       Model       |               Task/Dataset               | Samples | Epoch | Precision/A100 Hours |
+|       Model       |               Task / Dataset               | Samples | Epoch | Precision / GPU Hours |
 |:-----------------:|:----------------------------------------:|:-------:|:-----:|:--------------------:|
-|     LLaMA-70B     |        Single-turn Dialogue/Alpaca       |   52K   |   4   |  BF16/105h  \|  NF4/32h  |
-| LLaMA-13B+Qformer | Multi-modal Dialogue/LLaVA-Instruct-150K |   150K  |   3   |  BF16/172h  \|  NF4/88h  |
+|     LLaMA-70B     |        Single-turn Dialogue / Alpaca       |   52K   |   4   |  BF16/100h  \|  NF4/32h  |
+| LLaMA-13B+Qformer | Multi-modal Dialogue / LLaVA-Instruct-150K |   150K  |   3   |  BF16/170h  \|  NF4/88h  |
 
 *More use cases coming soon...*
