@@ -510,12 +510,18 @@ torchrun <--some_flags> main_finetune.py <--some_flags> --quant
 ```
 ## Comparison
 The LLaMA2-Accessory offers the option to load in 4-bit (NF4), optimizing both inference and training processes while significantly minimizing VRAM demands. To assess its impact, we performed experiments using the A100-80GB and obtained the following results.
-
-| Model | Max Length | Dataset | Precision | Batch Size | Inference |    Training   |
+## with batchsize=1
+| Model | Max Length | Task/Dataset | Precision | Batch Size | Inference |    Training   |
 |:-----:|:----------:|:-------:|:---------:|:----------:|:---------:|:-------------:|
-|  70B  |     512    |  Alpaca |    BF16   |      1     |   145 GB  | 165 GB (PEFT) |
-|  70B  |     512    |  Alpaca |    NF4    |      1     |   36 GB   |  46 GB (PEFT) |
+|  LLaMA2-70B  |     512    |  Single-turn Dialogue/Alpaca |    BF16   |      1     |   145 GB  | 165 GB (PEFT) |
+|  LLaMA2-70B  |     512    |  Single-turn Dialogue/Alpaca |    NF4    |      1     |   36 GB   |  46 GB (PEFT) |
+|  LLaMA2-13B+Qfomer  |     512    |  Multi-modal Dialogue/[LLaVA-Instruct-150K](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/tree/main) |    BF16   |      1     |   31 GB  | ? GB (PEFT) |
+|  LLaMA2-13B+Qfomer  |     512    |  Multi-modal Dialogue/[LLaVA-Instruct-150K](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/tree/main) |    NF4    |      1     |   13 GB   |  15 GB (PEFT) |
 
-
+## GPU hours of fine-tuning
+| Model             | Task/Dataset                             | Precision | A100 Hours |
+|-------------------|------------------------------------------|-----------|------------|
+| LLaMA-70B         | Single-turn Dialogue/Alpaca              | NF4       | 8/Epoch    |
+| LLaMA-13B+Qformer | Multi-modal Dialogue/LLaVA-Instruct-150K | NF4       | 3.5/Epoch  |
 
 *More use cases coming soon...*
