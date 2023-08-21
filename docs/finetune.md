@@ -508,9 +508,10 @@ For users with constrained computing resources, we provide an alternative choice
 # Enable quantization with flag "--quant"
 torchrun <--some_flags> main_finetune.py <--some_flags> --quant
 ```
+For more details, please check [alpacaLlava_llamaQformerv2Peft_QF_13B](https://github.com/Alpha-VLLM/LLaMA2-Accessory/blob/main/accessory/exps/finetune/mm/alpacaLlava_llamaQformerv2Peft_QF_13B.sh).
 ## Comparison
 The LLaMA2-Accessory offers the option to load in 4-bit (NF4), optimizing both inference and training processes while significantly minimizing VRAM demands. To assess its impact, we performed experiments using the A100-80GB and obtained the following results.
-### with batchsize=1
+### BatchSize=1
 | Model | Max Length | Task/Dataset | Precision | Batch Size | Inference |    Training   |
 |:-----:|:----------:|:-------:|:---------:|:----------:|:---------:|:-------------:|
 |  LLaMA2-70B  |     512    |  Single-turn Dialogue/Alpaca |    BF16   |      1     |   145 GB  | 165 GB (PEFT) |
@@ -519,10 +520,10 @@ The LLaMA2-Accessory offers the option to load in 4-bit (NF4), optimizing both i
 |  LLaMA2-13B+Qfomer  |     512    |  Multi-modal Dialogue/[LLaVA-Instruct-150K](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/tree/main) |    NF4    |      1     |   13 GB   |  15 GB (PEFT) |
 
 ### GPU hours of fine-tuning
-Note that 
+Note that we use 8x A100-80GB GPU cards for fine-tuning.
 |       Model       |               Task/Dataset               | Samples | Epoch | Precision/A100 Hours |
 |:-----------------:|:----------------------------------------:|:-------:|:-----:|:--------------------:|
-|     LLaMA-70B     |        Single-turn Dialogue/Alpaca       |   52K   |   4   |   BF16/? \| NF4/32   |
-| LLaMA-13B+Qformer | Multi-modal Dialogue/LLaVA-Instruct-150K |   150K  |   3   |   BF16/? \| NF4/88   |
+|     LLaMA-70B     |        Single-turn Dialogue/Alpaca       |   52K   |   4   |  BF16/105h  \|  NF4/32h  |
+| LLaMA-13B+Qformer | Multi-modal Dialogue/LLaVA-Instruct-150K |   150K  |   3   |  BF16/172h  \|  NF4/88h  |
 
 *More use cases coming soon...*
