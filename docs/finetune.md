@@ -514,8 +514,8 @@ The LLaMA2-Accessory offers the option to load in 4-bit (NF4), optimizing both i
 ### BatchSize=1
 | Model | Max Length | Task/Dataset | Precision | Batch Size | Inference |    Training   |
 |:-----:|:----------:|:-------:|:---------:|:----------:|:---------:|:-------------:|
-|  LLaMA2-70B  |     512    |  Single-turn Dialogue/Alpaca |    BF16   |      1     |   145 GB  | 165 GB (PEFT) |
-|  LLaMA2-70B  |     512    |  Single-turn Dialogue/Alpaca |    NF4    |      1     |   36 GB   |  46 GB (PEFT) |
+|  LLaMA2-70B  |     512    |  Single-turn Dialogue/[Alpaca](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM/blob/main/data/alpaca_gpt4_data.json) |    BF16   |      1     |   145 GB  | 165 GB (PEFT) |
+|  LLaMA2-70B  |     512    |  Single-turn Dialogue/[Alpaca](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM/blob/main/data/alpaca_gpt4_data.json) |    NF4    |      1     |   36 GB   |  46 GB (PEFT) |
 |  LLaMA2-13B+Qfomer  |     512    |  Multi-modal Dialogue/[LLaVA-Instruct-150K](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/tree/main) |    BF16   |      1     |   31 GB  | 38 GB (PEFT) |
 |  LLaMA2-13B+Qfomer  |     512    |  Multi-modal Dialogue/[LLaVA-Instruct-150K](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/tree/main) |    NF4    |      1     |   13 GB   |  15 GB (PEFT) |
 
