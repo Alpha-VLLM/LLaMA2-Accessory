@@ -28,6 +28,8 @@ from util.tensor_type import default_tensor_type
 
 default_linear_init = functools.partial(nn.init.kaiming_uniform_, a=math.sqrt(5))
 
+from .llama import precompute_freqs_cis, reshape_for_broadcast, apply_rotary_emb, repeat_kv
+
 
 @dataclass
 class ModelArgs:
@@ -43,6 +45,8 @@ class ModelArgs:
     max_batch_size: int = 32
     max_seq_len: int = 2048
 
+    rope_scaling: Optional[float] = None
+
     prefix_layers: Optional[int] = None # prefix, set to n_layers by default
     prefix_len: int = 30
     v_embed_dim = 768 # latent dim for clip projection layer
@@ -53,47 +57,6 @@ class ModelArgs:
     lora_rank: int = -1 # lora
 
     bias_tuning: bool = False  # bias
-
-
-def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0):
-    freqs = 1.0 / (theta ** (torch.arange(0, dim, 2)[: (dim // 2)].float() / dim))
-    t = torch.arange(end, device=freqs.device)  # type: ignore
-    freqs = torch.outer(t, freqs).float()  # type: ignore
-    freqs_cis = torch.polar(torch.ones_like(freqs), freqs)  # complex64
-    return freqs_cis
-
-
-def reshape_for_broadcast(freqs_cis: torch.Tensor, x: torch.Tensor):
-    ndim = x.ndim
-    assert 0 <= 1 < ndim
-    assert freqs_cis.shape == (x.shape[1], x.shape[-1])
-    shape = [d if i == 1 or i == ndim - 1 else 1 for i, d in enumerate(x.shape)]
-    return freqs_cis.view(*shape)
-
-
-def apply_rotary_emb(
-    xq: torch.Tensor,
-    xk: torch.Tensor,
-    freqs_cis: torch.Tensor,
-) -> Tuple[torch.Tensor, torch.Tensor]:
-    xq_ = torch.view_as_complex(xq.float().reshape(*xq.shape[:-1], -1, 2))
-    xk_ = torch.view_as_complex(xk.float().reshape(*xk.shape[:-1], -1, 2))
-    freqs_cis = reshape_for_broadcast(freqs_cis, xq_)
-    xq_out = torch.view_as_real(xq_ * freqs_cis).flatten(3)
-    xk_out = torch.view_as_real(xk_ * freqs_cis).flatten(3)
-    return xq_out.type_as(xq), xk_out.type_as(xk)
-
-
-def repeat_kv(x: torch.Tensor, n_rep: int) -> torch.Tensor:
-    """torch.repeat_interleave(x, dim=2, repeats=n_rep)"""
-    bs, slen, n_kv_heads, head_dim = x.shape
-    if n_rep == 1:
-        return x
-    return (
-        x[:, :, :, None, :]
-        .expand(bs, slen, n_kv_heads, n_rep, head_dim)
-        .reshape(bs, slen, n_kv_heads * n_rep, head_dim)
-    )
 
 
 class Attention(nn.Module):
@@ -222,7 +185,7 @@ class Attention(nn.Module):
                     mask = mask.to(xq.device, non_blocking=True)
                 else:
                     raise NotImplementedError()
-            output = F.scaled_dot_product_attention(xq, keys, values, dropout_p=0.0, mask=mask)
+            output = F.scaled_dot_product_attention(xq, keys, values, dropout_p=0.0, attn_mask=mask)
 
             if prefix is not None:
                 prefix_k = prefix_k.transpose(1, 2)
@@ -344,7 +307,7 @@ class Transformer(nn.Module):
         )
 
         self.freqs_cis = precompute_freqs_cis(
-            self.params.dim // self.params.n_heads, self.params.max_seq_len * 2
+            self.params.dim // self.params.n_heads, self.params.max_seq_len * 2, scaling=self.params.rope_scaling
         )
 
         self.image_words = 0
@@ -384,7 +347,6 @@ class Transformer(nn.Module):
             self.prefix_layers = 0
 
         self.cache_actual_prefix = None
-        self.set_default_trainability()
 
 
     def get_trainable_params(self):
@@ -396,13 +358,6 @@ class Transformer(nn.Module):
                     trainable[name] = para
 
         return trainable
-
-
-    def set_default_trainability(self):
-        for key, value in self.named_parameters():
-            value.requires_grad = False
-        for key, value in self.get_trainable_params().items():
-            value.requires_grad = True
 
 
     @torch.no_grad()

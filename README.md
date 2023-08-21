@@ -13,13 +13,11 @@
 
 ## Features
 * **💡Support More Datasets and Tasks**
-
   - 🎯 Pre-training with [RefinedWeb](https://huggingface.co/datasets/tiiuae/falcon-refinedweb) and [StarCoder](https://github.com/bigcode-project/starcoder).
-  - 📚 Single-modal fine-tuning with [Alpaca](https://github.com/tatsu-lab/stanford_alpaca), [ShareGPT](https://github.com/domeccleston/sharegpt), [LIMA](https://arxiv.org/pdf/2305.11206.pdf), [UltraChat](https://github.com/thunlp/UltraChat) and [MOSS](https://github.com/OpenLMLab/MOSS).
+  - 📚 Single-modal fine-tuning with [Alpaca](https://github.com/tatsu-lab/stanford_alpaca), [ShareGPT](https://github.com/domeccleston/sharegpt), [LIMA](https://arxiv.org/pdf/2305.11206.pdf), [WizardLM](https://github.com/nlpxucan/WizardLM), [Flacuna](https://github.com/declare-lab/flacuna), [Platypus](https://github.com/arielnlee/Platypus), [UltraChat](https://github.com/thunlp/UltraChat) and [MOSS](https://github.com/OpenLMLab/MOSS).
   - 🌈 Multi-modal fine-tuning with image-text pairs ([LAION](https://laion.ai/blog/laion-5b/), [COYO](https://github.com/kakaobrain/coyo-dataset) and more), interleaved image-text data ([MMC4](https://github.com/allenai/mmc4) and [OBELISC](https://github.com/huggingface/OBELISC)) and visual instruction data ([LLaVA](https://github.com/haotian-liu/LLaVA), [Shrika](https://github.com/shikras/shikra), [Bard](https://bard.google.com/))
   - 🔧 LLM for API Control ([GPT4Tools](https://github.com/StevenGrove/GPT4Tools) and [Gorilla](https://github.com/ShishirPatil/gorilla)).
 * **⚡Efficient Optimization and Deployment**
-
   - 🚝 Parameter-efficient fine-tuning with [Zero-init Attenion](https://github.com/OpenGVLab/LLaMA-Adapter) and [Bias-norm Tuning](https://github.com/OpenGVLab/LLaMA-Adapter).
   - 💻 Fully Sharded Data Parallel ([FSDP](https://engineering.fb.com/2021/07/15/open-source/fsdp/)), [Flash Attention 2](https://github.com/Dao-AILab/flash-attention) and [QLoRA](https://github.com/artidoro/qlora).
 * **🏋️‍♀️Support More Visual Encoders and LLMs**
@@ -27,18 +25,22 @@
   - 👁‍🗨 Visual Encoders: [CLIP](https://github.com/openai/CLIP), [Q-Former](https://github.com/salesforce/LAVIS) and [ImageBind](https://github.com/facebookresearch/ImageBind).
   - 🧩 LLMs: LLaMA and LLaMA2.
 
+## Setup
 
-## Installation
+:gear: For environment installation, please refer to [docs/install.md](./docs/install.md).
 
-See [docs/install.md](./docs/install.md). 
+## Model Usage
 
-## Training & Inference
-See [docs/pretrain.md](./docs/pretrain.md) and [docs/finetune.md](./docs/finetune.md). 
+:robot: Instructions for model training, inference, and fine-tuning are available in [docs/pretrain.md](./docs/pretrain.md), [docs/inference.md](./docs/inference.md), and [docs/finetune.md](./docs/finetune.md), respectively.
+
+## Frequently Asked Questions (FAQ)
+
+:question: Encountering issues or have further questions? Find answers to common inquiries [here](./docs/faq.md). We're here to assist you!
 
 ## Demos
 * Instruction-tuned LLaMA2: [alpaca](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/alpaca.html) & [gorilla](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/gorilla.html).
 * Chatbot LLaMA2: [dialog_sharegpt](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/dialog_sharegpt.html) & [dialog_lima](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/dialog_lima.html) & [llama2-chat](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/llama2-chat.html).
-* Multimodal LLaMA2: [in-context](https://alpha-vllm.github.io/demo_presentation/examples/finetune/mm/in-context.html)
+* Multimodal LLaMA2: [in-context](https://alpha-vllm.github.io/demo_presentation/examples/finetune/mm/in-context.html) & [alpacaLlava_llamaQformerv2_13b](https://alpha-vllm.github.io/demo_presentation/examples/finetune/mm/alpacaLlava_llamaQformerv2_13b.html)
 
 <img src="./docs/examples/finetune/mm/demo1.png" width="80%" />
 <img src="./docs/examples/finetune/mm/demo2.png" width="80%" />
@@ -48,7 +50,11 @@ See [docs/pretrain.md](./docs/pretrain.md) and [docs/finetune.md](./docs/finetun
 
 ## Core Contributors
 
-[Chris Liu](https://github.com/ChrisLiu6), [Ziyi Lin](https://github.com/linziyi96), [Guian Fang](https://github.com/Enderfga), [Jiaming Han](https://github.com/csuhan), [Renrui Zhang](https://github.com/ZrrSkywalker), [Wenqi Shao](https://github.com/wqshao126), [Peng Gao](https://github.com/gaopengpjlab)
+[Chris Liu](https://github.com/ChrisLiu6), [Ziyi Lin](https://github.com/linziyi96), [Guian Fang](https://github.com/Enderfga), [Jiaming Han](https://github.com/csuhan), [Yijiang Liu](https://github.com/kriskrisliu), [Renrui Zhang](https://github.com/ZrrSkywalker)
+
+## Project Leader
+
+[Peng Gao](https://github.com/gaopengpjlab), [Wenqi Shao](https://github.com/wqshao126), [Shanghang Zhang](https://scholar.google.com/citations?user=voqw10cAAAAJ&hl=en)
 
 ## Hiring Announcement
 
@@ -105,6 +111,8 @@ If you find our code and paper useful, please kindly cite:
 + [@tiiuae](https://huggingface.co/tiiuae) for [falcon-refinedweb](https://huggingface.co/datasets/tiiuae/falcon-refinedweb)
 + [@microsoft](https://github.com/microsoft) for [DeepSpeed](https://github.com/microsoft/DeepSpeed)
 + [@declare-lab](https://github.com/declare-lab) for [flacuna](https://github.com/declare-lab/flacuna)
++ [@nlpxucan](https://github.com/nlpxucan) for [WizardLM](https://github.com/nlpxucan/WizardLM)
++ [@arielnlee](https://github.com/arielnlee) for [Platypus](https://github.com/arielnlee/Platypus)
 + [@Google](https://github.com/google) for [Bard](https://bard.google.com/)
 </details>
 

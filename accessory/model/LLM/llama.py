@@ -42,10 +42,16 @@ class ModelArgs:
     max_batch_size: int = 32
     max_seq_len: int = 2048
 
+    rope_scaling: Optional[float] = None
 
-def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0):
+
+def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0, scaling=None):
     freqs = 1.0 / (theta ** (torch.arange(0, dim, 2)[: (dim // 2)].float() / dim))
     t = torch.arange(end, device=freqs.device)  # type: ignore
+    if scaling is not None:
+        print(f"rope scaling enabled")
+        print(f"create rotary embedding with scaling factor {scaling}")
+        t = t * scaling
     freqs = torch.outer(t, freqs).float()  # type: ignore
     freqs_cis = torch.polar(torch.ones_like(freqs), freqs)  # complex64
     return freqs_cis
@@ -194,7 +200,7 @@ class Attention(nn.Module):
                     mask = mask.to(xq.device, non_blocking=True)
                 else:
                     raise NotImplementedError()
-            output = F.scaled_dot_product_attention(xq, keys, values, dropout_p=0.0, mask=mask)
+            output = F.scaled_dot_product_attention(xq, keys, values, dropout_p=0.0, attn_mask=mask)
             output = output.transpose(
                 1, 2
             ).contiguous().view(bsz, seqlen, -1)
@@ -302,7 +308,7 @@ class Transformer(nn.Module):
         )
 
         self.freqs_cis = precompute_freqs_cis(
-            self.params.dim // self.params.n_heads, self.params.max_seq_len * 2
+            self.params.dim // self.params.n_heads, self.params.max_seq_len * 2, scaling=self.params.rope_scaling
         )
 
         self.image_words = 0
@@ -319,8 +325,6 @@ class Transformer(nn.Module):
             self.clip_proj_norm = nn.LayerNorm(params.dim)
             self.image_words = 257
 
-        self.set_default_trainability()
-
 
     def get_trainable_params(self):
         trainable = {}
@@ -329,13 +333,6 @@ class Transformer(nn.Module):
                 trainable[name] = para
 
         return trainable
-
-
-    def set_default_trainability(self):
-        for key, value in self.named_parameters():
-            value.requires_grad = False
-        for key, value in self.get_trainable_params().items():
-            value.requires_grad = True
 
 
     @torch.no_grad()

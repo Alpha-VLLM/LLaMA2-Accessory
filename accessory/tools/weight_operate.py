@@ -29,7 +29,7 @@ def calculate_weight_delta(original_model, fine_tuned_model, num, max_num):
     
     save_path = os.path.join(
         args.output_path,
-        f"consolidated.{num:02d}-of-{max_num:02d}.model.pth", 
+        f"consolidated.{num:02d}-of-{max_num:02d}.model-diff.pth", 
     )
     
     torch.save(consolidated_model_state_dict, save_path)
@@ -67,7 +67,7 @@ if not os.path.exists(args.output_path):
 
 pretrained_list = [path for path in os.listdir(args.pretrained_path) if path.startswith("consolidated.") and path.endswith(".pth")]
 pretrained_list.sort()
-delta_list = [path for path in os.listdir(args.delta_path) if path.startswith("consolidated.") and path.endswith("model.pth")]
+delta_list = [path for path in os.listdir(args.delta_path) if path.startswith("consolidated.") and path.endswith(".pth")]
 delta_list.sort()
 
 assert len(pretrained_list) == len(delta_list)  

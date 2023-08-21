@@ -63,10 +63,10 @@ def train_one_epoch(model: torch.nn.Module,
 
         if update_grad:
             assert grad_norm is not None
-            metric_logger.update(grad_norm=grad_norm)
-            # mp_rank = fs_init.get_model_parallel_rank()
-            # dp_rank = fs_init.get_data_parallel_rank()
-            # print(f"mp_rank: {mp_rank} dp_rank: {dp_rank}, norm: {grad_norm.item()}", force=True)
+            if torch.any(torch.isinf(grad_norm)):
+                print("grad norm is inf")
+            else:
+                metric_logger.update(grad_norm=grad_norm)
 
             model.zero_grad(set_to_none=True)
 
