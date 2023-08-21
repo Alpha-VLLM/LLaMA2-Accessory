@@ -163,6 +163,7 @@ def main(args):
         "tf32": torch.float32,
     }[args.precision]
     print("Start initialization.")
+
     if args.quant:
         from transformers.utils.quantization_config import BitsAndBytesConfig
         for i in range(misc.get_world_size()):
@@ -203,7 +204,6 @@ def main(args):
         misc.print_param_status(model)
         print(f"load pretrained from {args.pretrained_path}")
         load_tensor_parallel_model(model, args.pretrained_path, args.pretrained_type)
-        misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
     print("Unwrapped Model = %s" % str(model))
 
     # resume stage1

@@ -2,24 +2,24 @@ import sys
 import os
 sys.path.append(os.path.abspath(__file__).rsplit('/', 2)[0])
 
-import argparse  # noqa: E402
-import multiprocessing as mp  # noqa: E402
-import numpy as np  # noqa: E402
-from typing import List, Optional  # noqa: E402
+import argparse
+import multiprocessing as mp
+import numpy as np
+from typing import List, Optional
 
-import torch  # noqa: E402
-import torch.distributed as dist  # noqa: E402
+import torch
+import torch.distributed as dist
 
-from fairscale.nn.model_parallel import initialize as fs_init  # noqa: E402
+from fairscale.nn.model_parallel import initialize as fs_init
 
-import gradio as gr  # noqa: E402
+import gradio as gr
 
-from util.misc import setup_for_distributed  # noqa: E402
-from util.tensor_parallel import load_tensor_parallel_model_list  # noqa: E402
-from util.tensor_type import default_tensor_type  # noqa: E402
-from model.meta import MetaModel  # noqa: E402
-from data.conversation.lib import conv_templates, SeparatorStyle  # noqa: E402
-from util.quant import quantize  # noqa: E402
+from util.misc import setup_for_distributed
+from util.tensor_parallel import load_tensor_parallel_model_list
+from util.tensor_type import default_tensor_type
+from model.meta import MetaModel
+from data.conversation.lib import conv_templates, SeparatorStyle
+from util.quant import quantize
 
 
 def model_worker(
@@ -164,7 +164,7 @@ def gradio_worker(
         with gr.Row():
             submit_button = gr.Button("Submit", variant="primary")
             undo_button = gr.Button("Undo")
-            clear_button = gr.ClearButton([chatbot, msg])  # noqa: F841
+            clear_button = gr.ClearButton([chatbot, msg])
         with gr.Row():
             max_gen_len = gr.Slider(
                 minimum=1, maximum=args.model_max_seq_len // 2,

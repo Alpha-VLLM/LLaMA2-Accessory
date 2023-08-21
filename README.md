@@ -8,6 +8,7 @@
 🚀**LLaMA2-Accessory** is an open-source toolkit for pre-training, fine-tuning and deployment of **Large Language Models (LLMs)** and **mutlimodal LLMs**. This repo is mainly inherited from [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter) with more advanced features.🧠
 
 ## News
+- **[2023.08.21]** We release the Quantization codes and Evaluation result🔥🔥🔥
 - **[2023.08.05]** We release the multimodel fine-tuning codes and checkpoints🔥🔥🔥
 - **[2023.07.23]** Initial release 📌
 
