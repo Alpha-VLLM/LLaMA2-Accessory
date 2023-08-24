@@ -340,8 +340,11 @@ def main() -> None:
     )
     parser.add_argument(
         "--src_config_path", type=str, required=True, nargs="+",
-        help="Path to the model configuration file (in the name of "
-             "params.json as supplied by Meta)."
+        help="Path to the model configuration files (in the name of "
+             "params.json as supplied by Meta). Multiple config files are "
+             "supported and will be merged from left to right (i.e., the "
+             "configuration items in the later files override the previous "
+             "ones)."
     )
     parser.add_argument(
         "--dst_weights_path", type=str, required=True,
