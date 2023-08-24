@@ -325,8 +325,14 @@ def infer_checkpoint_format_and_mp_size(path: str) -> str:
                 raise NotImplementedError(f"Multiple matched format detected: "
                                           f"{inferred_format} and {format}.")
     if inferred_format is None:
-        raise NotImplementedError(f"Files in the given folder do not match "
-                                  f"any format. Files: {files_in_folder}.")
+        folder_contents = ", ".join(
+            [x if os.path.isfile(os.path.join(path, x)) else x + " (not a file)"
+             for x in os.listdir(path)]
+        )
+        raise NotImplementedError(
+            f"Files in the given folder do not match  any format. "
+            f"Contents in the folder: [{folder_contents}]."
+        )
 
     expected_files_list = get_tensor_parallel_shards_file_name(
         inferred_format, inferred_mp_size
@@ -457,11 +463,7 @@ def tensor_load_shard(
             the old value in the target tensor is overrided with the new value.
             If ``add``, the new value is added to the old value.
     """
-    if parallel_dim < 0:
-        target[...] = value
-        return
-
-    assert parallel_dim < target.ndim
+    assert parallel_dim < target.ndim or parallel_dim == -1
     target_slices = []
     for i in range(target.ndim):
         if i == parallel_dim:
@@ -470,6 +472,8 @@ def tensor_load_shard(
             target_slices.append(slice(dim_st, dim_ed))
         else:
             target_slices.append(slice(None))
+    if parallel_dim == -1 and shard_id != 0 and mode in ["set", "add"]:
+        return
     if mode == "set":
         target[target_slices] = value
     elif mode == "add":
