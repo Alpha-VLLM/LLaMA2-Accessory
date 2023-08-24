@@ -1,6 +1,7 @@
+# Pre-train
 LLaMA2-Accessory currently supports two kinds of pre-training datasets: the *vanilla* dataset and the *packed* dataset. Which one is used for training is controlled by the `--packed_data` argument in `main_pretrain.py`.
 
-### Vanilla Dataset
+## Vanilla Dataset
 
 The vanilla dataset is supported in [`data/falcon.py`](../accessory/data/falcon.py). It loads data directly from `.parquet` data files (as an example, see [*Falcon Refined-web*](https://huggingface.co/datasets/tiiuae/falcon-refinedweb)). With the vanilla dataset, every piece of data will be converted into tokens of  fixed length. Specifically, it will be truncated if it is longer than the target length, and padded if shorter.
 
@@ -10,7 +11,7 @@ An example for pre-training with the vanilla dataset is provided in [exps/pretra
 + A meta file specifying the list of `.parquet` files to use should be created and pointed to by the `data_meta_path` variable. We provide an example meta file for the *Falcon Refined-web* dataset [here](../data_example/PretrainMeta.json).
   + The elements in the meta file should be either absolute paths, or paths relative to `data_root`.
 
-### Packed Dataset
+## Packed Dataset
 
 For more efficient token utilization, the packed dataset is supported in [data/falcon_packed.py](../accessory/data/falcon_packed.py) The packed dataset concatenates contents from different data pieces into a whole and then splits it into equal-length segments. To train with packed dataset, you need to first pre-process your data, namely to tokenize, concatenate, split, and save them. A script for doing this is provided in [tools/generate_packed_data.py](../accessory/tools/generate_packed_data.py).
 

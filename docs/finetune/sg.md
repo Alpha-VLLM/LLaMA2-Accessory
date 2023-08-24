@@ -1,64 +1,18 @@
-  * [Prerequisites](#prerequisites)
-  * [Full-Parameter Fine-tuning](#full-parameter-fine-tuning)
-    + [Single-turn instruction-tuning of LLaMA2-7B on Alpaca](#single-turn-instruction-tuning-of-llama2-7b-on-alpaca)
-    + [Single-turn instruction-tuning of LLaMA2-7B on Gorilla](#single-turn-instruction-tuning-of-llama2-7b-on-gorilla)
-    + [Multi-turn instruction-tuning of LLaMA2-7B on ShareGPT](#multi-turn-instruction-tuning-of-llama2-7b-on-sharegpt)
-    + [Multi-turn instruction-tuning of LLaMA2-70B on ShareGPT](#multi-turn-instruction-tuning-of-llama2-70b-on-sharegpt)
-    + [Multi-turn instruction-tuning of LLaMA2-7B on LIMA](#multi-turn-instruction-tuning-of-llama2-7b-on-lima)
-    + [Multi-turn instruction-tuning of LLaMA2-7B on WizardLM](#multi-turn-instruction-tuning-of-llama2-7b-on-wizardlm)
-    + [Two-Stage Training of Multi-Model LLaMA 2](#two-stage-training-of-multi-model-llama-2)
-        * [Stage One](#stage-one)
-        * [Stage Two](#stage-two)
+# Language-only Full-Parameter Fine-tuning
 
-# Fine-tuning
-
-This document demonstrates the fine-tuning use cases supported by LLaMA2-Accessory
-
-> ## Prerequisites
->
-> To run our provided experiment scripts on you own machine, please first adjust the following configurations:
->
-> + Modify the value of the `pretrained_path` variable in the `.sh` file. This variable should point to the directory containing checkpoints to fine-tune from.
->   + If you fine-tune from the officianl LLaMA / LLaMA2 checkpoints released by META, the directory should be like:
->     ```
->     pretrained_path
->     ├── consolidated.00.pth
->     ├── consolidated.01.pth
->     └── ...
->     ```
->
->     and your should set `pretrained_type=meta_ori` in the `.sh` file.
->   + Alternatively, you may also fine-tune from checkpoints saved by LLaMA2-Accessory. In such cases, the directory should be like:
->     ```
->     pretrained_path
->     ├── consolidated.00-of-**.model.pth
->     ├── consolidated.01-of-**.model.pth
->     └── ...
->     ```
->
->   and your should set `pretrained_type=consolidated` in the `.sh` file
-> + Point `llama_config` in `.sh` to the model parameter file (usually named as `params.json`) that differentiates model sizes (7B, 13B, ...)
-> + Point `tokenizer_path` in `.sh` to the tokenizer file (usually named as `tokenizer.model`)
-> + The `data_config` argument in the `.sh` file points to a `.yaml` file defining the fine-tuning datasets. You need to first download the data and modify the paths in `.yaml` to the correct location
-> + LLaMA models of different model sizes use different *model parallel sizes*. For example, LLaMA 7B's default model parallel size is 1, and LLaMA 13B's default model parallel size is 2. Thus, if you want to modify a script from training 7B models to training 13B models, the model_parallel parameter should be modified accordingly.
->   + If you just train your model from scratch (i.e. do not load any pre-trained checkpoints), you may change the model parallel size arbitrarily based on your needs. However, if you do load some pre-trained checkpoints, it is important to guarantee that the model parallel size is set to be consistent with the checkpoints. 
-
-
-## Full-Parameter Fine-tuning
-
-### Single-turn instruction-tuning of LLaMA2-7B on Alpaca
+## Single-turn LLaMA2-7B on Alpaca
 
 **Script:**
 
-+ [exps/finetune/sg/alpaca.sh](../accessory/exps/finetune/sg/alpaca.sh)
++ {link2repo}`[exps/finetune/sg/alpaca.sh](accessory/exps/finetune/sg/alpaca.sh)`
 
 **Data:**
 
-+ https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM/blob/main/data/alpaca_gpt4_data.json
++ [💾alpaca_gpt4_data.json](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM/blob/main/data/alpaca_gpt4_data.json)
 
 **Model Release:**
 
-+ [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/alpaca/consolidated.00-of-01.model-diff.pth)
++ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/alpaca/consolidated.00-of-01.model-diff.pth)
 
 **Host Local Demo:**
 
@@ -70,34 +24,36 @@ torchrun --nproc-per-node=1  demos/single_turn.py \
 
 **Example:**
 
-> *Instruction:*
->
-> Write an introduction for the github repository "LLaMA2-Accesory: An Open-source Toolkit for LLM Development".
->
-> *Answer:*
->
-> Hello and welcome to the LLaMA2-Accesory GitHub repository! This is an open-source toolkit designed specifically for the development of LLM (Language Modeling) applications. Built on top of the powerful LLaMA2 library, this toolkit provides a user-friendly interface and a set of robust utilities to help you build and train your own LLM models with ease. Whether you are a seasoned AI developer or just getting started with LLaMA2, this toolkit has got you covered with its robust features and extensive documentation. Let's get started on building your LLaMA2-based application today!
->
-> [*More examples here*](./examples/finetune/sg/alpaca.md)
+```{card}
+*Instruction:*
+
+Write an introduction for the github repository "LLaMA2-Accesory: An Open-source Toolkit for LLM Development".
+
+*Answer:*
+
+Hello and welcome to the LLaMA2-Accesory GitHub repository! This is an open-source toolkit designed specifically for the development of LLM (Language Modeling) applications. Built on top of the powerful LLaMA2 library, this toolkit provides a user-friendly interface and a set of robust utilities to help you build and train your own LLM models with ease. Whether you are a seasoned AI developer or just getting started with LLaMA2, this toolkit has got you covered with its robust features and extensive documentation. Let's get started on building your LLaMA2-based application today!
+
+[*More examples here*](../examples/finetune/sg/alpaca.md)
+```
 
 ---
 
-### Single-turn instruction-tuning of LLaMA2-7B on Gorilla
+## Single-turn LLaMA2-7B on Gorilla
 
 **Script:**
 
-+ [exps/finetune/sg/gorilla.sh](../accessory/exps/finetune/sg/gorilla.sh)
++ {link2repo}`[exps/finetune/sg/gorilla.sh](../../accessory/exps/finetune/sg/gorilla.sh)`
 
 **Data:**
 
 + Here we take tensorflowhub as example, other subset can be handled in similar way:
-+ Download data from https://github.com/ShishirPatil/gorilla/blob/main/data/apibench/tensorflow_train.json
-+ Run [tools/data_conversion/to_alpaca/gorilla.py](../accessory/tools/data_conversion/to_alpaca/gorilla.py) with specified `--data_path` to reformat original data.
-+ Make sure [gorilla.yaml](../accessory/configs/data/finetune/sg/gorilla.yaml) is correctly specified to formatted data file.
++ Download data from [💾here](https://github.com/ShishirPatil/gorilla/blob/main/data/apibench/tensorflow_train.json)
++ Run {link2repo}`[tools/data_conversion/to_alpaca/gorilla.py](accessory/tools/data_conversion/to_alpaca/gorilla.py)` with specified `--data_path` to reformat original data
++ Make sure {link2repo}`[gorilla.yaml](accessory/configs/data/finetune/sg/gorilla.yaml)` is correctly specified to formatted data file
 
 **Model Release:**
 
-+ [checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/gorilla/consolidated.00-of-01.model-diff.pth)
++ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/gorilla/consolidated.00-of-01.model-diff.pth)
 
 **Host Local Demo:**
 
@@ -109,7 +65,7 @@ torchrun --nproc-per-node=1  demos/single_turn.py \
 
 **Accuracies:**
 
-Tuning scripts used here can be found in: [Zero-init Attenion](../accessory/exps/finetune/sg/gorilla_llamaAdapter.sh)(i.e. LLaMA-adapter), [Bias-norm Tuning](../accessory/exps/finetune/sg/gorilla_llamaPeft_normBias.sh), [LoRA + Bias-norm](../accessory/exps/finetune/sg/gorilla_llamaPeft_normBiasLora.sh).
+Tuning scripts used here can be found in: [Zero-init Attenion](../../accessory/exps/finetune/sg/gorilla_llamaAdapter.sh)(i.e. LLaMA-adapter), [Bias-norm Tuning](../../accessory/exps/finetune/sg/gorilla_llamaPeft_normBias.sh), [LoRA + Bias-norm](../../accessory/exps/finetune/sg/gorilla_llamaPeft_normBiasLora.sh).
 
 | Methods (TensorFlow Hub) | Overall ↑ | Hallu ↓ |
 | ------------------------ | --------- | ------- |
@@ -118,8 +74,6 @@ Tuning scripts used here can be found in: [Zero-init Attenion](../accessory/exps
 | Zero-init Attention      | 84.97     | 1.04    |
 | Bias-norm Tuning         | 80.36     | 7.29    |
 | LoRA + Bias-norm         | 87.95     | 2.38    |
-
-
 
 
 **Example:**
@@ -156,14 +110,14 @@ Tuning scripts used here can be found in: [Zero-init Attenion](../accessory/exps
 > features = model.predict(image_array)
 > ```
 >
-> [*More examples here*](./examples/finetune/sg/gorilla.md)
+> [*More examples here*](../examples/finetune/sg/gorilla.md)
 
 ---
-### Multi-turn instruction-tuning of LLaMA2-7B on ShareGPT
+## Multi-turn LLaMA2-7B on ShareGPT
 
 **Script:**
 
-+ [exps/finetune/sg/dialog_sharegpt.sh](../accessory/exps/finetune/sg/dialog_sharegpt.sh)
++ [exps/finetune/sg/dialog_sharegpt.sh](../../accessory/exps/finetune/sg/dialog_sharegpt.sh)
 
 **Data:**
 
@@ -203,10 +157,10 @@ python demos/multi_turn.py \
 >
 > **Assistant:** "My name is Jimmy, and I am a master's student pursuing a degree in computer science. I have had the opportunity to work on various projects, one of which was an image classification model called CLSModel. Through this project, I gained valuable experience and knowledge that has helped me grow as a computer scientist."
 >
-> [*More examples here*](./examples/finetune/sg/dialog_sharegpt.md)
+> [*More examples here*](../examples/finetune/sg/dialog_sharegpt.md)
 
 ---
-### Multi-turn instruction-tuning of LLaMA2-70B on ShareGPT
+## Multi-turn LLaMA2-70B on ShareGPT
 
 **Script:**
 
@@ -244,14 +198,14 @@ python demos/multi_turn.py \
 >
 > By following this process, you should be able to determine which switch controls each lamp.
 >
-> [*More examples here*](./examples/finetune/sg/dialog_sharegpt_70b.md)
+> [*More examples here*](../examples/finetune/sg/dialog_sharegpt_70b.md)
 
 ---
-### Multi-turn instruction-tuning of LLaMA2-7B on LIMA
+## Multi-turn LLaMA2-7B on LIMA
 
 **Script:**
 
-+ [exps/finetune/sg/dialog_lima.sh](../accessory/exps/finetune/sg/dialog_lima.sh)
++ {link2repo}`[exps/finetune/sg/dialog_lima.sh](accessory/exps/finetune/sg/dialog_lima.sh)`
 
 **Data:**
 
@@ -304,10 +258,10 @@ python demos/multi_turn.py \
 >
 > By following these guidelines, you can ensure that your communication with colleagues is respectful of their time and attention.
 >
-> [*More examples here*](./examples/finetune/sg/dialog_lima.md)
+> [*More examples here*](../examples/finetune/sg/dialog_lima.md)
 
 ---
-### Multi-turn instruction-tuning of LLaMA2-7B on WizardLM
+## Multi-turn LLaMA2-7B on WizardLM
 
 **Script:**
 
@@ -391,104 +345,7 @@ python demos/multi_turn.py \
 >
 > In the main function, we define an unsorted array and call quicksort on it. We then print out the sorted array to verify that the sorting was successful.
 >
-> [*More examples here*](./examples/finetune/sg/dialog_wizardLM.md)
-
----
-
-### Two-Stage Training of Multi-Model LLaMA 2
-
-For multi-modal fine-tuning, we follow a two-stage paradigm
-
-#### Stage1
-
-In stage one, we train the model on large scale image-text pairs
-
-**Script:**
-
-+ The code for the first stage will be released soon.
-
-**Data:**
-
-+ COYO/LAION/CC3M/CC12M/SBU
-
-**Model Release:**
-
-+ [Stage One Checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/caption_llamaQformerv2_13b/)
-
-#### Stage2
-
-In stage two, we further tune the model on multi-modal instruction-following data
-
-**Script:**
-
-+ [exps/finetune/mm/alpacaLlava_llamaQformerv2_13B.sh](../accessory/exps/finetune/mm/alpacaLlava_llamaQformerv2_13B.sh)
-  + The `--pretrained_path` argument should point to checkpoints saved by stage one instead of original LLaMA
-
-**Data:**
-
-+ https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM/blob/main/data/alpaca_gpt4_data.json
-+ https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/blob/main/llava_instruct_150k.json
-  + Note that before training, we have converted LLaVA into the single-turn form with [this script](../accessory/tools/llava_to_single_turn.py)
-
-**Model Release:**
-
-+ [Stage Two Checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/alpacaLlava_llamaQformerv2_13b/)
-
-**Host Local Demo:**
-
-```bash
-torchrun --nproc-per-node=2  demos/single_turn_mm.py \
---llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
---pretrained_path /path/to/multimodel_llama
-```
-**Example:**
-
-> ##### Stage One
->
-> **Without prefix prompt**
->
-> ![](./examples/finetune/mm/caption1.jpg)
->
-> *Answer*: A group of flamingos standing on top of a lush green field.
->
-> **With prefix prompt**
->
-> ![](./examples/finetune/mm/caption2.jpg)
->
-> prefix prompt: 'The author'
->
-> *Answer*: The author of this painting is Vincent Van Gogh.
->
-> ##### Stage Two
->
-> ![](./examples/finetune/mm/instruction3.jpg)
->
-> *Instruction:*
->
-> What is the food in the picture? Provide recipes for making the food in the picture.
->
-> *Answer:*
->
-> The food in the picture is a set of macaroons, which is a type of small, round, and crispy pastry. Macaroons are typically made with ingredients such as almond flour, butter, sugar, and egg whites. There are several recipes available online for making these delicious treats, such as the following:
->
-> **Almond-covered Macaroons:**
->
-> **Ingredients:**
->
-> - 1 cup of almond flour
-> - 1/2 cup of granulated sugar
-> - 1/4 cup of unsalted butter, melted
-> - 1 teaspoon of vanilla extract
-> - a few drops of food coloring (optional)
->
-> **Instructions:**
->
-> 1. Preheat your oven to 350°F (175°C). Line a baking sheet with parchment paper.
-> 2. In a large mixing bowl, mix together the almond flour, granulated sugar, and melted butter. Add the vanilla extract and mix well.
-> 3. Add a few drops of food coloring, if using, and mix again.
-> 4. Scoop small portions of the mixture and place them on the prepared baking sheet, ensuring enough space between each macaroon.
->
-> [*More examples here*](./examples/finetune/mm/alpacaLlava_llamaQformerv2_13b.md)
+> [*More examples here*](../examples/finetune/sg/dialog_wizardLM.md)
 
 ---
 

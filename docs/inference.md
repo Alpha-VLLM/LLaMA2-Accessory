@@ -1,10 +1,3 @@
-- [Prerequisites](#prerequisites)
-- [How to Apply Delta Weights](#how-to-apply-delta-weights)
-- [Inference Scenarios](#inference-scenarios)
-  * [Single-turn Dialogue](#single-turn-dialogue)
-  * [Multi-turn Dialogue](#multi-turn-dialogue)
-  * [Multi-modal Dialogue](#multi-modal-dialogue)
-
 # Inference
 
 ## Prerequisites
