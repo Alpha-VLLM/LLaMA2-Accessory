@@ -78,7 +78,7 @@ html_theme = "sphinx_book_theme"
 html_logo = 'logo_small.png'
 html_title = "LLaMA2-Accessory"
 html_copy_source = True
-html_favicon = "_static/logo-square.svg"
+html_favicon = "_static/images/logo_small.svg"
 html_last_updated_fmt = ""
 
 html_sidebars = {
@@ -106,16 +106,16 @@ thebe_config = {
 
 html_theme_options = {
     "path_to_docs": "docs",
-    "repository_url": "https://github.com/wanshiruyishoubinanshan/LLaMA2-Accessory",
+    "repository_url": "https://github.com/Alpha-VLLM/LLaMA2-Accessory",
     "repository_branch": "main",
-    "launch_buttons": { # todo
-        "binderhub_url": "https://mybinder.org",
-        "colab_url": "https://colab.research.google.com/",
-        "deepnote_url": "https://deepnote.com/",
-        "notebook_interface": "jupyterlab",
-        "thebe": True,
-        # "jupyterhub_url": "https://datahub.berkeley.edu",  # For testing
-    },
+    # "launch_buttons": {
+    #     "binderhub_url": "https://mybinder.org",
+    #     "colab_url": "https://colab.research.google.com/",
+    #     "deepnote_url": "https://deepnote.com/",
+    #     "notebook_interface": "jupyterlab",
+    #     "thebe": True,
+    #     # "jupyterhub_url": "https://datahub.berkeley.edu",  # For testing
+    # },
     "use_edit_page_button": True,
     "use_source_button": True,
     "use_issues_button": True,
@@ -133,21 +133,9 @@ html_theme_options = {
     },
     "icon_links": [
         {
-            "name": "Executable Books",
-            "url": "https://executablebooks.org/",
-            "icon": "_static/ebp-logo.png",
-            "type": "local",
-        },
-        {
             "name": "GitHub",
-            "url": "https://github.com/executablebooks/sphinx-book-theme",
+            "url": "https://github.com/Alpha-VLLM/LLaMA2-Accessory",
             "icon": "fa-brands fa-github",
-        },
-        {
-            "name": "PyPI",
-            "url": "https://pypi.org/project/sphinx-book-theme/",
-            "icon": "https://img.shields.io/pypi/dw/sphinx-book-theme",
-            "type": "url",
         },
     ],
     # For testing
@@ -168,24 +156,6 @@ html_theme_options = {
 # ogp_social_cards = {
 #     "image": "_static/logo-square.png",
 # }
-
-# -- ABlog config -------------------------------------------------
-blog_path = "reference/blog"
-blog_post_pattern = "reference/blog/*.md"
-blog_baseurl = "https://sphinx-book-theme.readthedocs.io"
-fontawesome_included = True
-post_auto_image = 1
-post_auto_excerpt = 2
-nb_execution_show_tb = "READTHEDOCS" in os.environ
-bibtex_bibfiles = ["references.bib"]
-# To test that style looks good with common bibtex config
-bibtex_reference_style = "author_year"
-bibtex_default_style = "plain"
-numpydoc_show_class_members = False  # for automodule:: urllib.parse stub file issue
-linkcheck_ignore = [
-    "http://someurl/release",  # This is a fake link
-    "https://doi.org",  # These don't resolve properly and cause SSL issues
-]
 
 
 def setup(app):
