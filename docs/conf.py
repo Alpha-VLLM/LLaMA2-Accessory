@@ -185,7 +185,7 @@ def autolink():
         pattern = re.compile("\[(.*?)\]\((.*?)\)")
         match_result = pattern.match(text).groups()
         text = match_result[0]
-        url = os.path.join("https://github.com/ChrisLiu6/LLaMA2-Accessory/tree/main/", match_result[1])
+        url = os.path.join("https://github.com/Alpha-VLLM/LLaMA2-Accessory/tree/main/", match_result[1])
         node = nodes.reference(rawtext, text, refuri=url, **options)
         node['classes'].append("github")
         return [node], []

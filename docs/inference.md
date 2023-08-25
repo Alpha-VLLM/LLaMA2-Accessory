@@ -1,7 +1,6 @@
 # Inference
-
-:::{card}
-
+## Model Zoo
+```
 └─finetune
     ├─mm
     │  ├─alpacaLlava_llamaQformerv2Peft_13b
@@ -21,8 +20,8 @@
         ├─dialog_wizardcode_loadcode220k
         ├─dialog_wizardLM
         └─gorilla
-
-:::
+```
+The models are availabel at [🤗Hugging Face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory).
 
 ## Prerequisites
 
@@ -32,7 +31,7 @@ Before running the inference code, users must ensure that they have correctly in
 
 **We are pleased to announce that we have now released the full-version (i.e. merged) pre-trained weights**. You can directly download and utilize them without the need to merge original and delta weights. This simplifies the downloading process and provides an immediate user experience. 
 
-:::{info}
+:::{important}
 
 The usage of our released checkpoints should comply with the base LLM's model license: [LLaMA](https://github.com/facebookresearch/llama/blob/main/MODEL_CARD.md).
 
@@ -46,11 +45,11 @@ python tools/download.py --model_name check/in/release/page --input_type sg/or/m
 
 Please continue to stay updated with our latest releases and feel free to share your needs and feedback with us.
 
-### ⏳How to Apply Delta Weights (outdated)
+### How to Apply Delta Weights (Outdated)
 
 :::{warning}
 
-Please note that the following content may be outdated as we have now released the full-version (i.e. merged) pre-trained weights directly. It is no longer needed to apply delta.
+This section may be outdated as we have now released the full-version (i.e. merged) pre-trained weights directly. Applying delta is no longer needed.
 
 :::
 

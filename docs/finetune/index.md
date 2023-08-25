@@ -5,4 +5,5 @@ prerequisites
 sg
 sg_peft
 mm
+quantization
 ```
