@@ -124,7 +124,7 @@ features = model.predict(image_array)
 
 **Data:**
 
-+ Please collect and process the data on your own. [💾Here](../data_example/ShareGPT.json) is a toy example showing the proper format of the data file.
++ Please collect and process the data on your own. {link2repo}`[Here](data_example/ShareGPT.json)` is a toy example showing the proper format of the data file.
 
 **Model Release:**
 

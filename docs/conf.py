@@ -17,7 +17,6 @@ master_doc = "index"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "ablog",
     "myst_parser",
     "numpydoc",
     "sphinx.ext.autodoc",
@@ -177,8 +176,7 @@ def setup(app):
             "https://assets.readthedocs.org/static/javascript/readthedocs-doc-embed.js",
             priority=501,
         )
-        app.add_role('link2repo', autolink())
-
+    app.add_role('link2repo', autolink())
 
 from docutils import nodes
 import re

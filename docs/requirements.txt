@@ -1,6 +1,5 @@
 sphinx
 sphinx-book-theme
-ablog
 myst_nb
 numpydoc
 sphinx_copybutton
