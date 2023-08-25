@@ -94,6 +94,8 @@ def quantize(
                                                                   (LoraColumnParallelLinear, LoraRowParallelLinear,
                                                                    ColumnParallelLinear, RowParallelLinear))]
     for name, module in tqdm(module_list, desc="Qunatization Process"):
+        if "lora" in name:
+            continue
         if isinstance(module, (LoraColumnParallelLinear, LoraRowParallelLinear,
                                ColumnParallelLinear, RowParallelLinear)):
             # 1. Initialize quantization operator
