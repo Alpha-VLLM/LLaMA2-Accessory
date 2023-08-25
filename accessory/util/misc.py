@@ -482,8 +482,8 @@ def resume_stage2(args, model, optimizer, loss_scaler, dataset_train):
             loss_scaler.load_state_dict(other_state_dict['scaler'])
 
             _epoch_iter = [
-                int(other_state_dict['epoch']) + 1 if 'epoch' in other_state_dict else None,
-                int(other_state_dict['iter']) + 1 if 'iter' in other_state_dict else None
+                int(other_state_dict['epoch']) + 1 if other_state_dict.get('epoch', None) is not None else None,
+                int(other_state_dict['iter']) + 1 if other_state_dict.get('iter', None) is not None else None
             ]
             print(f"load other from {consilidated_other_checkpoint_path}")
             print(f"loaded epoch & iter: {_epoch_iter}")
@@ -620,8 +620,8 @@ def mark_mp_params(model: torch.nn.Module):
             m.weight.is_model_parallel = True
 
 
-def print_trainable_params(model: torch.nn.Module) -> None:
+def print_param_status(model: torch.nn.Module) -> None:
     for name, param in model.named_parameters():
         is_model_parallel = getattr(param, "is_model_parallel", False)
-        print(f"Trainable param: {name}, local_size: {param.shape}, model_parallel: {is_model_parallel}, dtype: {param.dtype}")
+        print(f"Param {name}: requires_grad {param.requires_grad}, local_size {param.shape}, model_parallel {is_model_parallel}, dtype {param.dtype}")
 

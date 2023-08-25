@@ -14,3 +14,4 @@ transformers
 pyyaml
 pathlib
 Ninja
+bitsandbytes

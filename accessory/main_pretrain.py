@@ -158,7 +158,7 @@ def main(args):
                           args.tokenizer_path, with_visual=False,
                           max_seq_len=args.max_words)
     promote_trainable_params_to_fp32(model)
-    misc.print_trainable_params(model)
+    misc.print_param_status(model)
     if args.pretrained_path:
         print(f"load pretrained from {args.pretrained_path}")
         misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)

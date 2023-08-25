@@ -39,6 +39,8 @@ from torch.utils.data import Dataset
 from data.alpaca import FinetuneDataset, transform_train, FinetuneDistSampler
 from data.conversation.dataset import FinetuneDialogDataset
 
+from util.quant import quantize
+from util.tensor_parallel import load_tensor_parallel_model
 
 
 def get_args_parser():
@@ -123,6 +125,8 @@ def get_args_parser():
     parser.add_argument('--precision', type=str, choices=['fp16', 'bf16', 'tf32'], default='bf16')
     parser.add_argument('--checkpointing', action="store_true", default=False,
                         help="enable gradient checkopointing")
+    parser.add_argument('--quant', action="store_true", default=False,
+                        help="enable quantization")
 
     return parser
 
@@ -158,14 +162,48 @@ def main(args):
         "bf16": torch.bfloat16,
         "tf32": torch.float32,
     }[args.precision]
-    with default_tensor_type(dtype=mixed_precision_dtype, device="cpu"):
-        model = MetaModel(args.llama_type, args.llama_config,
-                          args.tokenizer_path, with_visual=not args.no_visual,
-                          max_seq_len=args.max_words)
-    promote_trainable_params_to_fp32(model)
-    misc.print_trainable_params(model)
-    print(f"load pretrained from {args.pretrained_path}")
-    misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
+    print("Start initialization.")
+
+    if args.quant:
+        from transformers.utils.quantization_config import BitsAndBytesConfig
+        for i in range(misc.get_world_size()):
+            if i == misc.get_rank():
+                print(f"## Processing on RANK {i}.", force=True)
+                with default_tensor_type(dtype=mixed_precision_dtype, device="cpu"):
+                    model = MetaModel(args.llama_type, args.llama_config,
+                                    args.tokenizer_path, with_visual=not args.no_visual,
+                                    max_seq_len=args.max_words)
+                promote_trainable_params_to_fp32(model)
+                misc.print_param_status(model)
+
+                # load pre-trained weights
+                print(f"## Load pretrained from {args.pretrained_path}", force=True)
+                load_tensor_parallel_model(model, args.pretrained_path, args.pretrained_type)
+
+                print("## Quantizing model to 4bit!", force=True)
+                quantization_config = BitsAndBytesConfig.from_dict(
+                    config_dict={
+                        "load_in_8bit": False, 
+                        "load_in_4bit": True, 
+                        "bnb_4bit_quant_type": "nf4",
+                    },
+                    return_unused_kwargs=False,
+                )
+                quantize(model, quantization_config)
+                
+                # will (1) release CPU memory usage, and (2) occupy GPU memory.
+                model.cuda() 
+            torch.distributed.barrier()
+    else:
+        with default_tensor_type(dtype=mixed_precision_dtype, device="cpu"):
+            model = MetaModel(args.llama_type, args.llama_config,
+                            args.tokenizer_path, with_visual=not args.no_visual,
+                            max_seq_len=args.max_words)
+        print("Finish initialization.")
+        promote_trainable_params_to_fp32(model)
+        misc.print_param_status(model)
+        print(f"load pretrained from {args.pretrained_path}")
+        load_tensor_parallel_model(model, args.pretrained_path, args.pretrained_type)
     print("Unwrapped Model = %s" % str(model))
 
     # resume stage1

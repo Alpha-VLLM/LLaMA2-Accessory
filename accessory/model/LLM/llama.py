@@ -42,10 +42,16 @@ class ModelArgs:
     max_batch_size: int = 32
     max_seq_len: int = 2048
 
+    rope_scaling: Optional[float] = None
 
-def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0):
+
+def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0, scaling=None):
     freqs = 1.0 / (theta ** (torch.arange(0, dim, 2)[: (dim // 2)].float() / dim))
     t = torch.arange(end, device=freqs.device)  # type: ignore
+    if scaling is not None:
+        print(f"rope scaling enabled")
+        print(f"create rotary embedding with scaling factor {scaling}")
+        t = t * scaling
     freqs = torch.outer(t, freqs).float()  # type: ignore
     freqs_cis = torch.polar(torch.ones_like(freqs), freqs)  # complex64
     return freqs_cis
@@ -302,7 +308,7 @@ class Transformer(nn.Module):
         )
 
         self.freqs_cis = precompute_freqs_cis(
-            self.params.dim // self.params.n_heads, self.params.max_seq_len * 2
+            self.params.dim // self.params.n_heads, self.params.max_seq_len * 2, scaling=self.params.rope_scaling
         )
 
         self.image_words = 0
