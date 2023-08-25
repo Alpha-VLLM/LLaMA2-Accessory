@@ -8,13 +8,14 @@
 🚀**LLaMA2-Accessory** is an open-source toolkit for pre-training, fine-tuning and deployment of **Large Language Models (LLMs)** and **mutlimodal LLMs**. This repo is mainly inherited from [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter) with more advanced features.🧠
 
 ## News
+- **[2023.08.21]** We release the Quantization codes and Evaluation result🔥🔥🔥
 - **[2023.08.05]** We release the multimodel fine-tuning codes and checkpoints🔥🔥🔥
 - **[2023.07.23]** Initial release 📌
 
 ## Features
 * **💡Support More Datasets and Tasks**
   - 🎯 Pre-training with [RefinedWeb](https://huggingface.co/datasets/tiiuae/falcon-refinedweb) and [StarCoder](https://github.com/bigcode-project/starcoder).
-  - 📚 Single-modal fine-tuning with [Alpaca](https://github.com/tatsu-lab/stanford_alpaca), [ShareGPT](https://github.com/domeccleston/sharegpt), [LIMA](https://arxiv.org/pdf/2305.11206.pdf), [WizardLM](https://github.com/nlpxucan/WizardLM), [UltraChat](https://github.com/thunlp/UltraChat) and [MOSS](https://github.com/OpenLMLab/MOSS).
+  - 📚 Single-modal fine-tuning with [Alpaca](https://github.com/tatsu-lab/stanford_alpaca), [ShareGPT](https://github.com/domeccleston/sharegpt), [LIMA](https://arxiv.org/pdf/2305.11206.pdf), [WizardLM](https://github.com/nlpxucan/WizardLM), [Flacuna](https://github.com/declare-lab/flacuna), [Platypus](https://github.com/arielnlee/Platypus), [UltraChat](https://github.com/thunlp/UltraChat) and [MOSS](https://github.com/OpenLMLab/MOSS).
   - 🌈 Multi-modal fine-tuning with image-text pairs ([LAION](https://laion.ai/blog/laion-5b/), [COYO](https://github.com/kakaobrain/coyo-dataset) and more), interleaved image-text data ([MMC4](https://github.com/allenai/mmc4) and [OBELISC](https://github.com/huggingface/OBELISC)) and visual instruction data ([LLaVA](https://github.com/haotian-liu/LLaVA), [Shrika](https://github.com/shikras/shikra), [Bard](https://bard.google.com/))
   - 🔧 LLM for API Control ([GPT4Tools](https://github.com/StevenGrove/GPT4Tools) and [Gorilla](https://github.com/ShishirPatil/gorilla)).
 * **⚡Efficient Optimization and Deployment**
@@ -112,6 +113,7 @@ If you find our code and paper useful, please kindly cite:
 + [@microsoft](https://github.com/microsoft) for [DeepSpeed](https://github.com/microsoft/DeepSpeed)
 + [@declare-lab](https://github.com/declare-lab) for [flacuna](https://github.com/declare-lab/flacuna)
 + [@nlpxucan](https://github.com/nlpxucan) for [WizardLM](https://github.com/nlpxucan/WizardLM)
++ [@arielnlee](https://github.com/arielnlee) for [Platypus](https://github.com/arielnlee/Platypus)
 + [@Google](https://github.com/google) for [Bard](https://bard.google.com/)
 </details>
 

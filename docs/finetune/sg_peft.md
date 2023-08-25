@@ -12,7 +12,7 @@
 
 **Model Release:**
 
-+ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/alpaca_llamaPeft_normBias/consolidated.00-of-01.model-diff.pth)
++ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/alpaca_llamaPeft_normBias/consolidated.00-of-01.model.pth)
 
 **Host Local Demo:**
 

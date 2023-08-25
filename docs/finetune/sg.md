@@ -12,7 +12,7 @@
 
 **Model Release:**
 
-+ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/alpaca/consolidated.00-of-01.model-diff.pth)
++ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/alpaca/consolidated.00-of-01.model.pth)
 
 **Host Local Demo:**
 
@@ -53,7 +53,7 @@ Hello and welcome to the LLaMA2-Accesory GitHub repository! This is an open-sour
 
 **Model Release:**
 
-+ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/gorilla/consolidated.00-of-01.model-diff.pth)
++ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/gorilla/consolidated.00-of-01.model.pth)
 
 **Host Local Demo:**
 
@@ -128,7 +128,15 @@ features = model.predict(image_array)
 
 **Model Release:**
 
-+ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/dialog_sharegpt/consolidated.00-of-01.model-diff.pth)
++ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/dialog_sharegpt/consolidated.00-of-01.model.pth)
+
+**Benchmark on OpenCompass:**
+| Model | Overall | Exam | Language | Knowledge | Reasoning | Understanding |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| LLaMA-2-7B | 41.68 | 36.43 | 50.7 | 48.46 | 41.05 | 37.47 |
+| LLaMA-2-7B-ShareGPT | 43.00 | 42.43 | 51.32 | 47.85 | 42.57 | 37.35 |
+
+> Please check [OpenCompass](https://github.com/InternLM/opencompass) for more details.
 
 **Host Local Demo:**
 
@@ -216,7 +224,7 @@ By following this process, you should be able to determine which switch controls
 
 **Model Release:**
 
-+ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/dialog_lima/consolidated.00-of-01.model-diff.pth)
++ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/dialog_lima/consolidated.00-of-01.model.pth)
 
 **Host Local Demo:**
 
@@ -276,7 +284,7 @@ By following these guidelines, you can ensure that your communication with colle
 
 **Model Release:**
 
-+ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/dialog_wizardLM/consolidated.00-of-01.model-diff.pth)
++ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/dialog_wizardLM/consolidated.00-of-01.model.pth)
 
 **Host Local Demo:**
 

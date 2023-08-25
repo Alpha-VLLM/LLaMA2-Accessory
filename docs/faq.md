@@ -16,6 +16,8 @@ This project relies on [Apex](https://github.com/NVIDIA/apex), which necessitate
 
 ## 3. How to Apply Delta Weights?
 
+**(Please note that the following content may be outdated as we have now fully open-sourced our pre-trained weights)**
+
 We release our checkpoints as delta weights to comply with the LLaMA2 model license. To utilize our provided weights for inference or further tuning, kindly adhere to the following instructions to merge our delta into the original LLaMA2 weights to obtain the full weights:
 
 1. Upon agreeing to the License, Acceptable Use Policy, and Meta's privacy policy, proceed to download the LLaMA2 weights from [here](link).
@@ -26,6 +28,32 @@ We release our checkpoints as delta weights to comply with the LLaMA2 model lice
     # For Merging
     python tools/weight_operate.py --pretrained_path /path/to/llama2/ --delta_path /path/to/delta --output_path /path/to/finetuned
     ```
+
+## 4. How to Utilize Trainable Parameters from `main_finetune.py`?
+
+### **Merging with LLaMA2 Weights**
+
+If you've only saved the trainable parameters from `main_finetune.py` and wish to combine them with the `llama2` weights:
+
+- Use our recently introduced feature where demo Python files accept multiple directories for the `--pretrained_path` argument. The function `util.tensor_parallel.load_tensor_parallel_model_list` will autonomously discern checkpoint types (e.g., "meta_ori", "consolidated", or "diff") based on their names and load them sequentially. If a parameter appears in multiple checkpoints, later ones will overwrite earlier ones.
+  
+- If you prefer manual merging:
+  ``` python
+  for key, value in new_state_dict.items():
+      ori_state_dict[key] = value
+  ```
+  Remember, compared to the original llama checkpoints, our parameter names have an added `"llma."` prefix.
+
+### **Using the Parameters for Demos**
+
+For those who saved both trainable and non-trainable parameters from `main_finetune.py`:
+
+- They can be directly used in the `single_turn_mm.py` demo. Ensure `--only_save_trainable` is set to `False`. Here's how to use the saved weights:
+```bash
+python demos/single_turn_mm.py --pretrained_path <folder/to/base/model> <folder/to/trainable/parameters> <--other_flags>
+```
+
+---
 
 
 

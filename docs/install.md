@@ -12,4 +12,4 @@
     ```bash
     pip install flash-attn --no-build-isolation
     ```
-   Note that the `flash_attn` module is *not* supported on all types of GPUs. If it is not applicable on your machine, please set `USE_FLASH_ATTENTION` in [accessory/configs/global_configs.py](../accessory/configs/global_configs.py) to `False`. Vanilla attention computation will then be used.
+   Note that the `flash_attn` module is *not* supported on all types of GPUs. If it is not applicable on your machine, please set `USE_FLASH_ATTENTION` in {link2repo}`[accessory/configs/global_configs.py](accessory/configs/global_configs.py)` to `False`. Vanilla attention computation will then be used.
