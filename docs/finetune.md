@@ -17,10 +17,10 @@ This document demonstrates the fine-tuning use cases supported by LLaMA2-Accesso
 
 > ## Prerequisites
 >
-> To run our provided experiment scripts on you own machine, please first adjust the following configurations:
+> To run our provided experiment scripts on your own machine, please first adjust the following configurations:
 >
 > + Modify the value of the `pretrained_path` variable in the `.sh` file. This variable should point to the directory containing checkpoints to fine-tune from.
->   + If you fine-tune from the officianl LLaMA / LLaMA2 checkpoints released by META, the directory should be like:
+>   + If you fine-tune from the official LLaMA / LLaMA2 checkpoints released by META, the directory should be like:
 >     ```
 >     pretrained_path
 >     ├── consolidated.00.pth
@@ -28,7 +28,7 @@ This document demonstrates the fine-tuning use cases supported by LLaMA2-Accesso
 >     └── ...
 >     ```
 >
->     and your should set `pretrained_type=meta_ori` in the `.sh` file.
+>     and you should set `pretrained_type=meta_ori` in the `.sh` file.
 >   + Alternatively, you may also fine-tune from checkpoints saved by LLaMA2-Accessory. In such cases, the directory should be like:
 >     ```
 >     pretrained_path
@@ -199,7 +199,7 @@ python demos/multi_turn.py \
 > My content is:
 >
 > ```
-> I want study math everyday because I like it. It makes me feel very good. I do not like English because it is hard. I can not remember the words
+> I want to study math every day because I like it. It makes me feel very good. I do not like English because it is hard. I can not remember the words
 > ```
 >
 > **Assistant:** "I am eager to study mathematics daily as I find it fascinating. It brings me great satisfaction. On the other hand, I do not have the same enthusiasm for English as it is a challenging subject for me. Memorizing vocabulary and grammar rules is not my strong suit."
@@ -207,7 +207,7 @@ python demos/multi_turn.py \
 > **Human:** My second content is:
 >
 > ```
-> My name is Jimmy, a master student studing computer science. I have done some projects. For example, I designed a image classification model, its name is CLSModel. I learned a lot from this project.
+> My name is Jimmy, a master student studying computer science. I have done some projects. For example, I designed an image classification model, its name is CLSModel. I learned a lot from this project.
 > ```
 >
 > **Assistant:** "My name is Jimmy, and I am a master's student pursuing a degree in computer science. I have had the opportunity to work on various projects, one of which was an image classification model called CLSModel. Through this project, I gained valuable experience and knowledge that has helped me grow as a computer scientist."
