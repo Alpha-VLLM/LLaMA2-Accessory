@@ -1,42 +1,41 @@
-- [Prerequisites](#prerequisites)
-- [How to Apply Delta Weights](#how-to-apply-delta-weights)
-- [Inference Scenarios](#inference-scenarios)
-  * [Single-turn Dialogue](#single-turn-dialogue)
-  * [Multi-turn Dialogue](#multi-turn-dialogue)
-  * [Multi-modal Dialogue](#multi-modal-dialogue)
-
 # Inference
+## Model Zoo
+```
+└─finetune
+    ├─mm
+    │  ├─alpacaLlava_llamaQformerv2Peft_13b
+    │  ├─alpacaLlava_llamaQformerv2_13b
+    │  └─caption_llamaQformerv2_13b
+    └─sg
+        ├─alpaca
+        ├─alpaca_llamaPeft_normBias
+        ├─dialog_flan
+        ├─dialog_lima
+        ├─dialog_moss
+        ├─dialog_platypus
+        ├─dialog_sharegpt
+        ├─dialog_sharegpt_70b
+        ├─dialog_ultra
+        ├─dialog_wizardcode
+        ├─dialog_wizardcode_loadcode220k
+        ├─dialog_wizardLM
+        └─gorilla
+```
+The models are availabel at [🤗Hugging Face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory).
 
 ## Prerequisites
 
 Before running the inference code, users must ensure that they have correctly installed and configured all necessary environments according to the instructions in the [Installation Document](./install.md).
 
-1. **Model Name (Continuously Updated!)**
+### How to Download Pre-train Weights
 
-   ```sh
-   └─finetune
-       ├─mm
-       │  ├─alpacaLlava_llamaQformerv2Peft_13b
-       │  ├─alpacaLlava_llamaQformerv2_13b
-       │  └─caption_llamaQformerv2_13b
-       └─sg
-           ├─alpaca
-           ├─alpaca_llamaPeft_normBias
-           ├─dialog_flan
-           ├─dialog_lima
-           ├─dialog_moss
-           ├─dialog_platypus
-           ├─dialog_sharegpt
-           ├─dialog_sharegpt_70b
-           ├─dialog_ultra
-           ├─dialog_wizardcode
-           ├─dialog_wizardcode_loadcode220k
-           ├─dialog_wizardLM
-           └─gorilla
-   ```
-2. **How to Download Pre-train Heights**
+**We are pleased to announce that we have now released the full-version (i.e. merged) pre-trained weights**. You can directly download and utilize them without the need to merge original and delta weights. This simplifies the downloading process and provides an immediate user experience. 
 
-We are pleased to announce that we have now fully open-sourced our pre-trained weights. You can directly download and utilize them without the need to merge original and delta weights. This simplifies the downloading process and provides an immediate user experience.
+:::{important}
+
+The usage of our released checkpoints should comply with the base LLM's model license: [LLaMA](https://github.com/facebookresearch/llama/blob/main/MODEL_CARD.md).
+
+:::
 
 For those who wish to download smaller models like peft, we have retained the delta weights. Simply add the `--down_diff` argument during download to facilitate the process. Example commands for download are as follows:
 
@@ -46,28 +45,30 @@ python tools/download.py --model_name check/in/release/page --input_type sg/or/m
 
 Please continue to stay updated with our latest releases and feel free to share your needs and feedback with us.
 
+### How to Apply Delta Weights (Outdated)
 
-> ## ⏳How to Apply Delta Weights
->
-> **(Please note that the following content may be outdated as we have now fully open-sourced our pre-trained weights)**
->
-> We release checkpoints as delta weights to comply with the LLaMA2 model license. To use our provided weights for inference or further tuning, please first add our delta to the original LLaMA2 weights to obtain the full weights:
->
-> Instructions:
->
-> 1. After agreeing to the License, Acceptable Use Policy, and Meta's privacy policy, proceed to download the LLaMA2 weights from [here](https://ai.meta.com/resources/models-and-libraries/llama-downloads/).
-> 2. Utilize the following scripts to obtain finetuned weights by applying our delta. Make sure to download the delta weights from the [model release page](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory).
->    ```bash
->    # For Download
->    python tools/download.py  --model_name check/in/release/page --input_type sg/or/mm --output_path path/to/save --model_size 7B/13B/70B --down_config --down_diff
->    # For Merging
->    python tools/weight_operate.py  --pretrained_path /path/to/llama2/ --delta_path /path/to/delta --output_path /path/to/finetuned
->    # For Separation
->    python tools/weight_operate.py  --pretrained_path /path/to/llama2/ --delta_path /path/to/finetuned --output_path /path/to/delta --operate_type extract
->    ```
->
-> 
->
+:::{warning}
+
+This section may be outdated as we have now released the full-version (i.e. merged) pre-trained weights directly. Applying delta is no longer needed.
+
+:::
+
+We release checkpoints as delta weights to comply with the LLaMA2 model license. To use our provided weights for inference or further tuning, please first add our delta to the original LLaMA2 weights to obtain the full weights:
+
+Instructions:
+
+1. After agreeing to the License, Acceptable Use Policy, and Meta's privacy policy, proceed to download the LLaMA2 weights from [here](https://ai.meta.com/resources/models-and-libraries/llama-downloads/).
+2. Utilize the following scripts to obtain finetuned weights by applying our delta. Make sure to download the delta weights from the [model release page](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory).
+   ```bash
+   # For Download
+   python tools/download.py  --model_name check/in/release/page --input_type sg/or/mm --output_path path/to/save --model_size 7B/13B/70B --down_config --down_diff
+   # For Merging
+   python tools/weight_operate.py  --pretrained_path /path/to/llama2/ --delta_path /path/to/delta --output_path /path/to/finetuned
+   # For Separation
+   python tools/weight_operate.py  --pretrained_path /path/to/llama2/ --delta_path /path/to/finetuned --output_path /path/to/delta --operate_type extract
+   ```
+
+
 
 ## Inference Scenarios
 

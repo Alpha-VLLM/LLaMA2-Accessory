@@ -28,15 +28,15 @@
 
 ## Setup
 
-:gear: For environment installation, please refer to [docs/install.md](./docs/install.md).
+:gear: For environment installation, please refer to [Environment Setup](https://llama2-accessory.readthedocs.io/en/latest/install.html).
 
 ## Model Usage
 
-:robot: Instructions for model training, inference, and fine-tuning are available in [docs/pretrain.md](./docs/pretrain.md), [docs/inference.md](./docs/inference.md), and [docs/finetune.md](./docs/finetune.md), respectively.
+:robot: Instructions for model [pre-training](https://llama2-accessory.readthedocs.io/en/latest/pretrain.html), [fine-tuning](https://llama2-accessory.readthedocs.io/en/latest/finetune/index.html), [inference](https://llama2-accessory.readthedocs.io/en/latest/inference.html), and other related topics are all available in the [document](https://llama2-accessory.readthedocs.io).
 
 ## Frequently Asked Questions (FAQ)
 
-:question: Encountering issues or have further questions? Find answers to common inquiries [here](./docs/faq.md). We're here to assist you!
+:question: Encountering issues or have further questions? Find answers to common inquiries [here](https://llama2-accessory.readthedocs.io/en/latest/faq.html). We're here to assist you!
 
 ## Demos
 * Instruction-tuned LLaMA2: [alpaca](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/alpaca.html) & [gorilla](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/gorilla.html).
