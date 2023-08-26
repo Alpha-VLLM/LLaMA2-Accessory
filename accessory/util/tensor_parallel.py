@@ -66,28 +66,24 @@ def _tensor_list_max_diff(tensors: List[torch.Tensor]) -> float:
 
 
 def _load_checkpoint_and_merge_ranks(
-    ckpt_files: List[str], weight_parallel_dim: Dict[str, int], verbose: bool,
-    format: str,
+    ckpt_path: str, ckpt_mp_world_size: int,
+    weight_parallel_dim: Dict[str, int], verbose: bool, format: str,
 ) -> OrderedDict[str, torch.Tensor]:
     mp_rank = fs_init.get_model_parallel_rank()
     mp_world_size = fs_init.get_model_parallel_world_size()
-    ckpt_world_size = len(ckpt_files)
 
-    assert ckpt_world_size % mp_world_size == 0
-    local_num_shards = ckpt_world_size // mp_world_size
+    assert ckpt_mp_world_size % mp_world_size == 0
+    local_num_shards = ckpt_mp_world_size // mp_world_size
     local_shard_st = local_num_shards * mp_rank
     local_shard_ed = local_num_shards * (mp_rank + 1)
     ckpt_shards = []
     merged_ckpt = OrderedDict()
     for shard_id in range(local_shard_st, local_shard_ed):
-        shard = torch.load(ckpt_files[shard_id], map_location="cpu")
-        if format.startswith("consolidated"):
-            if "model" in shard and isinstance(shard["model"], dict):
-                shard = shard["model"]
-        elif format == "meta_ori":
-            shard = dict(("llma." + key, value)
-                         for key, value in shard.items())
-        ckpt_shards.append(shard)
+        ckpt_shards.append(
+            load_tensor_parallel_shard_state_dict(
+                ckpt_path, format, shard_id, ckpt_mp_world_size
+            )
+        )
 
     for key in list(ckpt_shards[0].keys()):
         param_shards = [shard[key] for shard in ckpt_shards]
@@ -112,17 +108,75 @@ def _load_checkpoint_and_merge_ranks(
 
 
 def _load_checkpoint_and_split_rank(
-    ckpt_files: List[str], weight_parallel_dim: Dict[str, int], verbose: bool,
-    format: str,
+    ckpt_path: str, ckpt_mp_world_size: int,
+    weight_parallel_dim: Dict[str, int], verbose: bool, format: str,
 ) -> OrderedDict[str, torch.Tensor]:
     raise NotImplementedError()
 
 
 def _load_checkpoint_and_redistribute_general(
-    ckpt_files: List[str], weight_parallel_dim: Dict[str, int], verbose: bool,
-    format: str,
+    ckpt_path: str, ckpt_mp_world_size: int,
+    weight_parallel_dim: Dict[str, int], verbose: bool, format: str,
 ) -> OrderedDict[str, torch.Tensor]:
     raise NotImplementedError()
+
+
+def get_tensor_parallel_shards_file_name(
+    format: str, mp_size: int
+) -> List[str]:
+    r"""A helper function that returns a list of tensor-parallel shard file
+    names by format and tensor parallel size.
+
+    Args:
+        format (str): Name of the checkpoint format.
+        mp_size (int): Tensor parallel size of the checkpoint.
+
+    Returns:
+        List[str]: A list of file names with the i-th element being the file
+            name of the i-th tensor parallel shard.
+    """
+    return {
+        "meta_ori": [
+            f"consolidated.{i:02d}.pth" for i in range(mp_size)
+        ],
+        "consolidated": [
+            f"consolidated.{i:02d}-of-{mp_size:02d}.model.pth"
+            for i in range(mp_size)
+        ],
+        "consolidated_diff": [
+            f"consolidated.{i:02d}-of-{mp_size:02d}.model-diff.pth"
+            for i in range(mp_size)
+        ],
+    }[format]
+
+
+def load_tensor_parallel_shard_state_dict(
+    path: str, format: str, shard_id: int, num_shards: int,
+) -> Dict[str, torch.Tensor]:
+    r"""Load one tensor parallel state dict shard from the disk and post
+    process according to format.
+
+    Args:
+        path (str): Path to the folder containing the checkpoint shards.
+        format (str): Name of the format of the checkpoint.
+        shard_id (int): The tensor parallel rank to load.
+        num_shards (int): The tensor parallel world size of the checkpoint.
+
+    Returns:
+        Dict[str, torch.Tensor]: The loaded and processed state dict.
+    """
+    shard_path = os.path.join(
+        path,
+        get_tensor_parallel_shards_file_name(format, num_shards)[shard_id],
+    )
+    shard = torch.load(shard_path, map_location="cpu")
+    if format.startswith("consolidated"):
+        if "model" in shard and isinstance(shard["model"], dict):
+            shard = shard["model"]
+    elif format == "meta_ori":
+        shard = dict(("llma." + key, value)
+                     for key, value in shard.items())
+    return shard
 
 
 def load_tensor_parallel_model_state_dict(
@@ -182,34 +236,21 @@ def load_tensor_parallel_model_state_dict(
             f"\"{path}\" is not a valid {format} format checkpoint path: "
             "No file with valid name is found in the path."
         )
-        ckpt_files = []
-        for i in range(ckpt_mp_world_size):
-            fn = {
-                "meta_ori": f"consolidated.{i:02d}.pth",
-                "consolidated": f"consolidated.{i:02d}-of-"
-                                f"{ckpt_mp_world_size:02d}.model.pth",
-                "consolidated_dirr": f"consolidated.{i:02d}-of-"
-                                     f"{ckpt_mp_world_size:02d}.model-diff"
-                                     f".pth",
-            }[format]
-            full_path = os.path.join(path, fn)
-            assert os.path.isfile(full_path), f"\"{full_path}\" is not a file."
-            ckpt_files.append(full_path)
 
         # Dispatch to different implementations for better performance:
         # Shorten the start-up time as much as possible because we strive for
         # better user experience!
         if ckpt_mp_world_size % mp_world_size == 0:
             local_state_dict = _load_checkpoint_and_merge_ranks(
-                ckpt_files, weight_parallel_dim, verbose, format
+                path, ckpt_mp_world_size, weight_parallel_dim, verbose, format
             )
         elif mp_world_size % ckpt_mp_world_size == 0:
             local_state_dict = _load_checkpoint_and_split_rank(
-                ckpt_files, weight_parallel_dim, verbose, format
+                path, ckpt_mp_world_size, weight_parallel_dim, verbose, format
             )
         else:
             local_state_dict = _load_checkpoint_and_redistribute_general(
-                ckpt_files, weight_parallel_dim, verbose, format
+                path, ckpt_mp_world_size, weight_parallel_dim, verbose, format
             )
 
         return local_state_dict
@@ -284,24 +325,19 @@ def infer_checkpoint_format_and_mp_size(path: str) -> str:
                 raise NotImplementedError(f"Multiple matched format detected: "
                                           f"{inferred_format} and {format}.")
     if inferred_format is None:
-        raise NotImplementedError(f"Files in the given folder do not match "
-                                  f"any format. Files: {files_in_folder}.")
+        folder_contents = ", ".join(
+            [x if os.path.isfile(os.path.join(path, x)) else x + " (not a file)"
+             for x in os.listdir(path)]
+        )
+        raise NotImplementedError(
+            f"Files in the given folder do not match  any format. "
+            f"Contents in the folder: [{folder_contents}]."
+        )
 
-    expected_files_list = {
-        "meta_ori": [
-            f"consolidated.{i:02d}.pth" for i in range(inferred_mp_size)
-        ],
-        "consolidated": [
-            f"consolidated.{i:02d}-of-{inferred_mp_size:02d}.model.pth"
-            for i in range(inferred_mp_size)
-        ],
-        "consolidated_diff": [
-            f"consolidated.{i:02d}-of-{inferred_mp_size:02d}.model-diff.pth"
-            for i in range(inferred_mp_size)
-        ],
-    }
-    assert expected_files_list.keys() == FORMAT_FILENAME_PATTERNS.keys()
-    for fn in expected_files_list[inferred_format]:
+    expected_files_list = get_tensor_parallel_shards_file_name(
+        inferred_format, inferred_mp_size
+    )
+    for fn in expected_files_list:
         if fn not in files_in_folder:
             raise NotImplementedError("An expected file is not found in the "
                                       "target folder: " + fn)
@@ -406,3 +442,93 @@ def load_tensor_parallel_model_list(
         unexpected_keys.update(step_unexpected_keys)
 
     return list(missing_keys), list(unexpected_keys)
+
+
+def tensor_load_shard(
+    target: torch.Tensor, parallel_dim: int, num_shards: int, shard_id: int,
+    value: torch.Tensor, mode: str = "set",
+) -> None:
+    r"""A helper function to partially load a tensor. This can save memory
+    sometimes as this allows tensor parallel shards to stream into memory (
+    without being concatenated into a full model first).
+
+    Args:
+        target (``torch.Tensor``): The target tensor to load the values into.
+        parallel_dim (int): Tensor parallel dimension of the tensor.
+        num_shards (int): Number of tensor parallel shards of the value.
+        shard_id (int): The shard id of the current value.
+        value (``torch.Tensor``): The value to be loaded into the target
+            tensor.
+        mode (str): The supported values are ``set`` and ``add``. If ``set``,
+            the old value in the target tensor is overrided with the new value.
+            If ``add``, the new value is added to the old value.
+    """
+    assert parallel_dim < target.ndim or parallel_dim == -1
+    target_slices = []
+    for i in range(target.ndim):
+        if i == parallel_dim:
+            dim_st = target.size(i) // num_shards * shard_id
+            dim_ed = target.size(i) // num_shards * (shard_id + 1)
+            target_slices.append(slice(dim_st, dim_ed))
+        else:
+            target_slices.append(slice(None))
+    if parallel_dim == -1 and shard_id != 0 and mode in ["set", "add"]:
+        return
+    if mode == "set":
+        target[target_slices] = value
+    elif mode == "add":
+        target[target_slices] += value
+    else:
+        raise NotImplementedError(f"Unknown mode: {mode}.")
+
+
+class ShardedTensorLoader:
+    r"""A helper class to load a tensor parallel sharded tensor and track the
+    loading status (i.e., check if a tensor is loaded with consistent tensor
+    parallel size, check that each shard is loaded only once, and check that
+    all shards are loaded).
+    """
+
+    def __init__(
+        self,
+        target: torch.Tensor,
+        num_shards: int,
+        shard_dim: int,
+        mode: str = "set",
+    ) -> None:
+        r"""Initialize a ShardedTensorLoader.
+
+        Args:
+            target (``torch.Tensor``): The target tensor where value shards are
+                loaded into.
+            num_shards (int): Number of expected shards.
+            shard_dim (int): The dimension along which the tensor is sharded.
+            mode (str): Supported options are ``set`` and ``add``. If ``set``,
+                the old value in the target tensor is overrided with the new
+                value. If ``add``, the new value is added to the old value.
+        """
+        self._target = target
+        self._num_shards = num_shards
+        self._shard_dim = shard_dim
+        self._mode = mode
+
+        self._loaded_shards = set()
+
+    def load_shard(self, shard_id: int, value: torch.Tensor) -> None:
+        r"""Load a shard into the target tensor.
+
+        Args:
+            shard_id (int): The shard id of the current value.
+            value (``torch.Tensor``): The value to be loaded.
+        """
+        assert shard_id not in self._loaded_shards
+        assert shard_id >= 0 and shard_id < self._num_shards
+        self._loaded_shards.add(shard_id)
+        tensor_load_shard(self._target, self._shard_dim, self._num_shards,
+                          shard_id, value, self._mode)
+
+    def is_complete(self) -> bool:
+        r"""Check if all the shards are loaded to the target tensor."""
+        assert all(x >= 0 and x < self._num_shards
+                   for x in self._loaded_shards)
+        return len(self._loaded_shards) == self._num_shards
