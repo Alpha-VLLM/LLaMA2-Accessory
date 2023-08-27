@@ -78,7 +78,7 @@ class MetaModel(nn.Module):
         if labels.sum() == 0:
            c_loss = output.mean() * 0
         else:
-           c_loss = self.criterion(output.reshape(-1, 32000), labels.flatten())
+           c_loss = self.criterion(output.reshape(-1, self.tokenizer.n_words), labels.flatten())
         return c_loss
 
 
