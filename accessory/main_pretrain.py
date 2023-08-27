@@ -47,7 +47,7 @@ def get_args_parser():
                         help='Accumulate gradient iterations (for increasing the effective batch size under memory constraints)')
 
     # Model parameters
-    parser.add_argument('--llama_type', default='llama', type=str, metavar='MODEL', choices=['llama',],
+    parser.add_argument('--llama_type', default='llama', type=str, metavar='MODEL',
                         help='Name of model to train')
     parser.add_argument('--llama_config', default=['params.json'], nargs="+",
                         help='Path to llama model config')

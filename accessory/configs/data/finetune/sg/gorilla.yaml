@@ -1,2 +1,4 @@
 META:
-  - ['../data/tensorflow_train_formatted.json', 'text']
+  -
+    path: '../data/tensorflow_train_formatted.json'
+    type: 'text'

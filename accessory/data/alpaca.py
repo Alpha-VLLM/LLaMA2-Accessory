@@ -16,25 +16,7 @@ try:
 except ImportError:
     BICUBIC = Image.BICUBIC
 
-
-def format_prompt(instruction, input=None):
-    PROMPT_DICT = {
-        "prompt_input": (
-            "Below is an instruction that describes a task, paired with an input that provides further context. "
-            "Write a response that appropriately completes the request.\n\n"
-            "### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:"
-        ),
-        "prompt_no_input": (
-            "Below is an instruction that describes a task. "
-            "Write a response that appropriately completes the request.\n\n"
-            "### Instruction:\n{instruction}\n\n### Response:"
-        ),
-    }
-    if input is None or input=='':
-        return PROMPT_DICT['prompt_no_input'].format_map({'instruction': instruction})
-    else:
-        return PROMPT_DICT["prompt_input"].format_map({'instruction': instruction, 'input': input})
-
+from .system_prompt import format_prompt
 
 # create data
 transform_train = transforms.Compose([
@@ -60,7 +42,8 @@ class FinetuneDataset(Dataset):
         print("DATASET CONFIG:")
         print(self.config)
         group_ann = {}
-        for meta_path, meta_type in self.config['META']:
+        for meta in self.config['META']:
+            meta_path, meta_type = meta['path'], meta['type']
             meta_ext = os.path.splitext(meta_path)[-1]
             if meta_ext == ".json":
                 with open(meta_path) as f:
@@ -80,6 +63,12 @@ class FinetuneDataset(Dataset):
                     "If you are using a supported format, please set the file extension so that the proper parsing "
                     "routine can be called."
                 )
+
+            prompt_type = meta.get('prompt_type', 'alpaca')
+            print(f"system prompt: {prompt_type}")
+            for _ in meta_l:
+                _['sys_prompt'] = prompt_type
+
             if meta_type not in group_ann:
                 group_ann[meta_type] = []
             print(f"{meta_path}, type{meta_type}: len {len(meta_l)}")
@@ -103,7 +92,7 @@ class FinetuneDataset(Dataset):
         return len(self.ann)
 
     def __getitem__(self, index):
-        data_item = self.ann[index]
+        data_item: dict = self.ann[index]
         if 'image' in data_item.keys():
             filename = data_item['image']
             question = data_item['conversations'][0]['value']
@@ -118,7 +107,7 @@ class FinetuneDataset(Dataset):
             format_instruction = data_item['instruction'],
             format_input = data_item['input']
             answer = data_item['output']
-        input1 = format_prompt(format_instruction, format_input)
+        input1 = format_prompt(format_instruction, format_input, data_item["sys_prompt"])
         input2 = input1 + answer
         input1 = torch.tensor(self.tokenizer.encode(input1, bos=True, eos=False), dtype=torch.int64)
         input2 = torch.tensor(self.tokenizer.encode(input2, bos=True, eos=True), dtype=torch.int64)

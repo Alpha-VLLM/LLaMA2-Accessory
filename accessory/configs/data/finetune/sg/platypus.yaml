@@ -1,2 +1,7 @@
 META:
-  - ['../data/Platypus_alpaca_format.json', 'text']
+  -
+    path: '../data/Platypus_alpaca_format.json'
+    type: 'text'
+  -
+    path: '../data/alpaca_gpt4_data.json'
+    type: 'text'
