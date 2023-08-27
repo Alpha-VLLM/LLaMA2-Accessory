@@ -13,7 +13,6 @@ from util import misc
 from fairscale.nn.model_parallel import initialize as fs_init
 
 from data.alpaca import transform_train, format_prompt
-from util.quant import quantize
 from util.tensor_parallel import load_tensor_parallel_model_list
 
 
@@ -54,7 +53,7 @@ load_tensor_parallel_model_list(model, args.pretrained_path)
 
 if args.quant:
     print("Quantizing model to 4bit!")
-
+    from util.quant import quantize
     from transformers.utils.quantization_config import BitsAndBytesConfig
     quantization_config = BitsAndBytesConfig.from_dict(
         config_dict={

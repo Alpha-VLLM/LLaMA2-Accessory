@@ -9,7 +9,7 @@ data_parallel=fsdp
 model_parallel=2
 
 
-exp_name="pretrain/pretrain"
+exp_name="pretrain/13B_packed"
 echo "exp name: $exp_name"
 mkdir -p output/"$exp_name"
 
