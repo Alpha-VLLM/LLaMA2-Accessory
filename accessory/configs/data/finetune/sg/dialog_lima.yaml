@@ -1,2 +1,4 @@
 META:
-  - ['../data/lima_vicuna_format.json', 'text']
+  -
+    path: '../data/lima_vicuna_format.json'
+    type: 'text'

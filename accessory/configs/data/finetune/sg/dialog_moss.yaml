@@ -1,2 +1,4 @@
 META:
-  - ['../data/moss_fastchat_4k.json', 'text']
+  -
+    path: '../data/moss_fastchat_4k.json'
+    type: 'text'

@@ -1,3 +1,7 @@
 META:
-  - ['../data/alpaca_gpt4_data.json', 'text']
-  - ['../data/llava_instruct_150k_single_turn.json', 'image_text']
+  -
+    path: '../data/alpaca_gpt4_data.json'
+    type: 'text'
+  -
+    path: '../data/llava_instruct_150k_single_turn.json'
+    type: 'image_text'
