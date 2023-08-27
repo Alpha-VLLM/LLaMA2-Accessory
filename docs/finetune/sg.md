@@ -42,7 +42,7 @@ Hello and welcome to the LLaMA2-Accesory GitHub repository! This is an open-sour
 
 **Script:**
 
-+ {link2repo}`[exps/finetune/sg/gorilla.sh](../../accessory/exps/finetune/sg/gorilla.sh)`
++ {link2repo}`[exps/finetune/sg/gorilla.sh](accessory/exps/finetune/sg/gorilla.sh)`
 
 **Data:**
 
@@ -272,7 +272,7 @@ By following these guidelines, you can ensure that your communication with colle
 [*More examples here*](../examples/finetune/sg/dialog_lima.md)
 :::
 ---
-## Multi-turn LLaMA2-7B on WizardLM
+## Single-turn LLaMA2-7B on WizardLM
 
 **Script:**
 
@@ -359,6 +359,17 @@ In the main function, we define an unsorted array and call quicksort on it. We t
 
  [*More examples here*](../examples/finetune/sg/dialog_wizardLM.md)
 :::
+
+---
+## Single-turn CodeLLaMA-7B on WizardCode
+
+**Script:**
+
++ {link2repo}`[exps/finetune/sg/dialog_wizardCode.sh](accessory/exps/finetune/sg/dialog_wizardCode.sh)`
+
+**Data:**
+
++ [💾evol-codealpaca-v1](https://huggingface.co/datasets/theblackcat102/evol-codealpaca-v1)
 
 ---
 
