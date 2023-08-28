@@ -125,7 +125,7 @@ def get_args_parser():
     parser.add_argument('--checkpointing', action="store_true", default=False,
                         help="enable gradient checkopointing")
     parser.add_argument('--quant', action="store_true", default=False,
-                        help="enable quantization")
+                        help="enable quantization to speedup and save memory")
 
     return parser
 
@@ -166,6 +166,7 @@ def main(args):
     if args.quant:
         from util.quant import quantize
         from transformers.utils.quantization_config import BitsAndBytesConfig
+        assert args.only_save_trainable, "only_save_trainable must be True when quantization is in the loop."
         for i in range(misc.get_world_size()):
             if i == misc.get_rank():
                 print(f"## Processing on RANK {i}.", force=True)
