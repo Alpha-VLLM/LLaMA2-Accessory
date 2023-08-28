@@ -8,6 +8,9 @@
 🚀**LLaMA2-Accessory** is an open-source toolkit for pre-training, fine-tuning and deployment of **Large Language Models (LLMs)** and **mutlimodal LLMs**. This repo is mainly inherited from [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter) with more advanced features.🧠
 
 ## News
+- **[2023.08.28]** We release quantized LLM with [OmniQuant](https://github.com/OpenGVLab/OmniQuant), which is an efficient, accurate, and omnibearing (even extremely low bit) quantization algorithm. Multimodal version is coming soon.🔥🔥🔥
+- **[2023.08.27]** We now support CodeLLaMA and instruction fine-tuning on [evol-code-alpaca](https://huggingface.co/datasets/theblackcat102/evol-codealpaca-v1)🔥🔥🔥
+- **[2023.08.27]** We release our documentation in a webbook format 🔗[Check it out here](https://llama2-accessory.readthedocs.io/)
 - **[2023.08.21]** We release the Quantization codes and Evaluation result🔥🔥🔥
 - **[2023.08.05]** We release the multimodel fine-tuning codes and checkpoints🔥🔥🔥
 - **[2023.07.23]** Initial release 📌
@@ -28,15 +31,15 @@
 
 ## Setup
 
-:gear: For environment installation, please refer to [docs/install.md](./docs/install.md).
+:gear: For environment installation, please refer to [Environment Setup](https://llama2-accessory.readthedocs.io/en/latest/install.html).
 
 ## Model Usage
 
-:robot: Instructions for model training, inference, and fine-tuning are available in [docs/pretrain.md](./docs/pretrain.md), [docs/inference.md](./docs/inference.md), and [docs/finetune.md](./docs/finetune.md), respectively.
+:robot: Instructions for model [pre-training](https://llama2-accessory.readthedocs.io/en/latest/pretrain.html), [fine-tuning](https://llama2-accessory.readthedocs.io/en/latest/finetune/index.html), [inference](https://llama2-accessory.readthedocs.io/en/latest/inference.html), and other related topics are all available in the [document](https://llama2-accessory.readthedocs.io).
 
 ## Frequently Asked Questions (FAQ)
 
-:question: Encountering issues or have further questions? Find answers to common inquiries [here](./docs/faq.md). We're here to assist you!
+:question: Encountering issues or have further questions? Find answers to common inquiries [here](https://llama2-accessory.readthedocs.io/en/latest/faq.html). We're here to assist you!
 
 ## Demos
 * Instruction-tuned LLaMA2: [alpaca](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/alpaca.html) & [gorilla](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/gorilla.html).

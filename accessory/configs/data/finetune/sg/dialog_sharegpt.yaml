@@ -1,2 +1,4 @@
 META:
-  - ['../data/sharegpt.json', 'text']
+  -
+    path: '../data/sharegpt.json'
+    type: 'text'

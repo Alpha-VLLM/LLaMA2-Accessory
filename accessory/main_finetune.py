@@ -39,7 +39,6 @@ from torch.utils.data import Dataset
 from data.alpaca import FinetuneDataset, transform_train, FinetuneDistSampler
 from data.conversation.dataset import FinetuneDialogDataset
 
-from util.quant import quantize
 from util.tensor_parallel import load_tensor_parallel_model
 
 
@@ -165,8 +164,9 @@ def main(args):
     print("Start initialization.")
 
     if args.quant:
-        assert args.only_save_trainable, "only_save_trainable must be True when quantization is in the loop."
+        from util.quant import quantize
         from transformers.utils.quantization_config import BitsAndBytesConfig
+        assert args.only_save_trainable, "only_save_trainable must be True when quantization is in the loop."
         for i in range(misc.get_world_size()):
             if i == misc.get_rank():
                 print(f"## Processing on RANK {i}.", force=True)

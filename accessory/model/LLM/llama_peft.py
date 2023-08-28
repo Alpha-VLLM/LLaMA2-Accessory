@@ -41,6 +41,7 @@ class ModelArgs:
     multiple_of: int = 256  # make SwiGLU hidden layer size multiple of large power of 2
     ffn_dim_multiplier: Optional[float] = None
     norm_eps: float = 1e-5
+    rope_theta: float = 10000
 
     max_batch_size: int = 32
     max_seq_len: int = 2048
@@ -280,7 +281,8 @@ class Transformer(nn.Module):
         )
 
         self.freqs_cis = precompute_freqs_cis(
-            self.params.dim // self.params.n_heads, self.params.max_seq_len * 2, scaling=self.params.rope_scaling
+            self.params.dim // self.params.n_heads, self.params.max_seq_len * 2,
+            theta=self.params.rope_theta, scaling=self.params.rope_scaling
         )
 
         self.image_words = 0

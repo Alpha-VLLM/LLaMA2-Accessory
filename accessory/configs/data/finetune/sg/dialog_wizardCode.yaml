@@ -1,0 +1,4 @@
+META:
+  -
+    path: '../data/evol-codealpaca-v1/wizardCode.json'
+    type: 'text'

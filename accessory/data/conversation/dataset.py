@@ -98,7 +98,8 @@ class FinetuneDialogDataset(Dataset):
         print("DATASET CONFIG:")
         print(self.config)
         group_ann = {}
-        for meta_path, meta_type in self.config['META']:
+        for meta in self.config['META']:
+            meta_path, meta_type = meta['path'], meta['type']
             meta_l = json.load(open(meta_path))
             if meta_type not in group_ann:
                 group_ann[meta_type] = []
