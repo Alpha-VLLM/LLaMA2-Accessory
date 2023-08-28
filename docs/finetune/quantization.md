@@ -34,20 +34,16 @@ Models can be loaded in 4-bit NormalFloat (NF4) data format which optimizes both
 | LLaMA2-13B Q-Fomer | 512        | Multi-modal/[LLaVA-Instruct-150K](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/tree/main)             | BF16      | 1          | 31 GB     | 38 GB (NormBiasLoRA) | ✔          |
 | LLaMA2-13B Q-Fomer | 512        | Multi-modal [LLaVA-Instruct-150K](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/tree/main)             | NF4       | 1          | 13 GB     | 15 GB (NormBiasLoRA) | ✔          |
 
-
-
 - **GPU hours** of fine-tuning
 
 > Note that we use 8x A100-80GB GPU cards for fine-tuning. The GPU hour refers to `number_of_cards * total_training_time`.
 
-| Model              | Task / Dataset                                                                                                          | Samples | Epoch | Precision | GPU Hours | 8x A100 Training Time |
-|:------------------:|:-----------------------------------------------------------------------------------------------------------------------:|:-------:|:-----:|:---------:|:---------:|:---------------------:|
-| LLaMA-70B          | Language-only/[Alpaca](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM/blob/main/data/alpaca_gpt4_data.json) | 52K     | 4     | BF16      | 100h      | 12.5h                 |
-| LLaMA-70B          | Language-only/[Alpaca](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM/blob/main/data/alpaca_gpt4_data.json) | 52K     | 4     | NF4       | 80h       | 10h                   |
-| LLaMA-13B Q-Former | Multi-modal/[LLaVA-Instruct-150K](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/tree/main)             | 150K    | 3     | BF16      | 170h      | 20h                   |
-| LLaMA-13B Q-Former | Multi-modal/[LLaVA-Instruct-150K](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/tree/main)             | 150K    | 3     | NF4       | 88h       | 11h                   |
-
-
+| Model               | Task / Dataset                                                                                                          | Samples | Epoch | Precision | GPU Hours | 8x A100 Training Time |
+|:-------------------:|:-----------------------------------------------------------------------------------------------------------------------:|:-------:|:-----:|:---------:|:---------:|:---------------------:|
+| LLaMA2-70B          | Language-only/[Alpaca](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM/blob/main/data/alpaca_gpt4_data.json) | 52K     | 4     | BF16      | 100h      | 12.5h                 |
+| LLaMA2-70B          | Language-only/[Alpaca](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM/blob/main/data/alpaca_gpt4_data.json) | 52K     | 4     | NF4       | 80h       | 10h                   |
+| LLaMA2-13B Q-Former | Multi-modal/[LLaVA-Instruct-150K](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/tree/main)             | 150K    | 3     | BF16      | 170h      | 20h                   |
+| LLaMA2-13B Q-Former | Multi-modal/[LLaVA-Instruct-150K](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/tree/main)             | 150K    | 3     | NF4       | 88h       | 11h                   |
 
 ## Inference
 
@@ -84,7 +80,5 @@ torchrun --nproc-per-node=1  demos/single_turn_mm.py \
 --pretrained_path </path/to/multi/modal/llama>  </path/to/trainable/params> \
 --quant
 ```
-
-
 
 Check [inference.md](https://github.com/Alpha-VLLM/LLaMA2-Accessory/blob/quantization/docs/inference.md) for more details.
