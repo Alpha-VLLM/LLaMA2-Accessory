@@ -1,10 +1,8 @@
-first = [True]
+from typing import Dict
 
-def format_prompt(instruction, input=None, sys_name="alpaca"):
-    if input is None or input == "" or input.isspace():
-        input = None
+def format_prompt(format_dict: Dict, sys_name="alpaca"):
     if sys_name == "alpaca":
-        PROMPT_DICT = {
+        prompt_dict = {
             "prompt_input": (
                 "Below is an instruction that describes a task, paired with an input that provides further context. "
                 "Write a response that appropriately completes the request.\n\n"
@@ -16,17 +14,23 @@ def format_prompt(instruction, input=None, sys_name="alpaca"):
                 "### Instruction:\n{instruction}\n\n### Response:"
             ),
         }
-        if input is None or input=='':
-            return PROMPT_DICT['prompt_no_input'].format_map({'instruction': instruction})
+        if "input" not in format_dict or format_dict["input"] is None or format_dict["input"] == "" or format_dict["input"].isspace():
+            return prompt_dict['prompt_no_input'].format_map(format_dict)
         else:
-            return PROMPT_DICT["prompt_input"].format_map({'instruction': instruction, 'input': input})
+            return prompt_dict["prompt_input"].format_map(format_dict)
 
     elif sys_name == "qg":  # question_generation
         prompt = (
             "Generate a question whose answer is:\n{instruction}\n\n"
             "Question:\n"
         )
-        if first[0]:
-            print(prompt.format_map({'instruction': instruction}))
-            first[0] = False
-        return prompt.format_map({'instruction': instruction})
+        return prompt.format_map(format_dict)
+
+    elif sys_name == "caption":
+        return ""
+
+    elif sys_name == "None":
+        return "{instruction}".format_map(format_dict)
+
+    else:
+        ValueError(sys_name)

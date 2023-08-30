@@ -1,8 +1,11 @@
+from typing import List, Dict
+import random
 import torch
 import yaml
 from torch.utils.data import Dataset
 from PIL import Image
 import json
+import pandas as pd
 from model.tokenizer import Tokenizer
 import copy
 import torchvision.transforms as transforms
@@ -45,6 +48,8 @@ class FinetuneDataset(Dataset):
         for meta in self.config['META']:
             meta_path, meta_type = meta['path'], meta['type']
             meta_ext = os.path.splitext(meta_path)[-1]
+            #   read data meta file
+            #   meta_l should finally be a list of data items, and each data item should be a dict
             if meta_ext == ".json":
                 with open(meta_path) as f:
                     meta_l = json.load(f)
@@ -57,12 +62,20 @@ class FinetuneDataset(Dataset):
                         except json.decoder.JSONDecodeError as e:
                             print(f"Error decoding the following jsonl line ({i}):\n{line.rstrip()}", force=True)
                             raise e
+            elif meta_ext == ".csv":
+                with open(meta_path) as f:
+                    chunk = pd.read_csv(meta_path, sep='\t', engine="pyarrow")
+                    meta_l = chunk.to_dict(orient="record")
             else:
                 raise NotImplementedError(
-                    f"Unknown meta file extension: \"{meta_ext}\". Currently, .json and .jsonl files are supported. "
+                    f"Unknown meta file extension: \"{meta_ext}\". "
+                    f"Currently, .json, .jsonl, and .csv files are supported. "
                     "If you are using a supported format, please set the file extension so that the proper parsing "
                     "routine can be called."
                 )
+
+            if meta.get("preprocess", None) is not None:
+                meta_l = MetaPreprocessor().preprocess(meta_l, meta['preprocess'])
 
             prompt_type = meta.get('prompt_type', 'alpaca')
             print(f"system prompt: {prompt_type}")
@@ -93,21 +106,13 @@ class FinetuneDataset(Dataset):
 
     def __getitem__(self, index):
         data_item: dict = self.ann[index]
-        if 'image' in data_item.keys():
-            filename = data_item['image']
-            question = data_item['conversations'][0]['value']
-            answer = data_item['conversations'][1]['value']
-
-            image = Image.open(filename).convert('RGB')
+        image = data_item.pop("image", None)
+        if image is not None:
+            image = Image.open(image).convert('RGB')
             image = self.transform(image)
-            format_instruction = question
-            format_input = None
-        else:
-            image = None
-            format_instruction = data_item['instruction'],
-            format_input = data_item['input']
-            answer = data_item['output']
-        input1 = format_prompt(format_instruction, format_input, data_item["sys_prompt"])
+        answer = data_item.pop("output")
+
+        input1 = format_prompt(data_item, data_item["sys_prompt"])
         input2 = input1 + answer
         input1 = torch.tensor(self.tokenizer.encode(input1, bos=True, eos=False), dtype=torch.int64)
         input2 = torch.tensor(self.tokenizer.encode(input2, bos=True, eos=True), dtype=torch.int64)
@@ -138,12 +143,49 @@ class FinetuneDataset(Dataset):
     def groups(self):
         return list(self.group_indices.values())
 
+class MetaPreprocessor:
+    def __init__(self):
+        self.routing = {
+            "single_turn_llava": self._preprocess_single_turn_llava,
+            "caption": self._preprocess_caption
+        }
+
+    def preprocess(self, meta_l:List[Dict], recipe: str):
+        return self.routing[recipe](meta_l)
+
+    @ staticmethod
+    def _preprocess_single_turn_llava(meta_l: List[Dict]):
+        new_meta = []
+        for data_item in meta_l:
+            new_meta.append({
+                "image": data_item['image'],
+                "instruction": data_item['conversations'][0]['value'],
+                "output": data_item['conversations'][1]['value']
+            })
+        return new_meta
+
+    @ staticmethod
+    def _preprocess_caption(meta_l: List[Dict]):
+        new_meta = []
+        for data_item in meta_l:
+            caption = data_item['caption']
+            if isinstance(caption, list):
+                caption = random.choice(caption)
+            new_meta.append({
+                "image": data_item['url'],
+                "output": caption
+            })
+
+        return new_meta
+
 
 import math
 from typing import TypeVar, Optional, Iterator
 from torch.utils.data import Sampler, Dataset
 
+
 class FinetuneDistSampler(Sampler):
+    #   Distrubuted Sampler ensuring data in a batch are of the same type (e.g. text, image-text)
     def __init__(self, dataset: FinetuneDataset, num_replicas: Optional[int] = None,
                  rank: Optional[int] = None, shuffle: bool = True,
                  seed: int = 0, batch_size = None, acc_grad=1) -> None:

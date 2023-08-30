@@ -5,3 +5,4 @@ META:
   -
     path: '../data/llava_instruct_150k_single_turn.json'
     type: 'image_text'
+    preprocess: "single_turn_llava"

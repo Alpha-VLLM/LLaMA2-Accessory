@@ -71,6 +71,17 @@ class MetaModel(nn.Module):
 
 
     def forward(self, examples, labels, images=None):
+        with torch.no_grad():
+            non_zero_ = torch.count_nonzero(labels, dim=0)
+            pos = non_zero_.shape[0] - 1
+            while pos >= 0:
+                if non_zero_[pos] == 0:
+                    pos -= 1
+                else:
+                    break
+            examples = examples[:, :pos+1]
+            labels = labels[:, :pos+1]
+
         output = self.llma(examples, images)
         output = output[:, :-1, :]
         labels = labels[:, 1:]

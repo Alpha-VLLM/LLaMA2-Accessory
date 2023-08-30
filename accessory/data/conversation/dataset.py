@@ -22,72 +22,69 @@ except ImportError:
     BICUBIC = Image.BICUBIC
 
 
-def _tokenize_fn(strings,
-                 tokenizer):
-    """Tokenize a list of strings."""
-    tokenized_list = [
-        torch.tensor(tokenizer.encode(text, bos=True, eos=False), dtype=torch.int64) for text in strings
-    ]
+class ConversationGenerator:
+    def __init__(self, tokenizer):
+        self.tokenizer = tokenizer
+        self.header = f"{conversation_lib.default_conversation.system}\n\n"
+        self._probe_tokenizer_style()
 
-    input_ids = labels = [
-        tokenized for tokenized in tokenized_list
-    ]
-    input_ids_lens = labels_lens = [
-        tokenized.ne(-1).sum().item()
-        for tokenized in tokenized_list
-    ]
-    return dict(
-        input_ids=input_ids,
-        labels=labels,
-        input_ids_lens=input_ids_lens,
-        labels_lens=labels_lens,
-    )
+    def _probe_tokenizer_style(self):
+        """
+        Given a sentence, e.g. "My darling", some tokenizers will make the space a seperate token,
+        while some others will merge the space into the next word, forming a token representing " darling".
+        Knowing which style the tokenizer takes is necessary for correct ground-truth label masking.
 
-
-def _mask_targets(target, tokenized_lens, speakers, s_ids=None):
-    # cur_idx = 0
-    cur_idx = tokenized_lens[0]
-    tokenized_lens = tokenized_lens[1:]
-    s_ids = s_ids[1:]
-    target[:cur_idx] = IGNORE_INDEX
-
-    for tokenized_len, speaker, s_id in zip(tokenized_lens, speakers, s_ids):
-        if cur_idx >= target.shape[0]:
-            break
-        tmp = target[cur_idx + 2:cur_idx + tokenized_len]
-        if not torch.equal(tmp,
-                           s_id[2:2 + len(tmp)]):
-            print("a sentence mismatches the corresponding piece "
-                  "in the conversation")
-
-        if speaker == "human":
-            target[cur_idx + 2:cur_idx + tokenized_len] = IGNORE_INDEX
-        cur_idx += tokenized_len
-
-
-def _add_speaker_and_signal(header, source, get_conversation=True):
-    """Add speaker and start/end signal on each round."""
-    BEGIN_SIGNAL = "### "
-    END_SIGNAL = "\n"
-    conversation = header
-    for sentence in source:
-        from_str = sentence["from"]
-        if from_str.lower() == "human":
-            from_str = conversation_lib.default_conversation.roles[0]
-        elif from_str.lower() == "gpt":
-            from_str = conversation_lib.default_conversation.roles[1]
+        """
+        probe = "Probe am I"
+        sentence1 = self.tokenizer.encode(conversation_lib.default_conversation.roles[1] + ": " + probe,
+                                          bos=False, eos=False)
+        sentence2 = self.tokenizer.encode(probe,
+                                          bos=False, eos=False)
+        if sentence1[-len(sentence2):] == sentence2:
+            self.space_before_to_predict = False
         else:
-            from_str = 'unknown'
+            sentence3 = self.tokenizer.encode(" " + probe,
+                                              bos=False, eos=False)
+            assert sentence1[-len(sentence3):] == sentence3
+            self.space_before_to_predict = True
 
-        if DEFAULT_IMAGE_TOKEN in sentence["value"]:
-            sentence["value"] = sentence["value"].replace(DEFAULT_IMAGE_TOKEN, '').strip()
+    def add_speaker_and_signal(self, source, get_conversation=True):
+        """Add speaker and start/end signal on each round."""
+        BEGIN_SIGNAL = "### "
+        END_SIGNAL = "\n"
+        conversation = self.header
 
-        sentence["value"] = (BEGIN_SIGNAL + from_str + ": " +
-                             sentence["value"] + END_SIGNAL)
-        if get_conversation:
-            conversation += sentence["value"]
-    conversation += BEGIN_SIGNAL
-    return conversation
+        to_predict_list = []
+
+        for sentence in source:
+            from_str = sentence["from"]
+            if from_str.lower() == "human":
+                from_str = conversation_lib.default_conversation.roles[0]
+            elif from_str.lower() == "gpt":
+                from_str = conversation_lib.default_conversation.roles[1]
+            else:
+                from_str = 'unknown'
+
+            value = sentence["value"]
+            if DEFAULT_IMAGE_TOKEN in value:
+                value = value.replace(DEFAULT_IMAGE_TOKEN, '').strip()
+
+            sentence_value = (BEGIN_SIGNAL + from_str + ": " + value + END_SIGNAL)
+
+            if from_str == conversation_lib.default_conversation.roles[1]:
+                to_predict_value = value + END_SIGNAL + "###"
+                if self.space_before_to_predict:
+                    to_predict_value = " " + to_predict_value
+                to_predict_list.append(to_predict_value)
+
+            if get_conversation:
+                conversation = conversation + sentence_value
+
+        conversation = conversation + BEGIN_SIGNAL
+        return conversation, to_predict_list
+
+
+
 
 
 class FinetuneDialogDataset(Dataset):
@@ -119,6 +116,7 @@ class FinetuneDialogDataset(Dataset):
         self.max_words = max_words
         self.image_words = image_words
         self.tokenizer = Tokenizer(model_path=tokenizer_path)
+        self.conversation_generator = ConversationGenerator(self.tokenizer)
 
     def __len__(self):
         return len(self.ann)
@@ -133,17 +131,23 @@ class FinetuneDialogDataset(Dataset):
             image = None
 
         source = data_item["conversations"]
-        header = f"{conversation_lib.default_conversation.system}\n\n"
-        conversation = _add_speaker_and_signal(header, source)
+        conversation, to_predict_values = self.conversation_generator.add_speaker_and_signal(source)
 
+        tokenzed_conversation = self.tokenizer.encode(conversation, bos=True, eos=True)
+        labels = [IGNORE_INDEX for _ in tokenzed_conversation]
 
-        input2 = torch.tensor(self.tokenizer.encode(conversation, bos=True, eos=True), dtype=torch.int64)
-        concat_sentence = [header] + [s["value"] for s in source]
+        check_pos = 0
+        for value in to_predict_values:
+            tokenized_value = self.tokenizer.encode(value, bos=False, eos=False)
+            value_pos = find_sublist(tokenzed_conversation[check_pos:], tokenized_value) + check_pos
+            if value_pos == -1:
+                print("a sentence mismatches the corresponding piece in the conversation")
+                return self[index-1]
+            labels[value_pos:value_pos+len(tokenized_value)] = tokenized_value
+            check_pos = value_pos+len(tokenized_value)
 
-        tokenized_sentence = _tokenize_fn(concat_sentence,
-                                          self.tokenizer)
-        tokenized_lens = tokenized_sentence["input_ids_lens"]
-        tokenized_ids = tokenized_sentence["input_ids"]
+        input2 = torch.tensor(tokenzed_conversation, dtype=torch.int64)
+        labels = torch.tensor(labels, dtype=torch.int64)
 
         if image is not None:
             max_words = self.max_words - self.image_words
@@ -152,12 +156,10 @@ class FinetuneDialogDataset(Dataset):
         padding = max_words - input2.shape[0]
         if padding > 0:
             input2 = torch.cat((input2, torch.zeros(padding, dtype=torch.int64) - 1))
+            labels = torch.cat((labels, torch.zeros(padding, dtype=torch.int64) - 1))
         elif padding < 0:
             input2 = input2[:max_words]
-        speakers = [sentence["from"] for sentence in source]
-        labels = copy.deepcopy(input2)
-        _mask_targets(labels, tokenized_lens, speakers, tokenized_ids)
-
+            labels = labels[:max_words]
 
         input2_mask = input2.ge(0)
         label_mask = labels.ge(0)
@@ -172,3 +174,10 @@ class FinetuneDialogDataset(Dataset):
 
     def groups(self):
         return list(self.group_indices.values())
+
+def find_sublist(a: list, b:list):
+    len_a, len_b = len(a), len(b)
+    for i in range(len_a - len_b + 1):
+        if a[i:i+len_b] == b:
+            return i
+    return -1

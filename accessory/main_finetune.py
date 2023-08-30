@@ -196,7 +196,7 @@ def main(args):
                 model.cuda() 
             torch.distributed.barrier()
     else:
-        with default_tensor_type(dtype=mixed_precision_dtype, device="cpu"):
+        with default_tensor_type(dtype=mixed_precision_dtype, device="cuda"):
             model = MetaModel(args.llama_type, args.llama_config,
                             args.tokenizer_path, with_visual=not args.no_visual,
                             max_seq_len=args.max_words)
