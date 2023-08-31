@@ -44,6 +44,8 @@ def get_args_parser():
                         help='url used to set up distributed training')
     parser.add_argument('--quant', action="store_true", default=False,
                         help="enable quantization")
+    parser.add_argument('--instruct', action="store_true", default=False,
+                        help="enable instruction")
     return parser
 
 args = get_args_parser().parse_args()
@@ -72,6 +74,12 @@ if args.quant:
 print("Model = %s" % str(model))
 model.bfloat16().cuda()
 
+def multimodel_prompt(prompt, question_input):
+    if args.instruct:
+        prompt = format_prompt(prompt, question_input)
+        return prompt
+    else:
+        return prompt+question_input
 
 @ torch.inference_mode()
 def generate(
@@ -88,7 +96,7 @@ def generate(
         image = None
 
     # text output
-    _prompt = format_prompt(prompt, question_input)
+    _prompt = multimodel_prompt(prompt, question_input)
 
     dist.barrier()
     dist.broadcast_object_list([_prompt, image, max_gen_len, gen_t, top_p])
