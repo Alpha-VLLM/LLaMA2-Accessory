@@ -111,8 +111,9 @@ And for multi-modal dialogues, use the `single_turn_mm.py` script:
 ```bash
 torchrun --nproc-per-node=2  demos/single_turn_mm.py \
 --llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
---pretrained_path /path/to/multimodel_llama  --instruct
-# the --instruct flag is used to insturtion inferece, caption model DOES NOT need this flag
+--pretrained_path /path/to/multimodel_llama  \
+<--noinstruct>
+# the --noinstruct flag is used to completion inference, ONLY for caption model
 
 # (Optional) Quantization-assistant Inference. To run on GPUs with limited VRAM, add the "--quant" flag.
 # For example, less than 7GB of VRAM is required for the 7B model.
