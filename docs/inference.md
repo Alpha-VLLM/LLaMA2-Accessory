@@ -3,8 +3,10 @@
 ```
 └─finetune
     ├─mm
-    │  ├─alpacaLlava_llamaQformerv2Peft_13b
+    │  ├─alpacaLlava_llamaQformerv2
     │  ├─alpacaLlava_llamaQformerv2_13b
+    │  ├─alpacaLlava_llamaQformerv2Peft_13b
+    │  ├─caption_llamaQformerv2
     │  └─caption_llamaQformerv2_13b
     └─sg
         ├─alpaca
@@ -109,7 +111,8 @@ And for multi-modal dialogues, use the `single_turn_mm.py` script:
 ```bash
 torchrun --nproc-per-node=2  demos/single_turn_mm.py \
 --llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
---pretrained_path /path/to/multimodel_llama
+--pretrained_path /path/to/multimodel_llama  --instruct
+# the --instruct flag is used to insturtion inferece, caption model DOES NOT need this flag
 
 # (Optional) Quantization-assistant Inference. To run on GPUs with limited VRAM, add the "--quant" flag.
 # For example, less than 7GB of VRAM is required for the 7B model.
