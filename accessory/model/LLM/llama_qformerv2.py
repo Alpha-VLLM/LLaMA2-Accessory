@@ -27,6 +27,7 @@ if configs.global_configs.USE_FLASH_ATTENTION:
 default_linear_init = functools.partial(nn.init.kaiming_uniform_, a=math.sqrt(5))
 
 from .llama import precompute_freqs_cis, reshape_for_broadcast, apply_rotary_emb, repeat_kv
+from util.tensor_type import default_tensor_type
 
 
 @dataclass
@@ -273,7 +274,8 @@ class Transformer(nn.Module):
         self.cache_image_words = 0 # for inference
         if with_visual:
             print("build llama model with qformerv2")
-            self.qformer = Blip2Model.from_pretrained("Salesforce/blip2-opt-2.7b", torch_dtype=torch.float16)
+            with default_tensor_type(is_meta=False):
+                self.qformer = Blip2Model.from_pretrained("Salesforce/blip2-opt-2.7b", torch_dtype=torch.float16)
 
             self.qformer.language_projection = None
             self.qformer.language_model = None

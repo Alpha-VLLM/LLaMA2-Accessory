@@ -315,7 +315,7 @@ class Transformer(nn.Module):
         self.image_words = 0
         if with_visual:
             print("build llama model with clip")
-            with default_tensor_type(dtype=torch.half):
+            with default_tensor_type(dtype=torch.half, is_meta=False):
                 self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
             for name, param in self.clip.named_parameters():
                 param.requires_grad = False
