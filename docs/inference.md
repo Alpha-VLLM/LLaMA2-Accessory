@@ -2,7 +2,8 @@
 ## Model Zoo
 ```
 ├─convert
-│   └─InternLM
+│   └─sg
+│      └─InternLM
 └─finetune
     ├─mm
     │  ├─alpacaLlava_llamaQformerv2
