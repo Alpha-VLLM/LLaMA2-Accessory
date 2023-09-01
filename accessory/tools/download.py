@@ -17,7 +17,7 @@ def get_args_parser():
     parser = argparse.ArgumentParser('Download the weights of the model.', add_help=False)
     parser.add_argument('--model_name', type=str,
                         help='directory containing pre-trained checkpoints')
-    parser.add_argument('--train_type', default='finetune', choices=['finetune', 'pretrain'])
+    parser.add_argument('--train_type', default='finetune', choices=['finetune', 'pretrain', 'convert'])
     parser.add_argument('--output_path', default='./output',
                         help='path where to save')
     parser.add_argument('--input_type', default='sg', choices=['sg', 'mm'])
