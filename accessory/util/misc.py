@@ -16,6 +16,7 @@ import time
 from collections import defaultdict, deque
 from pathlib import Path
 import subprocess
+from warnings import warn
 
 import torch
 import torch.distributed as dist
@@ -582,42 +583,19 @@ def add_weight_decay(model, weight_decay=1e-5, skip_list=()):
 
 
 def broadcast_nonmp_parameters(model):
-    if fs_init.get_model_parallel_world_size() == 1:
-        return
-    print("starting broadcast non-model-parallel parameters within model parallel group")
-    memo = set()
-    modules = model.named_modules(prefix='', remove_duplicate=True)
-    for module_prefix, module in modules:
-        members = dict(module._parameters.items())
-        for k, v in members.items():
-            name = module_prefix + ('.' if module_prefix else '') + k
-            if v is None or v in memo:
-                continue
-            if getattr(v, "is_model_parallel", False):
-                print(f"ignore: {name}")
-                continue
-            memo.add(v)
-            dist.broadcast(v, src=fs_init.get_model_parallel_src_rank(), group=fs_init.get_model_parallel_group())
-    print("braodcast done")
+    warn("util.misc.broadcast_nonmp_parameters is deprecated. "
+         "Use util.tensor_parallel.broadcast_nonmp_parameters instead.",
+         DeprecationWarning, stacklevel=2)
+    from .tensor_parallel import broadcast_nonmp_parameters
+    broadcast_nonmp_parameters(model)
 
 
 def mark_mp_params(model: torch.nn.Module):
-    from fairscale.nn.model_parallel.layers import (
-        RowParallelLinear,
-        ColumnParallelLinear,
-        ParallelEmbedding,
-    )
-    for m in model.modules():
-        if isinstance(m, ColumnParallelLinear):
-            m.weight.is_model_parallel = True
-            if m.bias is not None:
-                m.bias.is_model_parallel = True
-
-        if isinstance(m, RowParallelLinear):
-            m.weight.is_model_parallel = True
-
-        if isinstance(m, ParallelEmbedding):
-            m.weight.is_model_parallel = True
+    warn("util.misc.mark_mp_params is deprecated. "
+         "Use util.tensor_parallel.mark_mp_params instead.",
+         DeprecationWarning, stacklevel=2)
+    from .tensor_parallel import mark_mp_params
+    mark_mp_params(model)
 
 
 def print_param_status(model: torch.nn.Module) -> None:
