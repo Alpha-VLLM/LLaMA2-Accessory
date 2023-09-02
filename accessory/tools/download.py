@@ -24,6 +24,7 @@ def get_args_parser():
     parser.add_argument('--model_size', default='7B', choices=['7B', '13B', '70B'])
     parser.add_argument('--down_config', action="store_true" ,help='download config')
     parser.add_argument('--down_diff', action="store_true" ,help='download delta weights')
+    parser.add_argument('--down_internLM', action="store_true" ,help='download internLM')
     return parser
 
 if __name__ == '__main__':
@@ -35,8 +36,12 @@ if __name__ == '__main__':
     repo_id = f"Alpha-VLLM/LLaMA2-Accessory"
 
     if args.down_config:
-        download_file(repo_id, 'config', 'tokenizer.model', args.output_path)
-        param_file = f"{args.model_size}_params.json"
+        if args.down_internLM:
+            prefix = 'internLM_'
+        else:
+            prefix = ''
+        download_file(repo_id, 'config', prefix+'tokenizer.model', args.output_path)
+        param_file = prefix+f"{args.model_size}_params.json"
         download_file(repo_id, 'config', param_file, args.output_path)
         if args.model_name == None:
             sys.exit("Model name not specified, only configuration files were downloaded.")
