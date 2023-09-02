@@ -25,6 +25,7 @@ def get_args_parser():
     parser.add_argument('--down_config', action="store_true" ,help='download config')
     parser.add_argument('--down_diff', action="store_true" ,help='download delta weights')
     parser.add_argument('--down_internLM', action="store_true" ,help='download internLM')
+    parser.add_argument('--down_code', action="store_true" ,help='download internLM')
     return parser
 
 if __name__ == '__main__':
@@ -38,6 +39,8 @@ if __name__ == '__main__':
     if args.down_config:
         if args.down_internLM:
             prefix = 'internLM_'
+        elif args.down_code:
+            prefix = 'code_'
         else:
             prefix = ''
         download_file(repo_id, 'config', prefix+'tokenizer.model', args.output_path)
