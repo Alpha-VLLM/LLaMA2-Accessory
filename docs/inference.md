@@ -1,30 +1,33 @@
 # Inference
 ## Model Zoo
 ```
-├─convert
-│   └─sg
-│      └─InternLM
-└─finetune
-    ├─mm
-    │  ├─alpacaLlava_llamaQformerv2
-    │  ├─alpacaLlava_llamaQformerv2_13b
-    │  ├─alpacaLlava_llamaQformerv2Peft_13b
-    │  ├─caption_llamaQformerv2
-    │  └─caption_llamaQformerv2_13b
-    └─sg
-        ├─alpaca
-        ├─alpaca_llamaPeft_normBias
-        ├─dialog_flan
-        ├─dialog_lima
-        ├─dialog_moss
-        ├─dialog_platypus
-        ├─dialog_sharegpt
-        ├─dialog_sharegpt_70b
-        ├─dialog_ultra
-        ├─dialog_wizardcode
-        ├─dialog_wizardcode_loadcode220k
-        ├─dialog_wizardLM
-        └─gorilla
+├── convert
+│   └── sg
+│       └── InternLM
+└── finetune
+    ├── mm
+    │   ├── alpacaLlava_llamaQformerv2
+    │   ├── alpacaLlava_llamaQformerv2_13b
+    │   ├── alpacaLlava_llamaQformerv2Peft_13b
+    │   ├── caption_llamaQformerv2
+    │   └── caption_llamaQformerv2_13b
+    └── sg
+        ├── alpaca
+        ├── alpaca_internLM_en
+        ├── alpaca_internLM_zh
+        ├── alpaca_llamaPeft_normBias
+        ├── dialog_flan
+        ├── dialog_lima
+        ├── dialog_moss
+        ├── dialog_platypus
+        ├── dialog_sharegpt
+        ├── dialog_sharegpt_70b
+        ├── dialog_ultra
+        ├── dialog_wizardcode
+        ├── dialog_wizardcode_codellama
+        ├── dialog_wizardcode_loadcode220k
+        ├── dialog_wizardLM
+        └── gorilla
 ```
 The models are availabel at [🤗Hugging Face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory).
 
@@ -42,7 +45,11 @@ The usage of our released checkpoints should comply with the base LLM's model li
 
 :::
 
-For those who wish to download smaller models like peft, we have retained the delta weights. Simply add the `--down_diff` argument during download to facilitate the process. Example commands for download are as follows:
+For those who wish to download smaller models like peft, we have retained the delta weights. Simply add the `--down_diff` argument during download to facilitate the process. 
+
+**Now we support the internLM model**, and when downloading its specific config, you need to add `--down_internLM`. 
+
+Example commands for download are as follows:
 
 ```bash
 python tools/download.py --model_name check/in/release/page --input_type sg/or/mm --output_path path/to/save --model_size 7B/13B/70B --down_config
