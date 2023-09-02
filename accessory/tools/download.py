@@ -21,11 +21,11 @@ def get_args_parser():
     parser.add_argument('--output_path', default='./output',
                         help='path where to save')
     parser.add_argument('--input_type', default='sg', choices=['sg', 'mm'])
-    parser.add_argument('--model_size', default='7B', choices=['7B', '13B', '70B'])
+    parser.add_argument('--model_size', default='7B', choices=['7B', '13B', '34B', '70B'])
     parser.add_argument('--down_config', action="store_true" ,help='download config')
     parser.add_argument('--down_diff', action="store_true" ,help='download delta weights')
     parser.add_argument('--down_internLM', action="store_true" ,help='download internLM')
-    parser.add_argument('--down_code', action="store_true" ,help='download internLM')
+    parser.add_argument('--down_code', action="store_true" ,help='download codellama')
     return parser
 
 if __name__ == '__main__':
