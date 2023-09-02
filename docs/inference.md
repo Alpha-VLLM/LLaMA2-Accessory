@@ -47,7 +47,7 @@ The usage of our released checkpoints should comply with the base LLM's model li
 
 For those who wish to download smaller models like peft, we have retained the delta weights. Simply add the `--down_diff` argument during download to facilitate the process. 
 
-**Now we support the internLM model**, and when downloading its specific config, you need to add `--down_internLM`. 
+**Now we support the internLM model**, and when downloading its specific config, you need to add `--down_internLM`. Similarly, `--down_code` is used for codellama.
 
 Example commands for download are as follows:
 
