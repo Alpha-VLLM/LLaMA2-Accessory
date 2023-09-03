@@ -28,7 +28,7 @@
 * **🏋️‍♀️Support More Visual Encoders and LLMs**
 
   - 👁‍🗨 Visual Encoders: [CLIP](https://github.com/openai/CLIP), [Q-Former](https://github.com/salesforce/LAVIS) and [ImageBind](https://github.com/facebookresearch/ImageBind).
-  - 🧩 LLMs: LLaMA, LLaMA2 and InternLM.
+  - 🧩 LLMs: LLaMA, LLaMA2, CodeLlama and InternLM.
 
 ## Setup
 
@@ -89,7 +89,7 @@ If you find our code and paper useful, please kindly cite:
 + [@OpenGVLab](https://github.com/OpenGVLab) for [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter)
 <details><summary>Show More</summary>
 
-+ [@facebookresearch](https://github.com/facebookresearch) for [ImageBind](https://github.com/facebookresearch/ImageBind) & [LIMA](https://huggingface.co/datasets/64bits/lima_vicuna_format)
++ [@facebookresearch](https://github.com/facebookresearch) for [ImageBind](https://github.com/facebookresearch/ImageBind) & [LIMA](https://huggingface.co/datasets/64bits/lima_vicuna_format) & [CodeLlama](https://github.com/facebookresearch/codellama)
 + [@Instruction-Tuning-with-GPT-4](https://github.com/Instruction-Tuning-with-GPT-4) for [GPT-4-LLM](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
 + [@tatsu-lab](https://github.com/tatsu-lab) for [stanford_alpaca](https://github.com/tatsu-lab/stanford_alpaca)
 + [@tloen](https://github.com/tloen) for [alpaca-lora](https://github.com/tloen/alpaca-lora)
