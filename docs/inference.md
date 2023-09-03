@@ -45,14 +45,13 @@ The usage of our released checkpoints should comply with the base LLM's model li
 
 :::
 
-For those who wish to download smaller models like peft, we have retained the delta weights. Simply add the `--down_diff` argument during download to facilitate the process. 
-
-**Now we support the internLM model**, and when downloading its specific config, you need to add `--down_internLM`. Similarly, `--down_code` is used for codellama.
-
 Example commands for download are as follows:
 
 ```bash
-python tools/download.py --model_name check/in/release/page --input_type sg/or/mm --output_path path/to/save --model_size 7B/13B/70B --down_config
+# Now support interactive input for all parameters
+python tools/download.py
+# It can also be directly specified in the command line.
+python tools/download.py --model_name check/in/model/zoo --input_type sg/or/mm --output_path path/to/save --model_size 7B/13B/34B/70B [--down_config] [--down_internLM] [--down_code]
 ```
 
 Please continue to stay updated with our latest releases and feel free to share your needs and feedback with us.
@@ -71,6 +70,8 @@ Instructions:
 
 1. After agreeing to the License, Acceptable Use Policy, and Meta's privacy policy, proceed to download the LLaMA2 weights from [here](https://ai.meta.com/resources/models-and-libraries/llama-downloads/).
 2. Utilize the following scripts to obtain finetuned weights by applying our delta. Make sure to download the delta weights from the [model release page](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory).
+
+For those who wish to download smaller models like peft, we have retained the delta weights. Simply add the `--down_diff` argument during download to facilitate the process. 
    ```bash
    # For Download
    python tools/download.py  --model_name check/in/release/page --input_type sg/or/mm --output_path path/to/save --model_size 7B/13B/70B --down_config --down_diff
