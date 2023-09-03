@@ -1,4 +1,4 @@
-## Demos of Instruction-Following LLaMA2
+## Demos of Instruction-Following LLaMA2 using the Alpaca dataset.
 
 
 ### **Instruction 1:**
