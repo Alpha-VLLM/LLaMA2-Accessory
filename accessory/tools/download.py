@@ -24,8 +24,8 @@ def get_args_parser():
     parser.add_argument('--model_size', default='7B', choices=['7B', '13B', '34B', '70B'])
     parser.add_argument('--down_config', action="store_true" ,help='download config')
     parser.add_argument('--down_diff', action="store_true" ,help='download delta weights')
-    parser.add_argument('--down_internLM', action="store_true" ,help='download internLM')
-    parser.add_argument('--down_code', action="store_true" ,help='download codellama')
+    parser.add_argument('--down_internLM', action="store_true" ,help='download internLM config')
+    parser.add_argument('--down_code', action="store_true" ,help='download codellama config')
     return parser
 
 if __name__ == '__main__':
@@ -37,20 +37,19 @@ if __name__ == '__main__':
     repo_id = f"Alpha-VLLM/LLaMA2-Accessory"
 
     if args.down_config:
+        prefix = ''
         if args.down_internLM:
             prefix = 'internLM_'
         elif args.down_code:
             prefix = 'code_'
-        else:
-            prefix = ''
         download_file(repo_id, 'config', prefix+'tokenizer.model', args.output_path)
         param_file = prefix+f"{args.model_size}_params.json"
         download_file(repo_id, 'config', param_file, args.output_path)
         if args.model_name == None:
             sys.exit("Model name not specified, only configuration files were downloaded.")
 
-    num_files_map = {'7B': 1, '13B': 2, '70B': 8}
-    max_num = num_files_map[args.model_size]
+    num_files_map = {'7B': 1, '13B': 2, '34B': 4, 70B': 8}
+    max_num = num_files_map.get(args.model_size, 1)
 
     for num in range(max_num):
         if args.down_diff:
