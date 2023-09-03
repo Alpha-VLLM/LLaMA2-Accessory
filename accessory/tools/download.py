@@ -1,7 +1,9 @@
 import argparse
 import os
-from termcolor import colored
 from huggingface_hub import hf_hub_download
+def colored(text, color):
+    color_map = {'yellow': "\033[93m", 'green': "\033[92m", 'red': "\033[91m"}
+    return f"{color_map.get(color, '')}{text}\033[0m"
 model_list = {
     'convert': {
         'sg': ['InternLM']
