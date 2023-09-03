@@ -48,7 +48,7 @@ if __name__ == '__main__':
         if args.model_name == None:
             sys.exit("Model name not specified, only configuration files were downloaded.")
 
-    num_files_map = {'7B': 1, '13B': 2, '34B': 4, 70B': 8}
+    num_files_map = {'7B': 1, '13B': 2, '34B': 4, '70B': 8}
     max_num = num_files_map.get(args.model_size, 1)
 
     for num in range(max_num):
