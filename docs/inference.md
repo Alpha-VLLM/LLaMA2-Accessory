@@ -18,7 +18,7 @@
         ├── alpaca_llamaPeft_normBias
         ├── dialog_flan
         ├── dialog_lima
-        ├── dialog_moss
+        ├── dialog_moss 
         ├── dialog_platypus
         ├── dialog_sharegpt
         ├── dialog_sharegpt_70b
@@ -30,6 +30,23 @@
         └── gorilla
 ```
 The models are availabel at [🤗Hugging Face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory).
+
+Get started with our project effortlessly! Simply run the provided startup script from the `accessory` of the project. This will guide you through an interactive setup, making it a breeze to configure and run the model.
+
+- **For Linux users:**
+
+  ```bash
+  sh demos/start.sh
+  ```
+
+- **For Windows users:**
+
+  ```powershell
+  .\demos\start.bat
+  ```
+
+Enjoy your journey with our project!
+
 
 ## Prerequisites
 
