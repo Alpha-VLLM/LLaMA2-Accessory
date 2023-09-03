@@ -36,11 +36,11 @@ Get started with our project effortlessly! Simply run the provided startup scrip
 - **For Linux users:**
 
   ```bash
-  sh demos/start.sh
+  bash demos/start.sh
   ```
 
 - **For Windows users:**
-
+(not recommended)
   ```powershell
   .\demos\start.bat
   ```
