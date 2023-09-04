@@ -42,11 +42,11 @@ Hello and welcome to the LLaMA2-Accesory GitHub repository! This is an open-sour
 
 **Script:**
 
-+ {link2repo}`[exps/finetune/sg/alpaca.sh](accessory/exps/finetune/sg/alpaca_internLM.sh)`
++ {link2repo}`[exps/finetune/sg/alpaca_internLM.sh](accessory/exps/finetune/sg/alpaca_internLM.sh)`
 
 **Data:**
 
-+ [💾alpaca_gpt4_data.json](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM/blob/main/data/alpaca_gpt4_data_zh.json)
++ [💾alpaca_gpt4_data_zh.json](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM/blob/main/data/alpaca_gpt4_data_zh.json)
 
 **Model Release:**
 
@@ -64,6 +64,7 @@ torchrun --nproc-per-node=1  demos/single_turn.py \
 
 ```{card}
 **Human:** 生成一篇关于人工智能未来发展趋势的文章
+
 **Assistant:** 人工智能的未来发展趋势
 
 人工智能（AI）技术在过去几十年中取得了长足的进步，它正在改变我们的生活方式和商业运作方式。未来，人工智能将如何发展？本文将探讨人工智能的未来发展趋势。
