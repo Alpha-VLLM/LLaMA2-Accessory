@@ -38,6 +38,47 @@ Hello and welcome to the LLaMA2-Accesory GitHub repository! This is an open-sour
 
 ---
 
+## Single-turn InternLM-7B on Alpaca
+
+**Script:**
+
++ {link2repo}`[exps/finetune/sg/alpaca.sh](accessory/exps/finetune/sg/alpaca_internLM.sh)`
+
+**Data:**
+
++ [💾alpaca_gpt4_data.json](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM/blob/main/data/alpaca_gpt4_data_zh.json)
+
+**Model Release:**
+
++ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/alpaca_internLM_zh/consolidated.00-of-01.model.pth)
+
+**Host Local Demo:**
+
+```bash
+torchrun --nproc-per-node=1  demos/single_turn.py \
+--llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
+--pretrained_path /path/to/alpaca_finetuned
+```
+
+**Example:**
+
+```{card}
+**Human:** 生成一篇关于人工智能未来发展趋势的文章
+**Assistant:** 人工智能的未来发展趋势
+
+人工智能（AI）技术在过去几十年中取得了长足的进步，它正在改变我们的生活方式和商业运作方式。未来，人工智能将如何发展？本文将探讨人工智能的未来发展趋势。
+
+首先，人工智能将更加智能化。随着机器学习和深度学习技术的不断发展，人工智能将能够更好地理解和处理复杂数据，从而做出更加智能的决策。例如，在医疗领域，人工智能将能够更好地诊断疾病，为患者提供更精准的治疗方案。在金融领域，人工智能将能够更好地预测市场走势，为投资者提供更精准的投资建议。
+
+其次，人工智能将更加人性化。随着自然语言处理技术的不断发展，人工智能将能够更好地与人类进行交流和沟通。例如，智能语音助手将能够更好地理解人类的语言，为人类提供更加人性化的服务。此外，人工智能也将更加注重隐私保护，为人类提供更加安全、可靠的个人信息保护措施。
+
+最后，人工智能将更加普及。随着人工智能技术的不断发展，它将逐渐渗透到人们的日常生活中，为人们提供更加便捷、高效的智能化服务。例如，智能家居系统将能够更好地控制家庭中的各种设备，为人们提供更加舒适、便捷的生活环境。
+
+[*More examples here*](../examples/finetune/sg/intern_alpaca_zh.md)
+```
+
+---
+
 ## Single-turn LLaMA2-7B on Gorilla
 
 **Script:**
