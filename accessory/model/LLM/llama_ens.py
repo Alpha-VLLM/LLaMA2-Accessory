@@ -30,7 +30,7 @@ if configs.global_configs.USE_FLASH_ATTENTION:
 default_linear_init = functools.partial(nn.init.kaiming_uniform_, a=math.sqrt(5))
 
 from .llama import precompute_freqs_cis, reshape_for_broadcast, apply_rotary_emb, repeat_kv
-
+from util.tensor_type import default_tensor_type
 
 @dataclass
 class ModelArgs:
@@ -286,24 +286,25 @@ class Transformer(nn.Module):
                 nn.LayerNorm(params.dim)
             )
 
-            print("build llama model with clip")
-            self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
-            self.clip.transformer = None
+            with default_tensor_type(is_meta=False):
+                print("build llama model with clip")
+                self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
+                self.clip.transformer = None
 
-            print("build llama model with openclip")
-            self.openclip_convnext_xxl, _, _ = open_clip.create_model_and_transforms(
-                "convnext_xxlarge", pretrained="laion2b_s34b_b82k_augreg_soup"
-            )
-            self.openclip_convnext_xxl = self.openclip_convnext_xxl.visual.trunk
-            self.openclip_convnext_xxl.head.global_pool = nn.Identity()
-            self.openclip_convnext_xxl.head.flatten = nn.Identity()
+                print("build llama model with openclip")
+                self.openclip_convnext_xxl, _, _ = open_clip.create_model_and_transforms(
+                    "convnext_xxlarge", pretrained="laion2b_s34b_b82k_augreg_soup"
+                )
+                self.openclip_convnext_xxl = self.openclip_convnext_xxl.visual.trunk
+                self.openclip_convnext_xxl.head.global_pool = nn.Identity()
+                self.openclip_convnext_xxl.head.flatten = nn.Identity()
 
-            print("build llama model with dinov2")
-            import os.path
-            if os.path.exists("/mnt/petrelfs/gaopeng/.cache/torch/hub/facebookresearch_dinov2_main"):
-                self.dinov2_vitg14 = torch.hub.load("/mnt/petrelfs/gaopeng/.cache/torch/hub/facebookresearch_dinov2_main", "dinov2_vitg14", source="local")
-            else:
-                self.dinov2_vitg14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14")
+                print("build llama model with dinov2")
+                import os.path
+                if os.path.exists("/mnt/petrelfs/gaopeng/.cache/torch/hub/facebookresearch_dinov2_main"):
+                    self.dinov2_vitg14 = torch.hub.load("/mnt/petrelfs/gaopeng/.cache/torch/hub/facebookresearch_dinov2_main", "dinov2_vitg14", source="local")
+                else:
+                    self.dinov2_vitg14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14")
 
             self.visual_proj = nn.Sequential(
                 nn.Linear(3072 + 1024 + 1536, params.dim),

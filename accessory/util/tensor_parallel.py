@@ -5,12 +5,16 @@ from typing import Dict, List, Set, Tuple, Type
 
 import torch
 import torch.nn as nn
+import torch.distributed as dist
 
 import fairscale.nn.model_parallel.initialize as fs_init
 from fairscale.nn.model_parallel.layers import (
-    ColumnParallelLinear,
-    RowParallelLinear,
-    ParallelEmbedding,
+    ColumnParallelLinear as fs_ColumnParallelLinear,
+    RowParallelLinear as fs_RowParallelLinear,
+    ParallelEmbedding as fs_ParallelEmbedding,
+)
+from model.layers.tensor_parallel import (
+    ColumnParallelLinear, RowParallelLinear, ParallelEmbedding,
 )
 
 # _MODEL_PARALLEL_MODULES defines a list of module classes that contains
@@ -33,6 +37,11 @@ _MODEL_PARALLEL_MODULES: List[Tuple[Type[nn.Module], Dict[str, int]]] = [
     (ColumnParallelLinear, {"weight": 0, "bias": 0}),
     (RowParallelLinear, {"weight": 1, "bias": -1}),
     (ParallelEmbedding, {"weight": 1}),
+    # TODO: fs_* layer registrations are to be removed after the
+    #       migration is completed.
+    (fs_ColumnParallelLinear, {"weight": 0, "bias": 0}),
+    (fs_RowParallelLinear, {"weight": 1, "bias": -1}),
+    (fs_ParallelEmbedding, {"weight": 1}),
 ]
 
 FORMAT_FILENAME_PATTERNS: Dict[str, re.Pattern] = {
@@ -327,10 +336,10 @@ def infer_checkpoint_format_and_mp_size(path: str) -> str:
                 raise NotImplementedError(f"Multiple matched format detected: "
                                           f"{inferred_format} and {format}.")
     if inferred_format is None:
-        folder_contents = ", ".join(
-            [x if os.path.isfile(os.path.join(path, x)) else x + " (not a file)"
-             for x in os.listdir(path)]
-        )
+        folder_contents = ", ".join([
+            x if os.path.isfile(os.path.join(path, x)) else x + " (not a file)"
+            for x in os.listdir(path)
+        ])
         raise NotImplementedError(
             f"Files in the given folder do not match  any format. "
             f"Contents in the folder: [{folder_contents}]."
@@ -534,3 +543,45 @@ class ShardedTensorLoader:
         assert all(x >= 0 and x < self._num_shards
                    for x in self._loaded_shards)
         return len(self._loaded_shards) == self._num_shards
+
+
+def mark_mp_params(model: nn.Module) -> None:
+    r"""This method marks all parameters in the model that is sharded among
+    model parallel ranks. The mark may be used for various tensor-parallel-
+    related processings (e.g., when synchronizing model parameters among the
+    model parallel workers, only broadcast replicated tensors and skip sharded
+    tensors).
+
+    Args:
+        model (torch.nn.Module): The model whose parameters are to be marked.
+    """
+    for m in model.modules():
+        for module_class, shard_dict in _MODEL_PARALLEL_MODULES.items():
+            if isinstance(m, module_class):
+                for key, dim in shard_dict.items():
+                    if getattr(m, key, None) is not None and dim >= 0:
+                        getattr(m, key).is_model_parallel = True
+                break
+
+
+def broadcast_nonmp_parameters(model: nn.Module) -> None:
+    r"""This method broadcasts replicated parameters among tensor parallel
+    workers. Sharded parameters are skipped.
+
+    Args:
+        model (torch.nn.Module): The model whose replicated parameters are to
+            be broadcasted.
+    """
+    if fs_init.get_model_parallel_world_size() == 1:
+        print("Skip broadcasting parameters in tensor parallel groups as "
+              "group size is 1.")
+        return
+    print("Starting broadcast non-model-parallel parameters within tensor "
+          "parallel groups.")
+    for name, param in model.named_parameters():
+        if getattr(param, "is_model_parallel", False):
+            dist.broadcast(param, src=fs_init.get_model_parallel_src_rank(),
+                           group=fs_init.get_model_parallel_group())
+        else:
+            print(f"Ignoring sharded parameter: {name}")
+    print("Broadcasting within tensor parallel groups is done.")
