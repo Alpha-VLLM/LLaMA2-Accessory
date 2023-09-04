@@ -217,7 +217,7 @@ My name is Jimmy, a master student studing computer science. I have done some pr
 
 **Script:**
 
-+ The code for the exps will be released soon.
++ {link2repo}`[exps/finetune/sg/dialog_sharegpt_70B.sh](accessory/exps/finetune/sg/dialog_sharegpt_70B.sh)`
 
 **Data:**
 
@@ -318,7 +318,7 @@ By following these guidelines, you can ensure that your communication with colle
 
 **Script:**
 
-+ The code for the exps will be released soon.
++ {link2repo}`[exps/finetune/sg/dialog_wizardLM.sh](accessory/exps/finetune/sg/dialog_wizardLM.sh)`
 
 **Data:**
 
@@ -412,6 +412,24 @@ In the main function, we define an unsorted array and call quicksort on it. We t
 **Data:**
 
 + [💾evol-codealpaca-v1](https://huggingface.co/datasets/theblackcat102/evol-codealpaca-v1)
+
+**Model Release:**
+
++ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/finetune/sg/dialog_wizardcode_codellama/consolidated.00-of-01.model.pth)
+
+**Host Local Demo:**
+
+```bash
+python demos/multi_turn.py \
+--llama_config /path/to/params.json --tokenizer_path /path/to/tokenizer.model \
+--pretrained_path /path/to/wizardCode_finetuned
+```
+
+:::{attention}
+
+The Code LLaMA series has different `params.json` and `tokenizer.model` files from LLaMA and LLaMA2. Make sure to use the Code-LLaMA version of these files.
+
+:::
 
 ---
 
