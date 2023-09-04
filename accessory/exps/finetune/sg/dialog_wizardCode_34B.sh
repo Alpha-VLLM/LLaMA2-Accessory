@@ -7,20 +7,21 @@ tokenizer_path="$3"
 data=wizardCode
 data_config=configs/data/finetune/sg/dialog_"$data".yaml
 
-data_parallel=fsdp
+data_parallel=sdp
 model_parallel=4
 
 exp_name=finetune/sg/dialog_"$data"_34B
 echo "exp name: $exp_name"
 mkdir -p output/"$exp_name"
 
-torchrun --master_port=1112 --nproc_per_node=8 main_finetune.py \
+# use slurm to launch
+python -u main_finetune.py \
 --output_dir output/"$exp_name" --epochs 3 --warmup_epochs 0.04 \
---batch_size 4 --accum_iter 4 --num_workers 4 \
---max_words 2048 \
+--batch_size 2 --accum_iter 64 --num_workers 4 \
+--max_words 4096 \
 --lr 0.00002 --min_lr 0.0 --clip_grad 2 --weight_decay 0.0 \
 --data_parallel "$data_parallel" --model_parallel_size "$model_parallel" --checkpointing \
---llama_type llama --llama_config "$llama_config" --tokenizer_path "$tokenizer_path" \
+--llama_type llama --llama_config $llama_config --tokenizer_path "$tokenizer_path" \
 --no_visual \
 --pretrained_path "$pretrained_path" --pretrained_type="$pretrained_type" \
 --data_config $data_config --dialog \
