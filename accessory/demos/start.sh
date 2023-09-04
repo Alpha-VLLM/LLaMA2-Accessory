@@ -126,7 +126,7 @@ case $SCENARIO in
     ;;
   2)
     echo -e "${GREEN}Running multi_turn.py...${NC}"
-    torchrun --nproc-per-node=$NPROC --master-port=$PORT demos/multi_turn.py --llama_config $PARAMS --tokenizer_path $TOKENIZER --pretrained_path $PRETRAINED $QUANT --llama_type $LLAMA_TYPE
+    python  demos/multi_turn.py --n_gpus=$NPROC --master_port=$PORT --llama_config $PARAMS --tokenizer_path $TOKENIZER --pretrained_path $PRETRAINED $QUANT --llama_type $LLAMA_TYPE
     ;;
   3)
     echo -e "${GREEN}Running single_turn_mm.py...${NC}"

@@ -80,7 +80,7 @@ if "%LLAMA_TYPE%"=="llama_peft" (
 if "%SCENARIO%"=="1" (
     torchrun --nproc_per_node=!NPROC! --master_port=!PORT! demos\single_turn.py --llama_config=!PARAMS! --tokenizer_path=!TOKENIZER! --pretrained_path=!PRETRAINED! !QUANT! --llama_type=!LLAMA_TYPE!
 ) else if "%SCENARIO%"=="2" (
-    torchrun --nproc_per_node=!NPROC! --master_port=!PORT! demos\multi_turn.py --llama_config=!PARAMS! --tokenizer_path=!TOKENIZER! --pretrained_path=!PRETRAINED! !QUANT! --llama_type=!LLAMA_TYPE!
+    python  demos\multi_turn.py  --n_gpus=!NPROC! --master_port=!PORT! --llama_config=!PARAMS! --tokenizer_path=!TOKENIZER! --pretrained_path=!PRETRAINED! !QUANT! --llama_type=!LLAMA_TYPE!
 ) else if "%SCENARIO%"=="3" (
     torchrun --nproc_per_node=!NPROC! --master_port=!PORT! demos\single_turn_mm.py --llama_config=!PARAMS! --tokenizer_path=!TOKENIZER! --pretrained_path=!PRETRAINED! !QUANT! --llama_type=!LLAMA_TYPE!
 )
