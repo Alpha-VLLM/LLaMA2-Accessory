@@ -4,10 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Linear, Parameter, init
-from torch import Tensor
-
-
-from timm.models.layers import trunc_normal_, lecun_normal_, to_2tuple
 
 from fairscale.nn.model_parallel.initialize import get_model_parallel_rank, get_model_parallel_world_size
 from fairscale.nn.model_parallel.mappings import (
@@ -95,7 +91,9 @@ class LoraColumnParallelLinear(ColumnParallelLinear):
             # if world_size > 1:
             #     raise NotImplemented("Lora with model parallel with change the original behavior, not yet supported")
             self.lora_a = nn.Linear(self.in_features, self.lora_rank, bias=False)
-            trunc_normal_(self.lora_a.weight, std=.02)
+            # workaround because trunc_normal_ does not currently support bfloat16
+            _ = init.trunc_normal_(self.lora_a.weight.data.to(torch.float32), std=.02)
+            self.lora_a.weight.data.copy_(_)
             self.lora_b = ColumnParallelLinear(self.lora_rank, self.out_features, bias=False, gather_output=gather_output)
             nn.init.zeros_(self.lora_b.weight)
         else:
@@ -203,7 +201,9 @@ class LoraRowParallelLinear(RowParallelLinear):
             # if world_size > 1:
             #     raise NotImplemented("Lora with model parallel with change the original behavior, not yet supported")
             self.lora_a = RowParallelLinear(self.in_features, self.lora_rank, bias=False, input_is_parallel=True)
-            trunc_normal_(self.lora_a.weight, std=.02)
+            # workaround because trunc_normal_ does not currently support bfloat16
+            _ = init.trunc_normal_(self.lora_a.weight.data.to(torch.float32), std=.02)
+            self.lora_a.weight.data.copy_(_)
             self.lora_b = nn.Linear(self.lora_rank, self.out_features, bias=False)
             nn.init.zeros_(self.lora_b.weight)
         else:
