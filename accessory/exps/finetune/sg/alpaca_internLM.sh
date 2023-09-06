@@ -13,9 +13,9 @@ exp_name=finetune/sg/alpaca_internLM
 echo "exp name: $exp_name"
 mkdir -p output/"$exp_name"
 
-torchrun --master_port=1112 --nproc_per_node=6 main_finetune.py \
+torchrun --master_port=1112 --nproc_per_node=8 main_finetune.py \
 --output_dir output/"$exp_name" --epochs 3 --warmup_epochs 0.04 \
---batch_size 1 --accum_iter 4 --num_workers 4 \
+--batch_size 4 --accum_iter 8 --num_workers 4 \
 --max_words 512 \
 --lr 0.00002 --min_lr 0.0 --clip_grad 2 --weight_decay 0.0 \
 --data_parallel "$data_parallel" --model_parallel_size "$model_parallel" --checkpointing \
