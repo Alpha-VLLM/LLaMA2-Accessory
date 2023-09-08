@@ -44,8 +44,6 @@ def get_args_parser():
                         help='url used to set up distributed training')
     parser.add_argument('--quant', action="store_true", default=False,
                         help="enable quantization")
-    parser.add_argument('--noinstruct', action="store_true", default=False,
-                        help="disable instruction")
     return parser
 
 args = get_args_parser().parse_args()
@@ -74,17 +72,13 @@ if args.quant:
 print("Model = %s" % str(model))
 model.bfloat16().cuda()
 
-def multimodel_prompt(prompt, question_input):
-    if args.noinstruct:
-        return prompt + question_input
-    else:
-        return format_prompt(prompt, question_input)
 
 @ torch.inference_mode()
 def generate(
         img_path,
         prompt,
         question_input,
+        system_prompt,
         max_gen_len,
         gen_t, top_p
 ):
@@ -95,7 +89,7 @@ def generate(
         image = None
 
     # text output
-    _prompt = multimodel_prompt(prompt, question_input)
+    _prompt = format_prompt({"instruction":prompt, "input":question_input}, system_prompt)
 
     dist.barrier()
     dist.broadcast_object_list([_prompt, image, max_gen_len, gen_t, top_p])
@@ -105,7 +99,6 @@ def generate(
     with torch.cuda.amp.autocast(dtype=torch.bfloat16):
         results = model.generate([_prompt], image, max_gen_len=max_gen_len, temperature=gen_t, top_p=top_p)
     text_output = results[0].strip()
-    print(text_output)
     return text_output
 
 def create_demo():
@@ -120,6 +113,8 @@ def create_demo():
                     prompt = gr.Textbox(lines=4, label="Question")
                 with gr.Row():
                     question_input = gr.Textbox(lines=4, label="Question Input (Optional)")
+                with gr.Row():
+                    system_prompt = gr.Dropdown(choices=['alpaca', 'None'], value="alpaca", label="System Prompt")
                 with gr.Row() as text_config_row:
                     max_gen_len = gr.Slider(minimum=1, maximum=512, value=128, interactive=True, label="Max Length")
                     # with gr.Accordion(label='Advanced options', open=False):
@@ -136,7 +131,7 @@ def create_demo():
 
     inputs = [
         img_path,
-        prompt, question_input,
+        prompt, question_input, system_prompt,
         max_gen_len, gen_t, top_p,
     ]
     outputs = [text_output]

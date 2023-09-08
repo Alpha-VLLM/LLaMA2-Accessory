@@ -1,18 +1,19 @@
 # LLaMA2-Accessory: An Open-source Toolkit for LLM Development 🚀
 
 <p align="center">
- <img src="docs/logo.png" width="90%"/> 
+ <img src="docs/logo_compression.png" width="90%"/> 
  <br>
 </p>
 
 🚀**LLaMA2-Accessory** is an open-source toolkit for pre-training, fine-tuning and deployment of **Large Language Models (LLMs)** and **mutlimodal LLMs**. This repo is mainly inherited from [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter) with more advanced features.🧠
 
 ## News
-- **[2023.08.28]** We release quantized LLM with [OmniQuant](https://github.com/OpenGVLab/OmniQuant), which is an efficient, accurate, and omnibearing (even extremely low bit) quantization algorithm. Multimodal version is coming soon.🔥🔥🔥
-- **[2023.08.27]** We now support CodeLLaMA and instruction fine-tuning on [evol-code-alpaca](https://huggingface.co/datasets/theblackcat102/evol-codealpaca-v1)🔥🔥🔥
+- **[2023.09.02]** We now support InternLM🔥🔥🔥
+- **[2023.08.28]** We release quantized LLM with [OmniQuant](https://github.com/OpenGVLab/OmniQuant), which is an efficient, accurate, and omnibearing (even extremely low bit) quantization algorithm. Multimodal version is coming soon🔥🔥🔥
+- **[2023.08.27]** We now support CodeLLaMA and instruction fine-tuning on [evol-code-alpaca](https://huggingface.co/datasets/theblackcat102/evol-codealpaca-v1)🔥🔥
 - **[2023.08.27]** We release our documentation in a webbook format 🔗[Check it out here](https://llama2-accessory.readthedocs.io/)
-- **[2023.08.21]** We release the Quantization codes and Evaluation result🔥🔥🔥
-- **[2023.08.05]** We release the multimodel fine-tuning codes and checkpoints🔥🔥🔥
+- **[2023.08.21]** We release the Quantization codes and Evaluation result🔥
+- **[2023.08.05]** We release the multimodel fine-tuning codes and checkpoints🔥
 - **[2023.07.23]** Initial release 📌
 
 ## Features
@@ -27,7 +28,7 @@
 * **🏋️‍♀️Support More Visual Encoders and LLMs**
 
   - 👁‍🗨 Visual Encoders: [CLIP](https://github.com/openai/CLIP), [Q-Former](https://github.com/salesforce/LAVIS) and [ImageBind](https://github.com/facebookresearch/ImageBind).
-  - 🧩 LLMs: LLaMA and LLaMA2.
+  - 🧩 LLMs: LLaMA, LLaMA2, CodeLlama and InternLM.
 
 ## Setup
 
@@ -88,7 +89,7 @@ If you find our code and paper useful, please kindly cite:
 + [@OpenGVLab](https://github.com/OpenGVLab) for [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter)
 <details><summary>Show More</summary>
 
-+ [@facebookresearch](https://github.com/facebookresearch) for [ImageBind](https://github.com/facebookresearch/ImageBind) & [LIMA](https://huggingface.co/datasets/64bits/lima_vicuna_format)
++ [@facebookresearch](https://github.com/facebookresearch) for [ImageBind](https://github.com/facebookresearch/ImageBind) & [LIMA](https://huggingface.co/datasets/64bits/lima_vicuna_format) & [CodeLlama](https://github.com/facebookresearch/codellama)
 + [@Instruction-Tuning-with-GPT-4](https://github.com/Instruction-Tuning-with-GPT-4) for [GPT-4-LLM](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
 + [@tatsu-lab](https://github.com/tatsu-lab) for [stanford_alpaca](https://github.com/tatsu-lab/stanford_alpaca)
 + [@tloen](https://github.com/tloen) for [alpaca-lora](https://github.com/tloen/alpaca-lora)
@@ -117,6 +118,7 @@ If you find our code and paper useful, please kindly cite:
 + [@declare-lab](https://github.com/declare-lab) for [flacuna](https://github.com/declare-lab/flacuna)
 + [@nlpxucan](https://github.com/nlpxucan) for [WizardLM](https://github.com/nlpxucan/WizardLM)
 + [@arielnlee](https://github.com/arielnlee) for [Platypus](https://github.com/arielnlee/Platypus)
++ [@InternLM](https://github.com/InternLM) for [InternLM](https://github.com/InternLM/InternLM)
 + [@Google](https://github.com/google) for [Bard](https://bard.google.com/)
 </details>
 

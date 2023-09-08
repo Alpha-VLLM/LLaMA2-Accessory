@@ -66,6 +66,26 @@ torchrun --nproc-per-node=1  demos/single_turn.py \
 --pretrained_path /path/to/alpaca_finetuned
 ```
 
+## Bias&Norm&LoRA Tuning of LLaMA2-7B on Multi-turn ShareGPT
+
+**Script:**
+
++ {link2repo}`[exps/finetune/sg/dialog_sharegpt_llamaPeft_normBiasLora.sh](accessory/exps/finetune/sg/dialog_sharegpt_llamaPeft_normBiasLora.sh)`
+
+**Data:**
+
++ Please collect and process the data on your own. {link2repo}`[Here](data_example/ShareGPT.json)` is a toy example showing the proper format of the data file.
+
+**Host Local Demo:**
+
+```bash
+python demos/multi_turn.py \
+--llama_type llama_peft \
+--llama_config /path/to/params.json configs/model/finetune/sg/llamaPeft_normBiasLora.json \
+--tokenizer_path /path/to/tokenizer.model \
+--pretrained_path /path/to/sharegpt_finetuned
+```
+
 ---
 
 *More use cases coming soon...*

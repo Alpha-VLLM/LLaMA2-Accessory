@@ -13,13 +13,13 @@ exp_name=finetune/sg/alpaca_llamaPeft_normBias
 echo "exp name: $exp_name"
 mkdir -p output/"$exp_name"
 
-torchrun --master_port=1112 --nproc_per_node=6 main_finetune.py \
+torchrun --master_port=1112 --nproc_per_node=8 main_finetune.py \
 --output_dir output/"$exp_name" --epochs 4 --warmup_epochs 1 \
 --batch_size 4 --accum_iter 2 --num_workers 4 \
 --max_words 512 \
 --lr 0.00005 --min_lr 0.000005 --clip_grad 2 --weight_decay 0.02 \
 --data_parallel "$data_parallel" --model_parallel_size "$model_parallel" --checkpointing \
---llama_type llama_peft --llama_config "$llama_config" --tokenizer_path "$tokenizer_path" \
+--llama_type llama_peft --llama_config $llama_config --tokenizer_path "$tokenizer_path" \
 --no_visual \
 --pretrained_path "$pretrained_path" --pretrained_type="$pretrained_type" \
 --data_config $data_config \
