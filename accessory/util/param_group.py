@@ -151,12 +151,12 @@ def make_param_groups(
     # may change in future PyTorch releases. Be careful when bumping the
     # PyTorch version or write a more robust one in the future.
     from torch.distributed._composable_state import _get_module_state
-    from torch.distributed.fsdp._common_utils import _FSDPState
+    from torch.distributed.fsdp._common_utils import _FSDPState, FSDP_PREFIX
     from torch.distributed.algorithms._checkpoint.checkpoint_wrapper import (
         CheckpointWrapper, _CHECKPOINT_PREFIX
     )
 
-    def get_param_fqn(module_name: str, param_name: str):
+    def get_fqn(module_name: str, param_name: str):
         return module_name + "." + param_name if module_name else param_name
 
     def match_and_strip_prefix(prefix: str,
@@ -171,10 +171,10 @@ def make_param_groups(
         sharded_views_original_shape: Dict[str, torch.Size],
     ) -> None:
         state = _get_module_state(module)
-        if isinstance(state, CheckpointWrapper):
+        if isinstance(module, CheckpointWrapper):
             # The special case is that we want to strip the _CHECKPOINT_PREFIX
             dfs_find_params_and_clean_names(
-                state._checkpoint_wrapped_module,
+                module._checkpoint_wrapped_module,
                 prefix=prefix,
                 sharded_views_original_shape=match_and_strip_prefix(
                     _CHECKPOINT_PREFIX, sharded_views_original_shape
@@ -190,49 +190,55 @@ def make_param_groups(
                 for (param_name, _, submodule_name), shape in zip(
                     handle.flat_param._param_infos, handle.flat_param._shapes
                 ):
-                    fqn = get_param_fqn(submodule_name, param_name)
+                    fqn = get_fqn(submodule_name, param_name)
                     assert fqn not in sharded_views_original_shape
                     sharded_views_original_shape[fqn] = shape
                 for (
                     param_name, _, submodule_name,
                     prim_param_name, _, prim_submodule_name,
                 ) in handle.flat_param._shared_param_infos:
-                    fqn = get_param_fqn(submodule_name, param_name)
-                    prim_fqn = get_param_fqn(prim_submodule_name,
-                                             prim_param_name)
+                    fqn = get_fqn(submodule_name, param_name)
+                    prim_fqn = get_fqn(prim_submodule_name, prim_param_name)
                     assert fqn not in sharded_views_original_shape
                     sharded_views_original_shape[fqn] = (
                         sharded_views_original_shape[prim_fqn]
                     )
-        else:
-            assert state is None, (f"Unknown state type: {type(state)}")
-
-        for name, param in module.named_parameters(
-            prefix=prefix, recurse=False,
-        ):
-            clean_name_to_real_param_dict[name] = param
-            if name in sharded_views_original_shape:
-                meta_param = torch.zeros(
-                    sharded_views_original_shape[name],
-                    dtype=param.dtype,
-                    device="meta",
-                    requires_grad=param.requires_grad
-                )
-            else:
-                meta_param = torch.zeros_like(
-                    param, device="meta", requires_grad=param.requires_grad
-                )
-            clean_name_to_meta_param_dict[name] = meta_param
-
-        for name, submodule in module.named_children():
             dfs_find_params_and_clean_names(
-                submodule, prefix=prefix + name + ".",
+                state._fsdp_wrapped_module,
+                prefix=prefix,
                 sharded_views_original_shape=match_and_strip_prefix(
-                    name + ".", sharded_views_original_shape
+                    FSDP_PREFIX, sharded_views_original_shape
                 )
             )
+            return
+        else:
+            assert state is None, (f"Unknown state type: {type(state)}")
+            for name, param in module.named_parameters(
+                prefix=prefix, recurse=False,
+            ):
+                clean_name_to_real_param_dict[name] = param
+                if name in sharded_views_original_shape:
+                    meta_param = torch.zeros(
+                        sharded_views_original_shape[name],
+                        dtype=param.dtype,
+                        device="meta",
+                        requires_grad=param.requires_grad
+                    )
+                else:
+                    meta_param = torch.zeros_like(
+                        param, device="meta", requires_grad=param.requires_grad
+                    )
+                clean_name_to_meta_param_dict[name] = meta_param
+    
+            for name, submodule in module.named_children():
+                dfs_find_params_and_clean_names(
+                    submodule, prefix=get_fqn(prefix, name),
+                    sharded_views_original_shape=match_and_strip_prefix(
+                        name + ".", sharded_views_original_shape
+                    )
+                )
 
-    dfs_find_params_and_clean_names(model, prefix="")
+    dfs_find_params_and_clean_names(model, "", {})
 
     prefix_to_params: Dict[str, Dict[str, torch.Tensor]] = {}
     for key, meta_param in clean_name_to_meta_param_dict.items():
@@ -257,7 +263,9 @@ def make_param_groups(
             )
         )
         if no_layer_wise_lr_decay:
-            lr_groups[0]["params"].extend(meta_param_dict.keys())
+            lr_groups[0]["params"].extend([
+                prefix + key for key in meta_param_dict.keys()
+            ])
             continue
 
         lr_decay_factor = (
@@ -271,9 +279,13 @@ def make_param_groups(
         for i, group in enumerate(blockwise_groups[::-1]):
             for name in group:
                 all_params.remove(name)
-            lr_groups.append({"params": group,
-                              "lr": base_lr * (lr_decay_factor ** i)})
-        lr_groups[0]["params"].extend(all_params)
+            group_with_prefix = [prefix + key for key in group]
+            if i == 0:
+                lr_groups[0]["params"].extend(group_with_prefix)
+            else:
+                lr_groups.append({"params": group_with_prefix,
+                                  "lr": base_lr * (lr_decay_factor ** i)})
+        lr_groups[0]["params"].extend([prefix + key for key in all_params])
 
     def default_no_wd_criterion(name: str) -> bool:
         return (
@@ -284,7 +296,7 @@ def make_param_groups(
         )
 
     # Split weight decay and no weight decay into 2 groups.
-    lr_and_wd_groups = List[Dict[str, Any]] = []
+    lr_and_wd_groups: List[Dict[str, Any]] = []
     for group in lr_groups:
         lr = group["lr"]
         wd_group = {"params": [], "lr": lr, "weight_decay": base_weight_decay}
