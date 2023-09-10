@@ -172,51 +172,61 @@ def make_param_groups(
     ) -> None:
         state = _get_module_state(module)
         if isinstance(module, CheckpointWrapper):
-            # The special case is that we want to strip the _CHECKPOINT_PREFIX
+            # The special points for CheckpointWrappers are:
+            # 1. We want to strip the _CHECKPOINT_PREFIX.
+            # 2. There might be two cases when CheckpointWrapper is used
+            #    with FSPD: FSDP(checkpoint(model)) and
+            #    checkpoint(FSDP(model)). As of v2.0.1 it seems to be unclear
+            #    which one is the preferred / correct one so handle both for
+            #    now.
+            new_sharded_views_dict = {}
+            for key, value in sharded_views_original_shape.items():
+                if key.startswith(_CHECKPOINT_PREFIX):
+                    key = key[len(_CHECKPOINT_PREFIX):]
+                new_sharded_views_dict[key] = value
             dfs_find_params_and_clean_names(
                 module._checkpoint_wrapped_module,
                 prefix=prefix,
-                sharded_views_original_shape=match_and_strip_prefix(
-                    _CHECKPOINT_PREFIX, sharded_views_original_shape
-                )
+                sharded_views_original_shape=new_sharded_views_dict
             )
-            return
         elif isinstance(state, _FSDPState):
             assert state._use_orig_params, (
                 "Setting-up parameter groups requires that all FSDP instances "
                 "use use_orig_params=True."
+            )
+            sharded_views_original_shape_no_prefix = match_and_strip_prefix(
+                FSDP_PREFIX, sharded_views_original_shape
+            )
+            assert (
+                len(sharded_views_original_shape_no_prefix)
+                == len(sharded_views_original_shape)
             )
             for handle in state._handles:
                 for (param_name, _, submodule_name), shape in zip(
                     handle.flat_param._param_infos, handle.flat_param._shapes
                 ):
                     fqn = get_fqn(submodule_name, param_name)
-                    assert fqn not in sharded_views_original_shape
-                    sharded_views_original_shape[fqn] = shape
+                    assert fqn not in sharded_views_original_shape_no_prefix
+                    sharded_views_original_shape_no_prefix[fqn] = shape
                 for (
                     param_name, _, submodule_name,
                     prim_param_name, _, prim_submodule_name,
                 ) in handle.flat_param._shared_param_infos:
                     fqn = get_fqn(submodule_name, param_name)
                     prim_fqn = get_fqn(prim_submodule_name, prim_param_name)
-                    assert fqn not in sharded_views_original_shape
-                    sharded_views_original_shape[fqn] = (
-                        sharded_views_original_shape[prim_fqn]
+                    assert fqn not in sharded_views_original_shape_no_prefix
+                    sharded_views_original_shape_no_prefix[fqn] = (
+                        sharded_views_original_shape_no_prefix[prim_fqn]
                     )
             dfs_find_params_and_clean_names(
-                state._fsdp_wrapped_module,
-                prefix=prefix,
-                sharded_views_original_shape=match_and_strip_prefix(
-                    FSDP_PREFIX, sharded_views_original_shape
-                )
+                state._fsdp_wrapped_module, prefix,
+                sharded_views_original_shape_no_prefix,
             )
-            return
         else:
             assert state is None, (f"Unknown state type: {type(state)}")
-            for name, param in module.named_parameters(
-                prefix=prefix, recurse=False,
-            ):
-                clean_name_to_real_param_dict[name] = param
+            for name, param in module.named_parameters(recurse=False):
+                fqn = get_fqn(prefix, name)
+                clean_name_to_real_param_dict[fqn] = param
                 if name in sharded_views_original_shape:
                     meta_param = torch.zeros(
                         sharded_views_original_shape[name],
@@ -228,7 +238,7 @@ def make_param_groups(
                     meta_param = torch.zeros_like(
                         param, device="meta", requires_grad=param.requires_grad
                     )
-                clean_name_to_meta_param_dict[name] = meta_param
+                clean_name_to_meta_param_dict[fqn] = meta_param
     
             for name, submodule in module.named_children():
                 dfs_find_params_and_clean_names(
@@ -291,7 +301,7 @@ def make_param_groups(
         return (
             bias_and_1d_params_no_decay and (
                 name.endswith(".bias")
-                or clean_name_to_meta_param_dict[name].ndim < 1
+                or clean_name_to_meta_param_dict[name].ndim <= 1
             )
         )
 
