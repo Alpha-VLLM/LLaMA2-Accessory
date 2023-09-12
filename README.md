@@ -1,7 +1,7 @@
 # LLaMA2-Accessory: An Open-source Toolkit for LLM Development 🚀
 
 <p align="center">
- <img src="docs/logo_compression.png" width="90%"/> 
+ <img src="docs/logo.png" width="90%"/> 
  <br>
 </p>
 
