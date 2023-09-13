@@ -130,7 +130,7 @@ def resize_prompt(tokenizer, model_max_context, prompt):
 def run_infer(model, max_seq_len, data_path, infer_path, overwrite = False):
 
     infer_file = os.path.join(infer_path, f'gsm8k_infer.jsonl')
-    if not overwrite and os.path.exists(infer_path):
+    if not overwrite and os.path.exists(infer_file):
         print(f"{infer_file} existed, skip!")
         return
     
