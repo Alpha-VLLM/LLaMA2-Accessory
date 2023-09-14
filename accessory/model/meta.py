@@ -95,12 +95,12 @@ class MetaModel(nn.Module):
 
     def generate(
         self,
-        prompts: list[str],
-        images: list,
+        prompts: List[str],
+        images: List,
         max_gen_len: int,
         temperature: float = 0.8,
         top_p: float = 0.95,
-    ) -> list[str]:
+    ) -> List[str]:
         bsz = len(prompts)
         params = self.llma.params
         assert bsz <= params.max_batch_size, (bsz, params.max_batch_size)
@@ -113,11 +113,11 @@ class MetaModel(nn.Module):
 
         total_len = min(params.max_seq_len, max_gen_len + max_prompt_size)
 
-        tokens = torch.full(
-            (bsz, total_len), self.tokenizer.pad_id).cuda().long()
+        tokens = torch.full((bsz, total_len), 0).cuda().long()
+        input_text_mask = torch.full((bsz, total_len), False).cuda()
         for k, t in enumerate(prompt_tokens):
             tokens[k, : len(t)] = torch.tensor(t).long()
-        input_text_mask = tokens != self.tokenizer.pad_id
+            input_text_mask[k, : len(t)] = True
         start_pos = min_prompt_size
         prev_pos = 0
         for cur_pos in range(start_pos, total_len):
@@ -170,7 +170,7 @@ class MetaModel(nn.Module):
 
         total_len = min(params.max_seq_len, max_gen_len + prompt_size)
 
-        tokens = torch.full([total_len], self.tokenizer.pad_id).cuda().long()
+        tokens = torch.full([total_len], 0).cuda().long()
 
         tokens[:len(prompt_tokens)] = torch.tensor(prompt_tokens).long()
         start_pos = prompt_size

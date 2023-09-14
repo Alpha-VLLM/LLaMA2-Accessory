@@ -387,7 +387,7 @@ def load_diff_checkpoint(
 
 def load_tensor_parallel_model_list(
     model: nn.Module, path_list: List[str], verbose: bool = False
-) -> Tuple[List[str], List[str]]:
+) -> Dict:
     r"""This method accepts a list of checkpoint paths, and load each
     checkpoint to the model in the order as given in the list. The behaviors
     of a base checkpoint format (currently supported: meta_ori, consolidated)
@@ -416,7 +416,7 @@ def load_tensor_parallel_model_list(
             unexpected if it is unexpected to the model and has appeared in any
             one of the checkpoints in the list.
     """
-    existing_keys, missing_keys, unexpected_keys = set(), set(), set()
+    existing_keys, missing_keys, unexpected_keys = set(), set(model.state_dict().keys()), set()
     for i, path in enumerate(path_list):
         inferred_format, _ = infer_checkpoint_format_and_mp_size(path)
         print(f"Loading from checkpoint at: {path} ({i + 1} of "
@@ -443,7 +443,7 @@ def load_tensor_parallel_model_list(
         missing_keys.intersection_update(step_missing_keys)
         unexpected_keys.update(step_unexpected_keys)
 
-    return list(missing_keys), list(unexpected_keys)
+    return {"missing_keys": list(missing_keys), "unexpected_keys": list(unexpected_keys)}
 
 
 def tensor_load_shard(

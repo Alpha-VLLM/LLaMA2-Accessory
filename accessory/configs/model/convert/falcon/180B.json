@@ -1,0 +1,10 @@
+{
+  "num_layers": 80,
+  "hidden_size": 14848,
+  "num_attention_heads": 232,
+  "num_kv_heads": 8,
+  "bias": false,
+  "multi_query": true,
+  "new_decoder_architecture": true,
+  "parallel_attn": true
+}

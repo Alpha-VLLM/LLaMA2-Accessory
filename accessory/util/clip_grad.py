@@ -104,22 +104,14 @@ def clip_grad_norm(
             "`clip_grad_norm_()` should only be called on the root FSDP instance"
         )
     model._assert_state(TrainingState.IDLE)
-    # If every FSDP instance uses `NO_SHARD`, then we can directly use
-    # the normal `nn.utils` one targeting local gradients
-    all_no_shard = all(
-        not handle.uses_sharded_strategy
-        for handle in traversal_utils._get_fsdp_handles(model)
-    )
-    if all_no_shard:
-        return torch.nn.utils.clip_grad_norm_(
-            model.parameters(), max_norm, norm_type
-        )
+
     # Otherwise, there exists some FSDP instance using a sharded strategy,
     # where sharded and non-sharded parameters must be handled separately
     max_norm = float(max_norm)
     norm_type = float(norm_type)
     sharded_params = set()
     nonsharded_params = set()  # `NO_SHARD` or not FSDP-managed
+    model_parallel_ignore_params = set()
     model_parallel_params = set()
     grads: List[torch.Tensor] = []
     for handle in traversal_utils._get_fsdp_handles(model):
@@ -130,8 +122,8 @@ def clip_grad_norm(
             for param in handle.flat_param._params:
                 if getattr(param, "is_model_parallel", False) or cal_non_split_norm:
                     target_set.add(param)
-                if param.grad is not None:
-                    grads.append(param.grad)
+                else:
+                    model_parallel_ignore_params.add(param)
 
                 if getattr(param, "is_model_parallel", False):
                     model_parallel_params.add(param)
@@ -141,14 +133,17 @@ def clip_grad_norm(
             # if handle.flat_param.grad is not None:
             #     grads.append(handle.flat_param.grad)
     for param in model.parameters():
+        if param.grad is not None:
+            grads.append(param.grad)
+
         not_fsdp_managed = (
-            param not in sharded_params and param not in nonsharded_params
+            param not in sharded_params and param not in nonsharded_params and param not in model_parallel_ignore_params
         )
         if not_fsdp_managed:
             if getattr(param, "is_model_parallel", False) or cal_non_split_norm:
                 nonsharded_params.add(param)
-            if param.grad is not None:
-                grads.append(param.grad)
+            else:
+                model_parallel_ignore_params.add(param)
 
             if getattr(param, "is_model_parallel", False):
                 model_parallel_params.add(param)

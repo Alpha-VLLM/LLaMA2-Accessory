@@ -5,3 +5,4 @@ from . import llama_qformerv2 # llama equiped with qformerv2 image encoder for i
 from . import llama_qformerv2_peft
 from . import llama_ens
 from . import internlm
+from . import falcon
