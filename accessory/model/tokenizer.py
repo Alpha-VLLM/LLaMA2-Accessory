@@ -39,6 +39,8 @@ class Tokenizer:
             # BOS / EOS token IDs
             self.n_words: int = self.tokenizer.vocab_size
             self.bos_id: int = self.tokenizer.bos_token_id
+            if self.bos_id is None:
+                self.bos_id = self.tokenizer.eos_token_id
             self.eos_id: int = self.tokenizer.eos_token_id
             assert self.eos_id is not None
 
@@ -52,7 +54,7 @@ class Tokenizer:
             t = self.tokenizer.encode(s, truncation=False, add_special_tokens=False)
         else:
             t = self.tokenizer.encode(s)
-        if bos and self.bos_id is not None:
+        if bos:
             t = [self.bos_id] + t
         if eos:
             t = t + [self.eos_id]
