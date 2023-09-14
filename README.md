@@ -28,7 +28,7 @@
 * **🏋️‍♀️Support More Visual Encoders and LLMs**
 
   - 👁‍🗨 Visual Encoders: [CLIP](https://github.com/openai/CLIP), [Q-Former](https://github.com/salesforce/LAVIS) and [ImageBind](https://github.com/facebookresearch/ImageBind).
-  - 🧩 LLMs: LLaMA, LLaMA2, CodeLlama and InternLM.
+  - 🧩 LLMs: LLaMA, LLaMA2, CodeLlama, Falcon and InternLM.
 
 ## Setup
 
