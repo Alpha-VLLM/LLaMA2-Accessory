@@ -6,7 +6,7 @@ def colored(text, color):
     return f"{color_map.get(color, '')}{text}\033[0m"
 model_list = {
     'convert': {
-        'sg': ['InternLM']
+        'sg': ['InternLM','Falcon','Falcon_180b']
     },
     'finetune': {
         'mm': ['alpacaLlava_llamaQformerv2', 'alpacaLlava_llamaQformerv2_13b', 'alpacaLlava_llamaQformerv2Peft_13b', 'caption_llamaQformerv2', 'caption_llamaQformerv2_13b'],
