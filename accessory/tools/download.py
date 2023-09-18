@@ -44,7 +44,7 @@ def interactive_mode(args):
     if models:
         args.model_name = args.model_name or ask_question("\nChoose a model:", models)
     
-    args.model_size = args.model_size or ask_question("\nChoose a model size:", ['7B', '13B', '34B', '70B'])
+    args.model_size = args.model_size or ask_question("\nChoose a model size:", ['7B', '13B', '34B', '70B', '180B'])
     config_choice = ask_question("\nDownload which version of params.json and tokenizer.model?", ['LLaMA2', 'InterLM', 'CodeLlama', 'no'])
     if config_choice != 'no':
         args.down_config = True
