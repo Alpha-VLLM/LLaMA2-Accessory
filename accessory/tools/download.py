@@ -60,7 +60,7 @@ def get_args_parser():
     parser = argparse.ArgumentParser('Download the weights of the model.', add_help=False)
     parser.add_argument('--train_type', default=None, choices=['finetune', 'convert'])
     parser.add_argument('--input_type', default=None, choices=['sg', 'mm'])
-    parser.add_argument('--model_size', default=None, choices=['7B', '13B', '34B', '70B'])
+    parser.add_argument('--model_size', default=None, choices=['7B', '13B', '34B', '70B','180B'])
     parser.add_argument('--model_name', default=None, type=str)
     parser.add_argument('--down_config', default=None, action="store_true")
     parser.add_argument('--down_diff', default=None, action="store_true")
@@ -89,7 +89,7 @@ def main():
         param_file = prefix+f"{args.model_size}_params.json"
         download_file(repo_id, 'config', param_file, args.output_path)
 
-    num_files_map = {'7B': 1, '13B': 2, '34B': 4, '70B': 8}
+    num_files_map = {'7B': 1, '13B': 2, '34B': 4, '70B': 8, '180B': 8}
     max_num = num_files_map.get(args.model_size, 1)
 
     for num in range(max_num):
