@@ -8,7 +8,7 @@
 🚀**LLaMA2-Accessory** is an open-source toolkit for pre-training, fine-tuning and deployment of **Large Language Models (LLMs)** and **mutlimodal LLMs**. This repo is mainly inherited from [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter) with more advanced features.🧠
 
 ## News
-- **[2023.09.15]** We now support Falcon🔥🔥🔥
+- **[2023.09.15]** We now support Falcon 180B!🔥🔥🔥
 - **[2023.09.14]** [WeMix-LLaMA2-70B](https://github.com/Alpha-VLLM/WeMix-LLM) shows excellent performance on the [OpenCompass](https://opencompass.org.cn/leaderboard-llm) benchmark!🔥🔥🔥
 - **[2023.09.02]** We now support InternLM🔥🔥🔥
 - **[2023.08.28]** We release quantized LLM with [OmniQuant](https://github.com/OpenGVLab/OmniQuant), which is an efficient, accurate, and omnibearing (even extremely low bit) quantization algorithm. Multimodal version is coming soon🔥🔥
