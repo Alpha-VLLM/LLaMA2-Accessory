@@ -18,6 +18,7 @@ install
 pretrain
 finetune/index
 inference
+light-eval/index
 ```
 
 ```{toctree}
