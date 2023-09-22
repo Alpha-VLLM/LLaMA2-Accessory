@@ -71,6 +71,7 @@ if args.quant:
             "load_in_8bit": False, 
             "load_in_4bit": True, 
             "bnb_4bit_quant_type": "nf4",
+            "bnb_4bit_compute_dtype": torch.bfloat16
         },
         return_unused_kwargs=False,
     )
@@ -95,8 +96,11 @@ def generate(
 
     dist.barrier()
     dist.broadcast_object_list([_prompt, image, max_gen_len, gen_t, top_p])
-    with torch.cuda.amp.autocast(dtype=target_dtype):
+    if args.quant:
         results = model.generate([_prompt], image, max_gen_len=max_gen_len, temperature=gen_t, top_p=top_p)
+    else:
+        with torch.cuda.amp.autocast(dtype=target_dtype):
+            results = model.generate([_prompt], image, max_gen_len=max_gen_len, temperature=gen_t, top_p=top_p)
     text_output = results[0].strip()
     return text_output
 
