@@ -1,0 +1,66 @@
+{
+    "v1_0": {
+        "imagename": "v1_0.png",
+        "question": "What is x in the equation?",
+        "answer": "-1<AND>-5",
+        "capability": [
+            "ocr",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_1": {
+        "imagename": "v1_1.png",
+        "question": "What is d in the last equation?",
+        "answer": "1.25<OR>=1.25<OR>5/4",
+        "capability": [
+            "ocr",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_3": {
+        "imagename": "v1_3.png",
+        "question": "What is the answer to the bottom left equation?",
+        "answer": "12<OR>=12",
+        "capability": [
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_5": {
+        "imagename": "v1_5.png",
+        "question": "What is the answer to the second last equation on the right?",
+        "answer": "2<OR>=2",
+        "capability": [
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_7": {
+        "imagename": "v1_7.png",
+        "question": "Find the pattern of how the \"X\" operator is redefined, and answer the given equation in the image.",
+        "answer": "13<OR>=13",
+        "capability": [
+            "ocr",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_8": {
+        "imagename": "v1_8.png",
+        "question": "What will the girl on the right write on the board?",
+        "answer": "14<OR>=14",
+        "capability": [
+            "rec",
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    }
+}
