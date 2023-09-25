@@ -18,15 +18,6 @@ from fairscale.nn.model_parallel import initialize as fs_init
 
 from eval_utils.ceval_categories import TASK_NAME_MAPPING, hard_list 
 
-'''
-cd light-eval/data/
-mkdir ceval
-cd ceval
-wget https://huggingface.co/datasets/ceval/ceval-exam/resolve/main/ceval-exam.zip
-unzip unzip ceval-exam.zip 
-
-'''
-
 choices = ["A", "B", "C", "D"]
 
 def get_args_parser():
@@ -221,8 +212,10 @@ def main(args):
     subjects_result = run_infer_eval(model, args.max_seq_len, args.data_dir, args.ntrain)
     score = cal_ceval(subjects_result)
 
-    with open(result_path, 'w') as f:
-        json.dump(score, f, ensure_ascii=False, indent=2) 
+    if torch.distributed.get_rank() == 0:
+        torch.distributed.barrier()
+        with open(result_path, 'w') as f:
+            json.dump(score, f, ensure_ascii=False, indent=2) 
 
 if __name__ == "__main__":
 

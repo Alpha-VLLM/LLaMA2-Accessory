@@ -5,6 +5,7 @@ import jsonlines
 from fractions import Fraction
 import re
 from tqdm import tqdm
+import torch
 
 import os
 import sys
@@ -162,13 +163,16 @@ def run_infer(model, max_seq_len, data_path, infer_path, overwrite = False):
         for output in outputs:
             res_completions.append(output)
     
-    with jsonlines.open(infer_file, mode='w') as writer:
-        for (completion, prompt_answer) in zip(res_completions, answer_set):
-            record = {
-            'completion': completion,
-            'target_ans': prompt_answer
-            }
-            writer.write(record)
+
+    if torch.distributed.get_rank() == 0:
+        torch.distributed.barrier()
+        with jsonlines.open(infer_file, mode='w') as writer:
+            for (completion, prompt_answer) in zip(res_completions, answer_set):
+                record = {
+                'completion': completion,
+                'target_ans': prompt_answer
+                }
+                writer.write(record)
 
 def run_eval(infer_path):
 
@@ -211,13 +215,16 @@ def main(args):
     run_infer(model, args.max_seq_len, args.data_dir, infer_path, args.overwrite)
     score, invalid_outputs = run_eval(infer_path)
 
-    with open(os.path.join(eval_path, 'run_results.json'), 'w') as f:
-        json.dump(score, f, ensure_ascii=False, indent=2) 
+    if torch.distributed.get_rank() == 0:
+        torch.distributed.barrier()
+        
+        with open(os.path.join(eval_path, 'run_results.json'), 'w') as f:
+            json.dump(score, f, ensure_ascii=False, indent=2) 
 
-    with open(os.path.join(eval_path, 'debug_invalid_outputs.jsonl'), 'w') as outfile:
-        for entry in invalid_outputs:
-            json.dump(entry, outfile, ensure_ascii=False,indent=2)
-            outfile.write('\n')
+        with open(os.path.join(eval_path, 'debug_invalid_outputs.jsonl'), 'w') as outfile:
+            for entry in invalid_outputs:
+                json.dump(entry, outfile, ensure_ascii=False,indent=2)
+                outfile.write('\n')
 
 if __name__ == "__main__":
 

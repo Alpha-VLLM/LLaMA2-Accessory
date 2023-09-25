@@ -142,9 +142,11 @@ def run_infer(
 
         pbar.update(num_samples_per_task)
 
-    with jsonlines.open(infer_file, mode='w') as writer:
-        for x in samples:
-            writer.write(x)
+    if torch.distributed.get_rank() == 0:
+        torch.distributed.barrier()
+        with jsonlines.open(infer_file, mode='w') as writer:
+            for x in samples:
+                writer.write(x)
 
 def main(args):
 
@@ -163,10 +165,12 @@ def main(args):
     run_infer(model, infer_file, args.overwrite,)
     
     print("Evaluating...")
-    score = entry_point(sample_file=infer_file)
-    with open(os.path.join(eval_path, 'run_results.json'), 'w') as f:
-        json.dump(score, f, ensure_ascii=False, indent=2) 
-    print(score)
+    if torch.distributed.get_rank() == 0:
+        torch.distributed.barrier()
+        score = entry_point(sample_file=infer_file)
+        with open(os.path.join(eval_path, 'run_results.json'), 'w') as f:
+            json.dump(score, f, ensure_ascii=False, indent=2) 
+        print(score)
 
 
 if __name__ == "__main__":
