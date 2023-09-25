@@ -86,18 +86,29 @@ def forward_LoraRowParallelLinear(self, input_: torch.Tensor) -> torch.Tensor:  
         output = output_
     return output
 
+def forward_Linear(self, input: torch.Tensor) -> torch.Tensor:
+    output = self.quanted_layer(input)
+    if self.bias != None:
+        output += self.bias
+    return output
+
 def quantize(
         model : MetaModel,
         quant_conf : BitsAndBytesConfig,
 ):
     module_list = [_ for _ in model.named_modules() if isinstance(_[1], 
                                                                   (LoraColumnParallelLinear, LoraRowParallelLinear,
-                                                                   ColumnParallelLinear, RowParallelLinear))]
+                                                                   ColumnParallelLinear, RowParallelLinear, torch.nn.Linear))]
     for name, module in tqdm(module_list, desc="Qunatization Process"):
         if "lora" in name:
             continue
-        if isinstance(module, (LoraColumnParallelLinear, LoraRowParallelLinear,
-                               ColumnParallelLinear, RowParallelLinear)):
+        if isinstance(module, (
+                               LoraColumnParallelLinear, 
+                               LoraRowParallelLinear,
+                               ColumnParallelLinear, 
+                               RowParallelLinear, 
+                               torch.nn.Linear
+                               )):
             # 1. Initialize quantization operator
             if quant_conf.load_in_4bit: 
                 quanted_layer = bnb.nn.Linear4bit(
@@ -107,6 +118,8 @@ def quantize(
                             compute_dtype=quant_conf.bnb_4bit_compute_dtype, 
                             compress_statistics=True, 
                             device=None)
+                if quant_conf.bnb_4bit_compute_dtype != None:
+                    quanted_layer.compute_type_is_set = True
 
                 quanted_layer.weight = bnb.nn.Params4bit(
                             module.weight.data.clone(), 
@@ -141,6 +154,8 @@ def quantize(
                 forward_func = forward_ColumnParallelLinear
             elif isinstance(module, RowParallelLinear):
                 forward_func = forward_RowParallelLinear
+            elif isinstance(module, torch.nn.Linear):
+                forward_func = forward_Linear
             module.forward = MethodType(forward_func, module)
 
             del module.weight

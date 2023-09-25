@@ -14,6 +14,7 @@ from fairscale.nn.model_parallel import initialize as fs_init
 
 from data.alpaca import transform_train, format_prompt
 from util.tensor_parallel import load_tensor_parallel_model_list
+from util.tensor_type import default_tensor_type
 
 
 def get_args_parser():
@@ -39,6 +40,8 @@ def get_args_parser():
     parser.add_argument('--dist_on_itp', action='store_true')
     parser.add_argument('--dist_url', default='env://',
                         help='url used to set up distributed training')
+    parser.add_argument("--dtype", type=str, choices=["fp16", "bf16"], default="bf16",
+                        help="The dtype used for model weights and inference.")
     parser.add_argument('--quant', action='store_true', help="enable quantization")
     return parser
 
@@ -47,9 +50,17 @@ args = get_args_parser().parse_args()
 # define the model
 misc.init_distributed_mode(args)
 fs_init.initialize_model_parallel(args.model_parallel_size)
-model = MetaModel(args.llama_type, args.llama_config, args.tokenizer_path, with_visual=False)
+target_dtype = {
+    "bf16": torch.bfloat16,
+    "fp16": torch.float16,
+}[args.dtype]
+with default_tensor_type(dtype=target_dtype, device="cpu" if args.quant else "cuda"):
+    model = MetaModel(args.llama_type, args.llama_config, args.tokenizer_path, with_visual=False)
+
 print(f"load pretrained from {args.pretrained_path}")
-load_tensor_parallel_model_list(model, args.pretrained_path)
+load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
+print("load result: ", load_result)
+
 
 if args.quant:
     print("Quantizing model to 4bit!")
@@ -60,6 +71,7 @@ if args.quant:
             "load_in_8bit": False, 
             "load_in_4bit": True, 
             "bnb_4bit_quant_type": "nf4",
+            "bnb_4bit_compute_dtype": torch.bfloat16
         },
         return_unused_kwargs=False,
     )
@@ -84,8 +96,11 @@ def generate(
 
     dist.barrier()
     dist.broadcast_object_list([_prompt, image, max_gen_len, gen_t, top_p])
-    with torch.cuda.amp.autocast(dtype=torch.bfloat16):
+    if args.quant:
         results = model.generate([_prompt], image, max_gen_len=max_gen_len, temperature=gen_t, top_p=top_p)
+    else:
+        with torch.cuda.amp.autocast(dtype=target_dtype):
+            results = model.generate([_prompt], image, max_gen_len=max_gen_len, temperature=gen_t, top_p=top_p)
     text_output = results[0].strip()
     return text_output
 
@@ -128,7 +143,7 @@ def worker_func():
         input_data = [None for _ in range(5)]
         dist.broadcast_object_list(input_data)
         _prompt, image, max_gen_len, gen_t, top_p = input_data
-        with torch.cuda.amp.autocast(dtype=torch.bfloat16):
+        with torch.cuda.amp.autocast(dtype=target_dtype):
             _ = model.generate([_prompt], image, max_gen_len=max_gen_len, temperature=gen_t, top_p=top_p, )
 
 if dist.get_rank() == 0:

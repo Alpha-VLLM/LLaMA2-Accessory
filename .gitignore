@@ -166,3 +166,4 @@ accessory/output_dir/
 tokenizer.model
 *.swp
 
+.asset/

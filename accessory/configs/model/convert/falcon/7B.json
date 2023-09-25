@@ -1,0 +1,9 @@
+{
+  "num_layers": 32,
+  "hidden_size": 4544,
+  "num_attention_heads": 71,
+  "bias": false,
+  "multi_query": true,
+  "new_decoder_architecture": false,
+  "parallel_attn": true
+}
