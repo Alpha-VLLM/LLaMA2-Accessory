@@ -3,6 +3,7 @@ import json
 import jsonlines
 import re
 from tqdm import tqdm
+import torch
 
 import os
 import sys
@@ -74,9 +75,8 @@ def load(args):
     return model
 
 def extract_ans(ans, mode):
-    ans = ans.split('\n###')[0]
-    ans = re.split("Q:", ans, flags=re.IGNORECASE)[0]
-    ans_line = re.split('answer is ', ans, flags=re.IGNORECASE)[0]
+    ans_line = re.split("Q:", ans, flags=re.IGNORECASE)[0]
+    ans_line = re.split('answer is ', ans_line, flags=re.IGNORECASE)
     # Expect to see 'answer is'. If not return whole string
     if len(ans_line) == 1:
         return ans
@@ -84,15 +84,15 @@ def extract_ans(ans, mode):
         ans = ans_line[-1].strip()
     
     if mode == 'multiple_choice':
-        options = ['(A)', '(B)', '(C)', '(D)', '(E)', '(F)', '(G)', '(H)', '(I)', '(J)', '(K)', '(L)', '(M)', '(N)', '(O)', '(P)', '(Q)', '(R)', '(S)', '(T)', '(U)', '(V)', '(W)', '(X)', '(Y)', '(Z)']
-        for option in options:
-            if option in ans:
-                ans = option[1]
-                break
+        match = re.search(r'\(([A-Z])\)*', ans)
+        if match:
+            return match.group(1)
+        match = re.search(r'([A-Z])', ans)
+        if match:
+            return match.group(1)
         return ans
     elif mode == 'free_form':
-        ans = ans.split('.')[0]
-        
+        ans = re.split(r'[.#]', ans)[0]
         return ans
 
 def batch_data(prompts, batch_size=1):
@@ -158,13 +158,15 @@ def run_infer(model, max_seq_len, tasks, data_path, infer_path, mode, overwrite 
             for output in outputs:
                 res_completions.append(output)
         
-        with jsonlines.open(task_infer_path, mode='w') as writer:
-            for (prompt, completion, prompt_answer) in zip(task_data['examples'], res_completions, answer_set):
-                record = {'prompt': prompt,
-                    'completion': completion,
-                    'target_ans': prompt_answer
-                }
-                writer.write(record)
+        if torch.distributed.get_rank() == 0:
+            torch.distributed.barrier()
+            with jsonlines.open(task_infer_path, mode='w') as writer:
+                for (prompt, completion, prompt_answer) in zip(task_data['examples'], res_completions, answer_set):
+                    record = {'prompt': prompt,
+                        'completion': completion,
+                        'target_ans': prompt_answer
+                    }
+                    writer.write(record)
 
 def run_eval(tasks, infer_path, mode):
     
@@ -207,19 +209,26 @@ def main(args, multiple_choice_tasks=MULTIPLE_CHOICE_TASKS, free_form_tasks=FREE
     total_results = []
     if run_multiple_choice:
         run_infer(model, args.max_seq_len, multiple_choice_tasks, args.data_dir, infer_path, 'multiple_choice', args.overwrite)
-        score['multiple_choice'], task_results = run_eval(multiple_choice_tasks, infer_path, mode='multiple_choice')
-    total_results.extend(task_results)
     if run_free_form:
         run_infer(model, args.max_seq_len, free_form_tasks, args.data_dir, infer_path, 'free_form', args.overwrite)
+    
+    if run_multiple_choice:    
+        score['multiple_choice'], task_results = run_eval(multiple_choice_tasks, infer_path, mode='multiple_choice')
+    total_results.extend(task_results)
+
+    if run_free_form:
         score['free_form'], task_results = run_eval(free_form_tasks, infer_path, mode='free_form')
     total_results.extend(task_results)
 
     if args.task == 'all':
         score['TOTAL'] = '%.4f' %(sum(total_results) / len(total_results))
     
-    result_path = os.path.join(eval_path + 'run_results.json')
-    with open(result_path, 'w') as f:
-        json.dump(score, f, ensure_ascii=False, indent=2) 
+    result_path = os.path.join(eval_path, 'run_results.json')
+
+    if torch.distributed.get_rank() == 0:
+        torch.distributed.barrier()
+        with open(result_path, 'w') as f:
+            json.dump(score, f, ensure_ascii=False, indent=2) 
     
     return 
 

@@ -1,12 +1,12 @@
-task=humaneval
+task=bbh
 pretrained_type=meta_ori
 pretrained_path=/path/to/your/model_dir
 llama_config=/path/to/your/config
 tokenizer_path=/path/to/your/tokenizer
-#data_dir='data/'
+data_dir='data/BIG-Bench-Hard'
 
-nproc_per_node=8
-model_parallel=8
+nproc_per_node=1
+# model_parallel=1
 master_port=23456
 
 exp_name=your/model/name
@@ -17,4 +17,5 @@ torchrun --nproc-per-node="$nproc_per_node" --master_port "$master_port" src/eva
     --llama_config "$llama_config" \
     --tokenizer_path "$tokenizer_path" \
     --pretrained_path "$pretrained_path" \
+    --data_dir "$data_dir" \
     2>&1 | tee logs/"$exp_name"/"$task".log

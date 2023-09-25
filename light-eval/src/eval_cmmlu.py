@@ -200,8 +200,10 @@ def main(args):
     subjects_result = run_infer_eval(model, args.max_seq_len, args.data_dir, args.ntrain)
     score = cal_cmmlu(subjects_result)
 
-    with open(result_path, 'w') as f:
-        json.dump(score, f, ensure_ascii=False, indent=2) 
+    if torch.distributed.get_rank() == 0:
+        torch.distributed.barrier()
+        with open(result_path, 'w') as f:
+            json.dump(score, f, ensure_ascii=False, indent=2) 
 
 if __name__ == "__main__":
     

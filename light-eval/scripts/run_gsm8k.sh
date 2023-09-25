@@ -5,8 +5,8 @@ llama_config=/path/to/your/config
 tokenizer_path=/path/to/your/tokenizer
 data_dir='data/gsm8k'
 
-nproc_per_node=8
-model_parallel=8
+nproc_per_node=1
+# model_parallel=1
 master_port=23456
 
 exp_name=your/model/name
