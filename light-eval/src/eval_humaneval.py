@@ -12,6 +12,8 @@ sys.path.append(os.path.join(os.path.abspath(__file__).rsplit('/', 3)[0], 'acces
 from model.meta import MetaModel
 from util import misc
 from fairscale.nn.model_parallel import initialize as fs_init
+from util.tensor_parallel import load_tensor_parallel_model_list
+from util.quant import quantize
 
 from human_eval.data import write_jsonl, read_problems
 from eval_utils.humaneval_evaluation import evaluate_functional_correctness
@@ -50,12 +52,26 @@ def load(args):
     # define the model
     misc.init_distributed_mode(args)
     fs_init.initialize_model_parallel(args.model_parallel_size)
-    model = MetaModel(args.llama_type, args.llama_config, args.tokenizer_path, with_visual=False)
+    model = MetaModel(args.llama_type, args.llama_config, args.tokenizer_path, with_visual=True)
     print(f"load pretrained from {args.pretrained_path}")
-    misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
-    print("Model = %s" % str(model))
-    model.bfloat16().cuda()
+    load_tensor_parallel_model_list(model, args.pretrained_path)
 
+    if args.quant:
+        print("Quantizing model to 4bit!")
+
+        from transformers.utils.quantization_config import BitsAndBytesConfig
+        quantization_config = BitsAndBytesConfig.from_dict(
+            config_dict={
+                "load_in_8bit": False,
+                "load_in_4bit": True,
+                "bnb_4bit_quant_type": "nf4",
+            },
+            return_unused_kwargs=False,
+        )
+        quantize(model, quantization_config)
+        
+    #print("Model = %s" % str(model))
+    model.bfloat16().cuda()
     return model
 
 def entry_point(
