@@ -160,8 +160,9 @@ def run_infer(model, max_seq_len, data_path, infer_path, overwrite = False):
         for output in outputs:
             res_completions.append(output)
     
+    torch.distributed.barrier()
     if torch.distributed.get_rank() == 0:
-        torch.distributed.barrier()
+
         with jsonlines.open(infer_file, mode='w') as writer:
             for (completion, prompt_answer) in zip(res_completions, answer_set):
                 record = {
@@ -209,10 +210,12 @@ def main(args):
     model = load(args)
     
     run_infer(model, args.max_seq_len, args.data_dir, infer_path, args.overwrite)
-    score, invalid_outputs = run_eval(infer_path)
 
+    torch.distributed.barrier()
     if torch.distributed.get_rank() == 0:
-        torch.distributed.barrier()
+
+        score, invalid_outputs = run_eval(infer_path)
+
         with open(os.path.join(eval_path, 'run_results.json'), 'w') as f:
             json.dump(score, f, ensure_ascii=False, indent=2) 
 

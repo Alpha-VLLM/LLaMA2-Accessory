@@ -213,10 +213,11 @@ def main(args):
         return
 
     subjects_result = run_infer_eval(model, args.max_seq_len, args.data_dir, args.ntrain)
-    score = cal_cmmlu(subjects_result)
 
+    torch.distributed.barrier()
     if torch.distributed.get_rank() == 0:
-        torch.distributed.barrier()
+
+        score = cal_cmmlu(subjects_result)
         with open(result_path, 'w') as f:
             json.dump(score, f, ensure_ascii=False, indent=2) 
 
