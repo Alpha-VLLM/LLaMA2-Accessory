@@ -1,0 +1,19 @@
+META:
+  -
+    path: '../data/chinese_sft/COIG_sharegpt/human_value_alignment_instructions_part1.json'
+    type: 'text'
+  -
+    path: '../data/chinese_sft/COIG_sharegpt/human_value_alignment_instructions_part2.json'
+    type: 'text'
+  -
+    path: '../data/chinese_sft/COIG_sharegpt/leetcode_instructions.json'
+    type: 'text'
+  -
+    path: '../data/chinese_sft/COIG_sharegpt/translated_instructions.json'
+    type: 'text'
+  -
+    path: '../data/chinese_sft/COIG_sharegpt/exam_instructions.json'
+    type: 'text'
+  -
+    path: '../data/chinese_sft/BelleGroup_train_3.5M_CN/train_3.5M_CN.jsonl'
+    type: 'text'

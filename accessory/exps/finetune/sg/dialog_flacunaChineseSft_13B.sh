@@ -1,15 +1,15 @@
 #!/bin/bash
 
 pretrained_path=$1
-pretrained_type=meta_ori
+pretrained_type=consolidated
 llama_config="$2"
 tokenizer_path="$3"
-data_config=configs/data/finetune/sg/dialog_flacuna.yaml
+data_config=configs/data/finetune/sg/dialog_chineseSft.yaml
 
 data_parallel=sdp
 model_parallel=2
 
-exp_name=finetune/sg/dialog_flacuna_13B
+exp_name=finetune/sg/dialog_flacunaChineseSft_13B
 echo "exp name: $exp_name"
 mkdir -p output/"$exp_name"
 
