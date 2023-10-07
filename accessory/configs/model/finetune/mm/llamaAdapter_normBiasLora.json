@@ -1,0 +1,7 @@
+{
+  "lora_rank": 16,
+  "bias_tuning": true,
+  "use_prefix_new_gate": true,
+  "prefix_layers": 31,
+  "prefix_len": 10
+}

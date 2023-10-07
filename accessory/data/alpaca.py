@@ -200,6 +200,7 @@ class FinetuneDistSampler(Sampler):
         self.rank = rank
         self.acc_grad = acc_grad
         self.epoch = 0
+        self.start_iter = 0
 
         group_indices = dataset.groups()
         global_bsz = batch_size * num_replicas * acc_grad
@@ -219,22 +220,22 @@ class FinetuneDistSampler(Sampler):
         self.seed = seed
 
     def __iter__(self) -> Iterator:
+        global_batch_size = self.batch_size * self.num_replicas * self.acc_grad
         if self.shuffle:
             rng = np.random.default_rng(self.seed + self.epoch)
             # self.group_indices should not be changed during shuffle. Only change copy.
             group_indices_shuffle = copy.deepcopy(self.group_indices)
             for _ in group_indices_shuffle:
                 rng.shuffle(_)
-            global_batched_group_indices = [
-                [_[i:i+self.batch_size * self.num_replicas * self.acc_grad]
-                 for i in range(0, len(_), self.batch_size * self.num_replicas * self.acc_grad)]
-                for _ in group_indices_shuffle]
-            global_batched_indices = sum(global_batched_group_indices, start=[])
+            global_batched_indices = [
+                indices_in_group[i:i+global_batch_size]
+                for indices_in_group in group_indices_shuffle
+                for i in range(0, len(indices_in_group), global_batch_size)]
             rng.shuffle(global_batched_indices)
-            indices = sum(global_batched_indices, start=[])
+            indices = [_ for batch_indices in global_batched_indices for _ in batch_indices]
         else:
             group_indices = copy.deepcopy(self.group_indices)
-            indices = sum(group_indices, start=[])
+            indices = [_ for batch_indices in group_indices for _ in batch_indices]
 
         assert len(indices) == self.total_size
 
@@ -244,12 +245,17 @@ class FinetuneDistSampler(Sampler):
         # subsample
         assert len(own_indices) == self.num_samples
 
+        if self.start_iter * self.batch_size > len(own_indices):
+            own_indices = []
+        else:
+            own_indices = own_indices[self.start_iter * self.batch_size:]
+
         return iter(own_indices)
 
     def __len__(self) -> int:
         return self.num_samples
 
-    def set_epoch(self, epoch: int) -> None:
+    def set_epoch(self, epoch: int, start_iter: int = 0) -> None:
         r"""
         Sets the epoch for this sampler. When :attr:`shuffle=True`, this ensures all replicas
         use a different random ordering for each epoch. Otherwise, the next iteration of this
@@ -257,5 +263,8 @@ class FinetuneDistSampler(Sampler):
 
         Args:
             epoch (int): Epoch number.
+            start_iter (int): start iter number.
         """
         self.epoch = epoch
+        self.start_iter = start_iter
+

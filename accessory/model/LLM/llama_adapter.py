@@ -50,6 +50,9 @@ class ModelArgs:
 
     prefix_layers: Optional[int] = None # prefix, set to n_layers by default
     prefix_len: int = 30
+
+    use_prefix_new_gate: bool = False
+
     v_embed_dim = 768 # latent dim for clip projection layer
     v_depth = 8 # number of perceiver layers for clip projection
     v_num_heads = 16
@@ -81,7 +84,7 @@ class Attention(nn.Module):
         self.wk = LoraColumnParallelLinear(
             args.dim,
             self.n_kv_heads * self.head_dim,
-            bias=args.bias_tuning,
+            bias=False,
             gather_output=False,
             init_method=default_linear_init,
             lora_rank=args.lora_rank
@@ -89,7 +92,7 @@ class Attention(nn.Module):
         self.wv = LoraColumnParallelLinear(
             args.dim,
             self.n_kv_heads * self.head_dim,
-            bias=args.bias_tuning,
+            bias=False,
             gather_output=False,
             init_method=default_linear_init,
             lora_rank=args.lora_rank
@@ -111,7 +114,8 @@ class Attention(nn.Module):
     def forward(
         self, x: torch.Tensor, start_pos: int, freqs_cis: torch.Tensor,
         mask: Union[torch.Tensor, str, None],
-        prefix: Optional[torch.Tensor]=None, prefix_gate: Optional[torch.Tensor]=None
+        prefix: Optional[torch.Tensor]=None, prefix_gate: Optional[torch.Tensor]=None,
+        prefix_new_gate: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """
         Supported mask spec:
@@ -169,7 +173,10 @@ class Attention(nn.Module):
 
             if prefix is not None:
                 prefix_delta = flash_attn_func(xq, prefix_k, prefix_v, dropout_p=0.0, causal=False)
-                output = output + prefix_gate.view(1, 1, -1, 1).tanh() * prefix_delta
+                prefix_delta = prefix_gate.view(1, 1, -1, 1).tanh() * prefix_delta
+                if prefix_new_gate is not None:
+                    prefix_delta = prefix_new_gate * prefix_delta
+                output = output + prefix_delta
 
             output = output.contiguous().view(bsz, seqlen, -1)
         else:
@@ -192,7 +199,10 @@ class Attention(nn.Module):
                 prefix_k = prefix_k.transpose(1, 2)
                 prefix_v = prefix_v.transpose(1, 2)
                 prefix_delta = F.scaled_dot_product_attention(xq, prefix_k, prefix_v, dropout_p=0.0, causal=False)
-                output = output + prefix_gate.view(1, -1, 1, 1).tanh() * prefix_delta
+                prefix_delta = prefix_gate.view(1, -1, 1, 1).tanh() * prefix_delta
+                if prefix_new_gate is not None:
+                    prefix_delta = prefix_new_gate * prefix_delta
+                output = output + prefix_delta
 
             output = output.transpose(
                 1, 2
@@ -274,15 +284,16 @@ class TransformerBlock(nn.Module):
     def _forward_ffn(self, h):
         return h + self.feed_forward(self.ffn_norm(h))
 
-    def _forward_attention(self, x, start_pos, freqs_cis, mask, prefix, prefix_gate):
-        return x + self.attention(self.attention_norm(x), start_pos, freqs_cis, mask, prefix, prefix_gate)
+    def _forward_attention(self, x, start_pos, freqs_cis, mask, prefix, prefix_gate, prefix_new_gate):
+        return x + self.attention(self.attention_norm(x), start_pos, freqs_cis, mask, prefix, prefix_gate, prefix_new_gate)
 
     def forward(
         self, x: torch.Tensor, start_pos: int, freqs_cis: torch.Tensor,
         mask: Optional[torch.Tensor],
-        prefix: Optional[torch.Tensor]=None, prefix_gate: Optional[torch.Tensor]=None
+        prefix: Optional[torch.Tensor]=None, prefix_gate: Optional[torch.Tensor]=None,
+        prefix_new_gate: Optional[torch.Tensor] = None
     ) -> torch.Tensor:
-        h = self._forward_attention(x, start_pos, freqs_cis, mask, prefix, prefix_gate)
+        h = self._forward_attention(x, start_pos, freqs_cis, mask, prefix, prefix_gate, prefix_new_gate)
         out = self._forward_ffn(h)
         return out
 
@@ -316,13 +327,14 @@ class Transformer(nn.Module):
         if with_visual:
             print("build llama model with clip")
             with default_tensor_type(dtype=torch.half):
-                self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
+                self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai',
+                                                                        device=self.output.weight.device)
             for name, param in self.clip.named_parameters():
                 param.requires_grad = False
             in_dim = self.clip.visual.proj.shape[1]
             # in_dim = 3
-            self.clip_proj = nn.Linear(in_dim, params.dim)
-            self.clip_proj_norm = nn.LayerNorm(params.dim)
+            self.clip_proj = nn.Linear(in_dim, params.v_embed_dim)
+            self.clip_proj_norm = nn.LayerNorm(params.v_embed_dim)
             self.image_words = 0 # images does not occupy LLM input tokens with llama_adapter
 
             assert params.prefix_len > 0, "llama_adapter needs prefix if multi modal"
@@ -343,6 +355,10 @@ class Transformer(nn.Module):
             n_local_heads = self.layers[0].attention.n_local_heads
             self.prefix_gate = torch.nn.Parameter(torch.zeros(prefix_layers, n_local_heads))
             self.prefix_gate.is_model_parallel = True
+            if params.use_prefix_new_gate:
+                self.prefix_new_gate = torch.nn.Parameter(torch.ones(prefix_layers))
+            else:
+                self.prefix_new_gate = [None for _ in range(prefix_layers)]
             self.prefix = torch.nn.Parameter(torch.zeros(prefix_layers, 1, params.prefix_len, params.dim))
             torch.nn.init.normal_(self.prefix)
         else:
@@ -397,7 +413,7 @@ class Transformer(nn.Module):
         for block in self.visual_blocks:
             visual_query = block(visual_query)
 
-        visual_query = visual_query[:, :self.query_len, :]
+        visual_query = visual_query[:, :self.params.prefix_len, :]
         visual_query = self.visual_proj(visual_query)
         visual_query = self.visual_proj_norm(visual_query)
 
@@ -423,9 +439,11 @@ class Transformer(nn.Module):
         prefix_index = 0
         for layer in self.layers[-1 * self.prefix_layers:]:
             prefix_gate_this_layer = self.prefix_gate[prefix_index]
+            prefix_new_gate_this_layer = self.prefix_new_gate[prefix_index]
             prefix_this_layer = actual_prefix[prefix_index]
             h = layer(h, start_pos=0, freqs_cis=freqs_cis, mask="causal",
-                      prefix=prefix_this_layer, prefix_gate=prefix_gate_this_layer)
+                      prefix=prefix_this_layer, prefix_gate=prefix_gate_this_layer,
+                      prefix_new_gate=prefix_new_gate_this_layer)
             prefix_index += 1
 
         h = self.norm(h)
@@ -459,9 +477,11 @@ class Transformer(nn.Module):
         prefix_index = 0
         for layer in self.layers[-1 * self.prefix_layers:]:
             prefix_gate_this_layer = self.prefix_gate[prefix_index]
+            prefix_new_gate_this_layer = self.prefix_new_gate[prefix_index]
             prefix_this_layer = self.cache_actual_prefix[prefix_index]
             h = layer(h, start_pos=start_pos, freqs_cis=freqs_cis, mask=mask,
-                      prefix=prefix_this_layer, prefix_gate=prefix_gate_this_layer)
+                      prefix=prefix_this_layer, prefix_gate=prefix_gate_this_layer,
+                      prefix_new_gate=prefix_new_gate_this_layer)
             prefix_index += 1
 
         h = self.norm(h)

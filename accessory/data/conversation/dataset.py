@@ -1,3 +1,5 @@
+import warnings
+
 import torch
 import yaml
 from torch.utils.data import Dataset
@@ -58,11 +60,12 @@ class ConversationGenerator:
 
         for sentence in source:
             from_str = sentence["from"]
-            if from_str.lower() == "human":
+            if from_str.lower() in ["human"]:
                 from_str = conversation_lib.default_conversation.roles[0]
-            elif from_str.lower() == "gpt":
+            elif from_str.lower() in ["gpt", "assistant"]:
                 from_str = conversation_lib.default_conversation.roles[1]
             else:
+                warnings.warn(f"unknown dialog role: {from_str.lower()}")
                 from_str = 'unknown'
 
             value = sentence["value"]
@@ -97,7 +100,26 @@ class FinetuneDialogDataset(Dataset):
         group_ann = {}
         for meta in self.config['META']:
             meta_path, meta_type = meta['path'], meta['type']
-            meta_l = json.load(open(meta_path))
+            meta_ext = os.path.splitext(meta_path)[-1]
+            if meta_ext == ".json":
+                with open(meta_path) as f:
+                    meta_l = json.load(f)
+            elif meta_ext == ".jsonl":
+                meta_l = []
+                with open(meta_path) as f:
+                    for i, line in enumerate(f):
+                        try:
+                            meta_l.append(json.loads(line))
+                        except json.decoder.JSONDecodeError as e:
+                            print(f"Error decoding the following jsonl line ({i}):\n{line.rstrip()}", force=True)
+                            raise e
+            else:
+                raise NotImplementedError(
+                    f"Unknown meta file extension: \"{meta_ext}\". "
+                    f"Currently, .json, .jsonl are supported. "
+                    "If you are using a supported format, please set the file extension so that the proper parsing "
+                    "routine can be called."
+                )
             if meta_type not in group_ann:
                 group_ann[meta_type] = []
             print(f"{meta_path}, type{meta_type}: len {len(meta_l)}")
@@ -132,6 +154,9 @@ class FinetuneDialogDataset(Dataset):
 
         source = data_item["conversations"]
         conversation, to_predict_values = self.conversation_generator.add_speaker_and_signal(source)
+        if len(to_predict_values) == 0:
+            warnings.warn(f"see dialog data with nothing to predict, data: {data_item}")
+            return self[index-1]
 
         tokenzed_conversation = self.tokenizer.encode(conversation, bos=True, eos=True)
         labels = [IGNORE_INDEX for _ in tokenzed_conversation]
