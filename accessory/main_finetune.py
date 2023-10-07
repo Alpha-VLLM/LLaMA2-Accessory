@@ -293,20 +293,22 @@ def main(args):
     )
 
     start_epoch = 0
+    start_iter = 0
     if args.resume:
-        start_epoch, _ = misc.resume_stage2(args=args, model=model, optimizer=optimizer, loss_scaler=loss_scaler,
+        start_epoch, _start_iter = misc.resume_stage2(args=args, model=model, optimizer=optimizer, loss_scaler=loss_scaler,
                                             dataset_train=dataset_train)
-
+        if _start_iter is not None:
+            start_iter = _start_iter
 
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
     for epoch in range(start_epoch, args.epochs):
         if args.distributed:
-            data_loader_train.sampler.set_epoch(epoch)
+            data_loader_train.sampler.set_epoch(epoch, start_iter)
 
         train_stats = train_one_epoch(
             model, data_loader_train,
-            optimizer, epoch, loss_scaler,
+            optimizer, epoch, start_iter, loss_scaler,
             log_writer=log_writer,
             args=args
         )
@@ -327,6 +329,8 @@ def main(args):
                 log_writer.flush()
             with open(os.path.join(args.output_dir, "log.txt"), mode="a", encoding="utf-8") as f:
                 f.write(json.dumps(log_stats) + "\n")
+
+        start_iter = 0
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))

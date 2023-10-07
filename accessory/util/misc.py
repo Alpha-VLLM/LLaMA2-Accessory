@@ -482,9 +482,12 @@ def resume_stage2(args, model, optimizer, loss_scaler, dataset_train):
             loss_scaler.load_state_dict(other_state_dict['scaler'])
 
             _epoch_iter = [
-                int(other_state_dict['epoch']) + 1 if other_state_dict.get('epoch', None) is not None else None,
+                int(other_state_dict['epoch']) if other_state_dict.get('epoch', None) is not None else None,
                 int(other_state_dict['iter']) + 1 if other_state_dict.get('iter', None) is not None else None
             ]
+            if _epoch_iter[1] is None and _epoch_iter[0] is not None:
+                _epoch_iter[0] += 1
+
             print(f"load other from {consilidated_other_checkpoint_path}")
             print(f"loaded epoch & iter: {_epoch_iter}")
             return _epoch_iter

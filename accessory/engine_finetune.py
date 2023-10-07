@@ -12,7 +12,7 @@ from fairscale.nn.model_parallel import initialize as fs_init
 
 def train_one_epoch(model: torch.nn.Module,
                     data_loader, optimizer: torch.optim.Optimizer,
-                    epoch: int, loss_scaler,
+                    epoch: int, start_iter: int, loss_scaler,
                     log_writer=None,
                     args=None):
     model.train(True)
@@ -28,7 +28,7 @@ def train_one_epoch(model: torch.nn.Module,
     if log_writer is not None:
         print('log_dir: {}'.format(log_writer.log_dir))
     for data_iter_step, batch_data in enumerate(
-        metric_logger.log_every(data_loader, print_freq, header)):
+        metric_logger.log_every(data_loader, print_freq, header, start_iter), start=start_iter):
         if len(batch_data) == 4:
             examples, labels, example_mask, imgs = batch_data
         else:
