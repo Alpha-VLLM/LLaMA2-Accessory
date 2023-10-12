@@ -19,6 +19,14 @@ def format_prompt(format_dict: Dict, sys_name="alpaca"):
         else:
             return prompt_dict["prompt_input"].format_map(format_dict)
 
+    elif sys_name == "shortqa":
+        prompt =  (
+            "Below is an instruction that describes a task. "
+            "Write a response that appropriately completes the request using a single word or phrase.\n\n"
+            "### Instruction:\n{instruction}\n\n### Response:"
+        )
+        return prompt.format_map(format_dict)
+
     elif sys_name == "qg":  # question_generation
         prompt = (
             "Generate a question whose answer is:\n{instruction}\n\n"

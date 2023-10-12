@@ -329,6 +329,7 @@ class Transformer(nn.Module):
             with default_tensor_type(dtype=torch.half):
                 self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai',
                                                                         device=self.output.weight.device)
+                del self.clip.transformer
             for name, param in self.clip.named_parameters():
                 param.requires_grad = False
             in_dim = self.clip.visual.proj.shape[1]
@@ -370,10 +371,12 @@ class Transformer(nn.Module):
     def get_trainable_params(self):
         trainable = {}
         for name, para in self.named_parameters():
-            if not name.startswith("clip."):
-                trainable_key_words = ['norm', 'prefix', 'bias', 'lora']
-                if any([_ in name for _ in trainable_key_words]):
-                    trainable[name] = para
+            exclude_prefix = ['clip.', 'clip_proj', 'visual_']
+            if any([name.startswith(_) for _ in exclude_prefix]): # only tune those within real llama
+                continue
+            trainable_key_words = ['norm', 'bias', 'lora']
+            if any([_ in name for _ in trainable_key_words]):
+                trainable[name] = para
 
         return trainable
 
@@ -405,7 +408,7 @@ class Transformer(nn.Module):
 
     def encode_image(self, imgs):
         clip_feats = self.clip_encode_image(imgs)
-        clip_feats = self.clip_proj_norm(self.clip_proj(clip_feats.float()))
+        clip_feats = self.clip_proj_norm(self.clip_proj(clip_feats))
 
         visual_query = self.visual_query.unsqueeze(
             0).repeat(len(imgs), 1, 1)

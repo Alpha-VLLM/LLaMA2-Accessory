@@ -6,10 +6,8 @@ from torch.utils.data import Dataset
 from PIL import Image
 import json
 from model.tokenizer import Tokenizer
-import copy
-from ..alpaca import transform_train
+from ..transform import T_random_resized_crop
 import os
-import numpy as np
 
 from . import lib as conversation_lib
 
@@ -65,14 +63,13 @@ class ConversationGenerator:
             elif from_str.lower() in ["gpt", "assistant"]:
                 from_str = conversation_lib.default_conversation.roles[1]
             else:
-                warnings.warn(f"unknown dialog role: {from_str.lower()}")
-                from_str = 'unknown'
+                raise ValueError(f"unknown dialog role: {from_str.lower()}")
 
             value = sentence["value"]
             if DEFAULT_IMAGE_TOKEN in value:
                 value = value.replace(DEFAULT_IMAGE_TOKEN, '').strip()
 
-            sentence_value = (BEGIN_SIGNAL + from_str + ": " + value + END_SIGNAL)
+            sentence_value = BEGIN_SIGNAL + from_str + ": " + value + END_SIGNAL
 
             if from_str == conversation_lib.default_conversation.roles[1]:
                 to_predict_value = value + END_SIGNAL + "###"
@@ -87,11 +84,8 @@ class ConversationGenerator:
         return conversation, to_predict_list
 
 
-
-
-
 class FinetuneDialogDataset(Dataset):
-    def __init__(self, config_path, transform=transform_train, max_words=30, image_words=257, tokenizer_path=None):
+    def __init__(self, config_path, transform=T_random_resized_crop, max_words=30, image_words=257, tokenizer_path=None):
         print(f"read dataset config from {config_path}")
         with open(config_path, 'r') as f:
             self.config = yaml.load(f, Loader=yaml.FullLoader)
@@ -151,6 +145,8 @@ class FinetuneDialogDataset(Dataset):
             image = self.transform(image)
         else:
             image = None
+            # warnings.warn("pure black image for examples without image")
+            # image = torch.zeros(3, 224, 224)
 
         source = data_item["conversations"]
         conversation, to_predict_values = self.conversation_generator.add_speaker_and_signal(source)
@@ -169,6 +165,7 @@ class FinetuneDialogDataset(Dataset):
                 print("a sentence mismatches the corresponding piece in the conversation")
                 return self[index-1]
             labels[value_pos:value_pos+len(tokenized_value)] = tokenized_value
+            assert labels[value_pos:value_pos+len(tokenized_value)] == tokenzed_conversation[value_pos:value_pos+len(tokenized_value)]
             check_pos = value_pos+len(tokenized_value)
 
         input2 = torch.tensor(tokenzed_conversation, dtype=torch.int64)

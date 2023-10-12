@@ -14,7 +14,8 @@ from PIL import Image
 from util import misc
 from fairscale.nn.model_parallel import initialize as fs_init
 
-from data.alpaca import transform_val, format_prompt
+from data.alpaca import format_prompt
+from data.transform import get_transform
 from util.tensor_parallel import load_tensor_parallel_model_list
 from util.tensor_type import default_tensor_type
 
@@ -31,6 +32,9 @@ def get_args_parser():
 
     parser.add_argument('--pretrained_path', default='/path/to/pretrained', type=str, nargs="+",
                         help='directory containing pre-trained checkpoints')
+
+    parser.add_argument('--image_transform', default='resized_center_crop', type=str,
+                        help='type of image transformation (see accessory/data/transform.py for options)')
 
     parser.add_argument('--device', default='cuda',
                         help='device for inference')
@@ -93,7 +97,7 @@ def generate(
 ):
     if img_path is not None:
         image = Image.open(img_path).convert('RGB')
-        image = transform_val(image).unsqueeze(0)
+        image = get_transform(args.image_transform)(image).unsqueeze(0)
     else:
         image = None
 

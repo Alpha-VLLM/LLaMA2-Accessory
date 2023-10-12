@@ -36,8 +36,9 @@ from util.tensor_type import default_tensor_type, promote_trainable_params_to_fp
 from model.meta import MetaModel
 from engine_finetune import train_one_epoch
 from torch.utils.data import Dataset
-from data.alpaca import FinetuneDataset, transform_train, FinetuneDistSampler
+from data.alpaca import FinetuneDataset, FinetuneDistSampler
 from data.conversation.dataset import FinetuneDialogDataset
+from data.transform import get_transform
 
 from util.tensor_parallel import load_tensor_parallel_model
 
@@ -90,6 +91,8 @@ def get_args_parser():
                         help='whether use dialog dataset')
     parser.add_argument('--data_config', default='/path/to/data/config/yaml', type=str,
                         help='data config path')
+    parser.add_argument('--image_transform', default='random_resized_crop', type=str,
+                        help='type of image transformation (see accessory/data/transform.py for options)')
 
     parser.add_argument('--output_dir', default='./output_dir',
                         help='path where to save, empty for no saving')
@@ -268,7 +271,7 @@ def main(args):
         DatasetClass = FinetuneDialogDataset
     else:
         DatasetClass = FinetuneDataset
-    dataset_train = DatasetClass(args.data_config, transform_train,
+    dataset_train = DatasetClass(args.data_config, get_transform(args.image_transform),
                                  max_words=args.max_words, image_words=model.get_image_words(),
                                  tokenizer_path=args.tokenizer_path)
     print(dataset_train)

@@ -1,44 +1,22 @@
-from typing import List, Dict
+import warnings
+from typing import List, Dict, Optional, Iterator, Tuple
 import random
 import torch
 import yaml
-from torch.utils.data import Dataset
 from PIL import Image
 import json
 import pandas as pd
 from model.tokenizer import Tokenizer
 import copy
-import torchvision.transforms as transforms
 import numpy as np
 import os
-
-
-try:
-    from torchvision.transforms import InterpolationMode
-    BICUBIC = InterpolationMode.BICUBIC
-except ImportError:
-    BICUBIC = Image.BICUBIC
-
+from torch.utils.data import Sampler, Dataset
 from .system_prompt import format_prompt
+from .transform import T_random_resized_crop
 
-# create data
-transform_train = transforms.Compose([
-    transforms.RandomResizedCrop(size=(224, 224), scale=(0.9, 1.0), ratio=(0.75, 1.3333), interpolation=BICUBIC,
-                                 antialias=None),  # 3 is bicubic
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711])])
-
-
-transform_val = transforms.Compose([
-    transforms.Resize(
-        224, interpolation=transforms.InterpolationMode.BICUBIC
-    ),
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711])])
 
 class FinetuneDataset(Dataset):
-    def __init__(self, config_path, transform=transform_train, max_words=30, image_words=257, tokenizer_path=None):
+    def __init__(self, config_path, transform=T_random_resized_crop, max_words=30, image_words=257, tokenizer_path=None):
         print(f"read dataset config from {config_path}")
         with open(config_path, 'r') as f:
             self.config = yaml.load(f, Loader=yaml.FullLoader)
@@ -109,6 +87,8 @@ class FinetuneDataset(Dataset):
         image = data_item.pop("image", None)
         if image is not None:
             image = Image.open(image).convert('RGB')
+            # warnings.warn("image channel format: BGR")
+            # image = Image.fromarray(cv2.imread(image))
             image = self.transform(image)
         answer = data_item.pop("output")
 
@@ -126,6 +106,7 @@ class FinetuneDataset(Dataset):
             input2 = torch.cat((input2, torch.zeros(padding, dtype=torch.int64) - 1))
         elif padding < 0:
             input2 = input2[:max_words]
+            print(f'Warning for truncation input!\nImage name: {data_item["image"]} question: {data_item["question"][:10]}')
         labels = copy.deepcopy(input2)
         labels[:len(input1)] = -1
         input2_mask = input2.ge(0)
@@ -142,6 +123,7 @@ class FinetuneDataset(Dataset):
 
     def groups(self):
         return list(self.group_indices.values())
+
 
 class MetaPreprocessor:
     def __init__(self):
@@ -177,11 +159,6 @@ class MetaPreprocessor:
             })
 
         return new_meta
-
-
-import math
-from typing import TypeVar, Optional, Iterator
-from torch.utils.data import Sampler, Dataset
 
 
 class FinetuneDistSampler(Sampler):
@@ -225,8 +202,8 @@ class FinetuneDistSampler(Sampler):
             rng = np.random.default_rng(self.seed + self.epoch)
             # self.group_indices should not be changed during shuffle. Only change copy.
             group_indices_shuffle = copy.deepcopy(self.group_indices)
-            for _ in group_indices_shuffle:
-                rng.shuffle(_)
+            # for _ in group_indices_shuffle:
+            #     rng.shuffle(_)
             global_batched_indices = [
                 indices_in_group[i:i+global_batch_size]
                 for indices_in_group in group_indices_shuffle

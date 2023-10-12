@@ -12,7 +12,7 @@ import gradio as gr
 from util import misc
 from fairscale.nn.model_parallel import initialize as fs_init
 
-from data.alpaca import transform_train, format_prompt
+from data.alpaca import format_prompt
 from util.tensor_parallel import load_tensor_parallel_model_list
 from util.tensor_type import default_tensor_type
 
