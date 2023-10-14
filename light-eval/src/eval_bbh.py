@@ -43,7 +43,7 @@ def get_args_parser():
                         help='Path to llama model config')
     parser.add_argument('--tokenizer_path', type=str, default="../tokenizer.model",
                         help='path to tokenizer.model')
-    parser.add_argument('--pretrained_path', default='/path/to/pretrained', type=str,
+    parser.add_argument('--pretrained_path', default='/path/to/pretrained', type=str, nargs="+",
                         help='directory containing pre-trained checkpoints')
     parser.add_argument('--pretrained_type', type=str, default="consolidated", choices=['consolidated', 'meta_ori'],
                         help='pretrained checkpoint save format')
@@ -60,6 +60,8 @@ def get_args_parser():
     parser.add_argument('--dist_on_itp', action='store_true')
     parser.add_argument('--dist_url', default='env://',
                         help='url used to set up distributed training')
+    parser.add_argument('--quant', action="store_true", default=False,
+                        help="enable quantization to speedup and save memory")
     return parser
 
 # load model and tokenizer
@@ -210,7 +212,7 @@ def main(args, multiple_choice_tasks=MULTIPLE_CHOICE_TASKS, free_form_tasks=FREE
     run_multiple_choice = args.task == 'all' or args.task == 'multiple_choice'
     run_free_form = args.task == 'all' or args.task == 'free_form'
 
-    path_split = args.pretrained_path.split('/')
+    path_split = args.pretrained_path[0].split('/') if isinstance(args.pretrained_path,list) else args.pretrained_path.split('/')
     if path_split[-1] == '':
         path_split.pop(-1)
     model_name = path_split[-1] 
