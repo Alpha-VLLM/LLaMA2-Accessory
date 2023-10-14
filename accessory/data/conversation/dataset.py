@@ -118,6 +118,11 @@ class FinetuneDialogDataset(Dataset):
                 group_ann[meta_type] = []
             print(f"{meta_path}, type{meta_type}: len {len(meta_l)}")
             group_ann[meta_type] += meta_l
+
+        # sort group_ann for higher efficiency (items in one global batch with similar length)
+        for meta_type, meta_l in group_ann.items():
+            meta_l.sort(key=lambda data_item: sum([len(_['value']) for _ in data_item['conversations']]))
+
         self.group_ann = group_ann
         self.ann = sum(list(self.group_ann.values()), start=[])
 
@@ -129,6 +134,7 @@ class FinetuneDialogDataset(Dataset):
 
         print(f"total length: {len(self)}")
         self.transform = transform
+        print(f"transform:\n{self.transform}")
         self.max_words = max_words
         self.image_words = image_words
         self.tokenizer = Tokenizer(model_path=tokenizer_path)
@@ -140,7 +146,7 @@ class FinetuneDialogDataset(Dataset):
     def __getitem__(self, index):
         data_item = self.ann[index]
         if 'image' in data_item.keys():
-            filename = os.path.join('/data0/data/coco/train2017', data_item['image'])
+            filename = data_item['image']
             image = Image.open(filename).convert('RGB')
             image = self.transform(image)
         else:

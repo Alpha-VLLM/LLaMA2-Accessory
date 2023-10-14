@@ -276,7 +276,7 @@ class Transformer(nn.Module):
         self.cache_image_words = 0 # for inference
         if with_visual:
             print("build llama model with qformerv2")
-            self.qformer = Blip2Model.from_pretrained("Salesforce/blip2-opt-2.7b", torch_dtype=torch.float16)
+            self.qformer = Blip2Model.from_pretrained("Salesforce/blip2-opt-2.7b", torch_dtype=self.norm.weight.dtype)
 
             self.qformer.language_projection = None
             self.qformer.language_model = None
@@ -287,8 +287,12 @@ class Transformer(nn.Module):
             )
 
             print("build llama model with clip")
+
+            default_dtype = torch.get_default_dtype()
+            torch.set_default_dtype(torch.float32)
             self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
             self.clip.transformer = None
+            self.clip.to(self.norm.weight)
 
             print("build llama model with openclip")
             self.openclip_convnext_xxl, _, _ = open_clip.create_model_and_transforms(
@@ -297,6 +301,7 @@ class Transformer(nn.Module):
             self.openclip_convnext_xxl = self.openclip_convnext_xxl.visual.trunk
             self.openclip_convnext_xxl.head.global_pool = nn.Identity()
             self.openclip_convnext_xxl.head.flatten = nn.Identity()
+            self.openclip_convnext_xxl.to(self.norm.weight)
 
             print("build llama model with dinov2")
             import os.path
@@ -304,6 +309,8 @@ class Transformer(nn.Module):
                 self.dinov2_vitg14 = torch.hub.load("/mnt/petrelfs/gaopeng/.cache/torch/hub/facebookresearch_dinov2_main", "dinov2_vitg14", source="local")
             else:
                 self.dinov2_vitg14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14")
+            self.dinov2_vitg14.to(self.norm.weight)
+            torch.set_default_dtype(default_dtype)
 
             self.visual_proj = nn.Sequential(
                 nn.Linear(3072 + 1024 + 1536, params.dim),

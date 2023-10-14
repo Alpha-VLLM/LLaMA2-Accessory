@@ -29,6 +29,10 @@ class PadToSquare:
             result.paste(img, ((height - width) // 2, 0))
             return result
 
+    def __repr__(self) -> str:
+        format_string = self.__class__.__name__ + f"(bg_color={self.bg_color})"
+        return format_string
+
 
 T_random_resized_crop = transforms.Compose([
     transforms.RandomResizedCrop(size=(224, 224), scale=(0.9, 1.0), ratio=(0.75, 1.3333), interpolation=BICUBIC,

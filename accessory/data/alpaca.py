@@ -64,6 +64,13 @@ class FinetuneDataset(Dataset):
                 group_ann[meta_type] = []
             print(f"{meta_path}, type{meta_type}: len {len(meta_l)}")
             group_ann[meta_type] += meta_l
+
+        # sort group_ann for higher efficiency (items in one global batch with similar length)
+        for meta_type, meta_l in group_ann.items():
+            meta_l.sort(
+                key=lambda data_item: len(format_prompt(data_item, data_item["sys_prompt"]) + data_item['output'])
+            )
+
         self.group_ann = group_ann
         self.ann = sum(list(self.group_ann.values()), start=[])
 
