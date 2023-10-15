@@ -220,7 +220,7 @@ def eval_gpt4(args):
     print("evaluating with GPT4 now...")
     openai.api_key = args.openai_key
     os.makedirs(f"../LLaVA_benchmark/{args.model_name}", exist_ok=True)
-    
+    f_q = open(os.path.expanduser(args.question_file))
     f_ans1 = open(os.path.expanduser(args.answer_list[0]))
     f_ans2 = open(os.path.expanduser(args.answer_list[1]))
     rule_dict = json.load(open(os.path.expanduser(args.rule), 'r'))
