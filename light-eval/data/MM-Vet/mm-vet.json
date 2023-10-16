@@ -1,0 +1,2257 @@
+{
+    "v1_0": {
+        "imagename": "v1_0.png",
+        "question": "What is x in the equation?",
+        "answer": "-1<AND>-5",
+        "capability": [
+            "ocr",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_1": {
+        "imagename": "v1_1.png",
+        "question": "What is d in the last equation?",
+        "answer": "1.25<OR>=1.25<OR>5/4",
+        "capability": [
+            "ocr",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_2": {
+        "imagename": "v1_1.png",
+        "question": "What is x in the equation?",
+        "answer": "0.75<OR>=0.75<OR>3/4",
+        "capability": [
+            "ocr",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_3": {
+        "imagename": "v1_3.png",
+        "question": "What is the answer to the bottom left equation?",
+        "answer": "12<OR>=12",
+        "capability": [
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_4": {
+        "imagename": "v1_3.png",
+        "question": "What is the answer to the second equation on the right?",
+        "answer": "7<OR>=7",
+        "capability": [
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_5": {
+        "imagename": "v1_5.png",
+        "question": "What is the answer to the second last equation on the right?",
+        "answer": "2<OR>=2",
+        "capability": [
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_6": {
+        "imagename": "v1_5.png",
+        "question": "What is y in the last equation?",
+        "answer": "5<OR>=5",
+        "capability": [
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_7": {
+        "imagename": "v1_7.png",
+        "question": "Find the pattern of how the \"X\" operator is redefined, and answer the given equation in the image.",
+        "answer": "13<OR>=13",
+        "capability": [
+            "ocr",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_8": {
+        "imagename": "v1_8.png",
+        "question": "What will the girl on the right write on the board?",
+        "answer": "14<OR>=14",
+        "capability": [
+            "rec",
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_9": {
+        "imagename": "v1_9.png",
+        "question": "How many gallons of supreme gasoline can I get with $50?",
+        "answer": "13.6<OR>13.7",
+        "capability": [
+            "ocr",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_10": {
+        "imagename": "v1_9.png",
+        "question": "What is the price difference between diesel and regular gasoline?",
+        "answer": "0.11",
+        "capability": [
+            "ocr",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_11": {
+        "imagename": "v1_11.jpg",
+        "question": "What is the total price for a bottle of Merlot and a bottle of Cabernet shown in the image?",
+        "answer": "249.98",
+        "capability": [
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_12": {
+        "imagename": "v1_11.jpg",
+        "question": "What is the cost of three bottles of Moet champagne?",
+        "answer": "344.97",
+        "capability": [
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_13": {
+        "imagename": "v1_13.jpg",
+        "question": "I am getting one funghi pizza and one prosciutto pizza. How much should I pay in total?",
+        "answer": "14.8<OR>14,8",
+        "capability": [
+            "ocr",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_14": {
+        "imagename": "v1_13.jpg",
+        "question": "I am getting two margherita pizza and one calzone. How much should I pay in total?",
+        "answer": "25.8<OR>25,8",
+        "capability": [
+            "ocr",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_15": {
+        "imagename": "v1_15.png",
+        "question": "What is the original price for pork belly before discount?",
+        "answer": "14",
+        "capability": [
+            "ocr",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_16": {
+        "imagename": "v1_16.jpg",
+        "question": "What is the gasoline price?",
+        "answer": "4.299<OR>4.3",
+        "capability": [
+            "ocr",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_17": {
+        "imagename": "v1_17.jpg",
+        "question": "What is the color of the hat worn by the person in the front left?",
+        "answer": "blue",
+        "capability": [
+            "rec",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_18": {
+        "imagename": "v1_18.jpg",
+        "question": "What is located to the right of the shampoo?",
+        "answer": "conditioner",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_19": {
+        "imagename": "v1_18.jpg",
+        "question": "What is in the right most bottle?",
+        "answer": "mousse",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_20": {
+        "imagename": "v1_20.jpg",
+        "question": "What is the spatial relation between the frisbee and the man?",
+        "answer": "above the man<OR>top left",
+        "capability": [
+            "rec",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_21": {
+        "imagename": "v1_21.jpg",
+        "question": "Which car is on the parking spot 33?",
+        "answer": "no<OR>empty",
+        "capability": [
+            "rec",
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_22": {
+        "imagename": "v1_21.jpg",
+        "question": "Which spot is the red car parking on?",
+        "answer": "31",
+        "capability": [
+            "rec",
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_23": {
+        "imagename": "v1_23.png",
+        "question": "What is the price for tomatoes?",
+        "answer": "eight<OR>8.0",
+        "capability": [
+            "rec",
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_24": {
+        "imagename": "v1_23.png",
+        "question": "What fruit is the the right of plums?",
+        "answer": "orange",
+        "capability": [
+            "rec",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_25": {
+        "imagename": "v1_25.png",
+        "question": "Based on the image, what is the total international awareness of Tina Fey?",
+        "answer": "35%",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_26": {
+        "imagename": "v1_25.png",
+        "question": "Based on the image, in which country does Tina Fey have the highest level of total awareness?",
+        "answer": "Australia",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_27": {
+        "imagename": "v1_27.png",
+        "question": "What earth's interior structure does number 2 indicate?",
+        "answer": "mantle",
+        "capability": [
+            "ocr",
+            "know",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_28": {
+        "imagename": "v1_28.jpg",
+        "question": "What is the number displayed on the motorcycle ridden by the motorcyclist wearing a yellow suit?",
+        "answer": "16",
+        "capability": [
+            "rec",
+            "ocr"
+        ],
+        "imagesource": "web"
+    },
+    "v1_29": {
+        "imagename": "v1_28.jpg",
+        "question": "What is the number displayed on the motorcycle on the right?",
+        "answer": "4",
+        "capability": [
+            "rec",
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_30": {
+        "imagename": "v1_30.jpg",
+        "question": "Are which one of these two jets are larger in size?",
+        "answer": "same",
+        "capability": [
+            "rec",
+            "know",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_31": {
+        "imagename": "v1_31.png",
+        "question": "Is the person bigger than the car?",
+        "answer": "no",
+        "capability": [
+            "rec",
+            "know",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_32": {
+        "imagename": "v1_32.png",
+        "question": "What should I do after kneading the dough, before dividing it into pieces?",
+        "answer": "warm place<AND>1 hour",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_33": {
+        "imagename": "v1_33.png",
+        "question": "Should I add sugar when mixing egg and milk?",
+        "answer": "no",
+        "capability": [
+            "rec",
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_34": {
+        "imagename": "v1_34.jpg",
+        "question": "What should I do before cutting herbs, sausage, and mushrooms?",
+        "answer": "tilt pan slightly",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_35": {
+        "imagename": "v1_35.png",
+        "question": "What is the index of the step when we need to add all purpose flour?",
+        "answer": "third<OR> 3",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_36": {
+        "imagename": "v1_36.jpg",
+        "question": "What should we add in the third step?",
+        "answer": "milk",
+        "capability": [
+            "rec",
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_37": {
+        "imagename": "v1_37.jpg",
+        "question": "What should kids do after snap fingers?",
+        "answer": "hop on one foot",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_38": {
+        "imagename": "v1_38.jpg",
+        "question": "What should be drawn in the fourth step?",
+        "answer": "nose",
+        "capability": [
+            "ocr"
+        ],
+        "imagesource": "web"
+    },
+    "v1_39": {
+        "imagename": "v1_39.jpg",
+        "question": "What is the step after using probe to spread tire puncture?",
+        "answer": "remove the repair",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_40": {
+        "imagename": "v1_40.png",
+        "question": "What is the second step suggested?",
+        "answer": "identify your audience",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_41": {
+        "imagename": "v1_41.png",
+        "question": "What is the last strategy given in the image?",
+        "answer": "make a song",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_42": {
+        "imagename": "v1_42.png",
+        "question": "What is the average total fueling cost excluding the Ford F150?",
+        "answer": "76.55<OR>76.56",
+        "capability": [
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_43": {
+        "imagename": "v1_42.png",
+        "question": "What is the highest fueling cost?",
+        "answer": "130.96",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_44": {
+        "imagename": "v1_44.png",
+        "question": "Which category did the worst job in plastic recycling, considering the amount of plastic made and thrown out?",
+        "answer": "packaging",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_45": {
+        "imagename": "v1_44.png",
+        "question": "What is the difference in metric tonnes between the amount of plastic produced and the amount discarded?",
+        "answer": "105",
+        "capability": [
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_46": {
+        "imagename": "v1_46.png",
+        "question": "What is the estimated average standing charge for the year 2023?",
+        "answer": "271",
+        "capability": [
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_47": {
+        "imagename": "v1_46.png",
+        "question": "What is the estimated total cost for the year 2023?",
+        "answer": "23800",
+        "capability": [
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_48": {
+        "imagename": "v1_48.jpg",
+        "question": "In which direction does the living room window face?",
+        "answer": "north",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_49": {
+        "imagename": "v1_49.jpg",
+        "question": "What are the appliances in the kitchen in this floorplan?",
+        "answer": "oven<AND>dishwasher",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_50": {
+        "imagename": "v1_50.jpg",
+        "question": "Which room is bigger, the double garage or the living room?",
+        "answer": "double garage",
+        "capability": [
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_51": {
+        "imagename": "v1_50.jpg",
+        "question": "Which room is bigger, the master bedroom or the patio?",
+        "answer": "master bedroom",
+        "capability": [
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_52": {
+        "imagename": "v1_52.png",
+        "question": "What is the solution if the lamp is plugged in and the bulb has burned out?",
+        "answer": "replace blub",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_53": {
+        "imagename": "v1_53.png",
+        "question": "Which step in the flowchart is drawn with a diamond shape?",
+        "answer": "water boiled?",
+        "capability": [
+            "rec",
+            "ocr"
+        ],
+        "imagesource": "web"
+    },
+    "v1_54": {
+        "imagename": "v1_54.png",
+        "question": "What is the average wait time to climb out of bed?",
+        "answer": "15 min",
+        "capability": [
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_55": {
+        "imagename": "v1_55.png",
+        "question": "Which year has the highest growth rate of median house price?",
+        "answer": "2008",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_56": {
+        "imagename": "v1_56.png",
+        "question": "What is Japan's gdp in 2012?",
+        "answer": "6,233.15 billion U.S. dollars",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_57": {
+        "imagename": "v1_57.jpg",
+        "question": "In which years did rowing and athletics have the same number of gold medals?",
+        "answer": "2000<AND>2012",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_58": {
+        "imagename": "v1_58.png",
+        "question": "Which department is the person who has the highest salary from?",
+        "answer": "Administration",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_59": {
+        "imagename": "v1_58.png",
+        "question": "Based on the table, how much is Wilkins earning?",
+        "answer": "2500<OR>2,500",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_60": {
+        "imagename": "v1_60.png",
+        "question": "Which country has a below-average profit margin?",
+        "answer": "India",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_61": {
+        "imagename": "v1_60.png",
+        "question": "Which country has the highest profit margin?",
+        "answer": "Australia",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_62": {
+        "imagename": "v1_62.png",
+        "question": "In which month is the highest income generated?",
+        "answer": "Feb",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_63": {
+        "imagename": "v1_62.png",
+        "question": "What percentage does salary contribute to total income?",
+        "answer": "56.2<OR>0.562",
+        "capability": [
+            "ocr",
+            "spat",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_64": {
+        "imagename": "v1_64.png",
+        "question": "Who is the person on the left?",
+        "answer": "Keira Knightley",
+        "capability": [
+            "rec",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_65": {
+        "imagename": "v1_65.png",
+        "question": "Who is the person in the image?",
+        "answer": "Yuh-Jung Youn",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_66": {
+        "imagename": "v1_66.jpg",
+        "question": "Who is the person in the bottom right?",
+        "answer": "Jamie Dornan",
+        "capability": [
+            "rec",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_67": {
+        "imagename": "v1_67.png",
+        "question": "Which one is unsweetened?",
+        "answer": "oat",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_68": {
+        "imagename": "v1_68.png",
+        "question": "Is this apple organic?",
+        "answer": "yes",
+        "capability": [
+            "rec",
+            "ocr"
+        ],
+        "imagesource": "web"
+    },
+    "v1_69": {
+        "imagename": "v1_69.jpg",
+        "question": "What is the calories for the entire bag?",
+        "answer": "275",
+        "capability": [
+            "ocr",
+            "math"
+        ],
+        "imagesource": "web"
+    },
+    "v1_70": {
+        "imagename": "v1_70.png",
+        "question": "What is the name of this dish?",
+        "answer": "mapo tofu",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_71": {
+        "imagename": "v1_71.jpg",
+        "question": "What is the name of this dish?",
+        "answer": "Caprese Salad",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_72": {
+        "imagename": "v1_72.png",
+        "question": "What is the name of this dish?",
+        "answer": "pad thai",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_73": {
+        "imagename": "v1_73.jpg",
+        "question": "What is the make of the car on the left?",
+        "answer": "volkswagen",
+        "capability": [
+            "rec",
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_74": {
+        "imagename": "v1_74.jpg",
+        "question": "What does this factory make?",
+        "answer": "camera",
+        "capability": [
+            "ocr"
+        ],
+        "imagesource": "web"
+    },
+    "v1_75": {
+        "imagename": "v1_75.jpg",
+        "question": "what is the green logo on the car?",
+        "answer": "monster",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_76": {
+        "imagename": "v1_76.png",
+        "question": "What is the name of this landmark?",
+        "answer": "Trevi Fountain",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_77": {
+        "imagename": "v1_77.jpg",
+        "question": "What is the name of this landmark?",
+        "answer": "Anbariya Mosque",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_78": {
+        "imagename": "v1_78.jpg",
+        "question": "What is the name of this landmark?",
+        "answer": "baochu pagoda",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_79": {
+        "imagename": "v1_79.jpg",
+        "question": "What is the face value of this banknote?",
+        "answer": "five<OR> 5",
+        "capability": [
+            "rec",
+            "know"
+        ],
+        "imagesource": "web"
+    },
+    "v1_80": {
+        "imagename": "v1_80.jpg",
+        "question": "What is this banknote?",
+        "answer": "ten pound<OR>10 pound<OR>British pound",
+        "capability": [
+            "rec",
+            "ocr"
+        ],
+        "imagesource": "web"
+    },
+    "v1_81": {
+        "imagename": "v1_81.jpg",
+        "question": "What type of currency does this banknote represent?",
+        "answer": "Swede<OR>Kronor",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_82": {
+        "imagename": "v1_82.png",
+        "question": "Which chest xray disease can be found? (Options include: Atelectasis; Cardiomegaly; Effusion; Infiltration; Mass; Nodule; Pneumonia; Pneumothorax; Consolidation; Edema; Emphysema; Fibrosis; Pleural Thickening; Hernia.)",
+        "answer": "Cardiomegaly",
+        "capability": [
+            "rec",
+            "know"
+        ],
+        "imagesource": "ChestX-ray14"
+    },
+    "v1_83": {
+        "imagename": "v1_83.png",
+        "question": "Which chest xray disease can be found? (Options include: Atelectasis; Cardiomegaly; Effusion; Infiltration; Mass; Nodule; Pneumonia; Pneumothorax; Consolidation; Edema; Emphysema; Fibrosis; Pleural Thickening; Hernia.)",
+        "answer": "Hernia",
+        "capability": [
+            "rec",
+            "know"
+        ],
+        "imagesource": "ChestX-ray14"
+    },
+    "v1_84": {
+        "imagename": "v1_84.png",
+        "question": "Which chest xray disease can be found? (Options include: Atelectasis; Cardiomegaly; Effusion; Infiltration; Mass; Nodule; Pneumonia; Pneumothorax; Consolidation; Edema; Emphysema; Fibrosis; Pleural Thickening; Hernia.)",
+        "answer": "Infiltration",
+        "capability": [
+            "rec",
+            "know"
+        ],
+        "imagesource": "ChestX-ray14"
+    },
+    "v1_85": {
+        "imagename": "v1_85.jpg",
+        "question": "How many birds are there?",
+        "answer": "6",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_86": {
+        "imagename": "v1_86.jpg",
+        "question": "How many tomatoes are there?",
+        "answer": "5",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_87": {
+        "imagename": "v1_87.jpg",
+        "question": "How many books are there?",
+        "answer": "63",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_88": {
+        "imagename": "v1_88.jpg",
+        "question": "What are all the scene text in the image?",
+        "answer": "S3302CD",
+        "capability": [
+            "ocr"
+        ],
+        "imagesource": "web"
+    },
+    "v1_89": {
+        "imagename": "v1_89.jpg",
+        "question": "What are all the scene text in the image?",
+        "answer": "Lexmi Jewellers",
+        "capability": [
+            "ocr"
+        ],
+        "imagesource": "web"
+    },
+    "v1_90": {
+        "imagename": "v1_90.jpg",
+        "question": "What are all the scene text in the image?",
+        "answer": "have yourself a merry little Christmas",
+        "capability": [
+            "ocr"
+        ],
+        "imagesource": "web"
+    },
+    "v1_91": {
+        "imagename": "v1_91.jpg",
+        "question": "What are all the scene text in the image?",
+        "answer": "5:30PM<AND>88%<AND>Mario Kart 8 Deluxe<AND>MARIO KART 8 DELUXE<AND>SUPER MARIO ODYSSEY<AND>THE LEGEND OF ZELDA<AND>BREATH OF WILD<AND>Options<AND>Start",
+        "capability": [
+            "ocr"
+        ],
+        "imagesource": "web"
+    },
+    "v1_92": {
+        "imagename": "v1_92.jpg",
+        "question": "What are all the scene text in the image?",
+        "answer": "MR. WILLIAM SHAKESPEARES<AND>COMEDIES, HISTORIES, & TRAGEDIES.<AND>publifhed according to the True Originall Copies.",
+        "capability": [
+            "ocr"
+        ],
+        "imagesource": "web"
+    },
+    "v1_93": {
+        "imagename": "v1_93.jpg",
+        "question": "What are all the scene text in the image?",
+        "answer": "Connecticut law of 1642<AND>If any man or woman be a witch -- that is, hath or consulteth with a familiar spirit -- they shall be put to death",
+        "capability": [
+            "ocr"
+        ],
+        "imagesource": "web"
+    },
+    "v1_94": {
+        "imagename": "v1_94.jpg",
+        "question": "What is the brand of this device?",
+        "answer": "MOTOROLA",
+        "capability": [
+            "ocr"
+        ],
+        "imagesource": "web"
+    },
+    "v1_95": {
+        "imagename": "v1_95.jpg",
+        "question": "What is the license plate number?",
+        "answer": "AED-632",
+        "capability": [
+            "ocr"
+        ],
+        "imagesource": "web"
+    },
+    "v1_96": {
+        "imagename": "v1_96.jpg",
+        "question": "What are all the French scene text in the image?",
+        "answer": "HISTOIRE DE FRANCE<AND>De La pr\u00e9histoire \u00e0 ans jours<AND>Queelle Histoire",
+        "capability": [
+            "ocr"
+        ],
+        "imagesource": "web"
+    },
+    "v1_97": {
+        "imagename": "v1_97.jpg",
+        "question": "What are all the Chinese scene text in the image?",
+        "answer": "\u9a6c\u66f3<AND>\u8457<AND>\u6bcf\u4e2a\u4eba\u90fd\u6709\u81ea\u5df1\u7684\u56f0\u5883<AND>\u4f46\u603b\u4f1a\u88ab\u5149\u4eae\u5438\u5f15<AND>\u8eab\u4e0d\u7531\u5df1\u5730\u6162\u6162\u9760\u8fd1",
+        "capability": [
+            "ocr"
+        ],
+        "imagesource": "web"
+    },
+    "v1_98": {
+        "imagename": "v1_98.jpg",
+        "question": "Which continent is highlighted?",
+        "answer": "Asia",
+        "capability": [
+            "rec",
+            "know"
+        ],
+        "imagesource": "web"
+    },
+    "v1_99": {
+        "imagename": "v1_99.png",
+        "question": "Which are producers in this food web?",
+        "answer": "Phytoplankton<AND>Seaweed",
+        "capability": [
+            "ocr",
+            "know",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_100": {
+        "imagename": "v1_100.png",
+        "question": "Compare the average kinetic energies of the particles in each sample. The diagrams below show two pure samples of gas in identical closed, rigid containers. Each colored ball represents one gas particle. Both samples have the same number of particles. Which sample has the higher temperature? Sample A or sample B?",
+        "answer": "sample A",
+        "capability": [
+            "ocr",
+            "know",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_101": {
+        "imagename": "v1_101.png",
+        "question": "Which of these highlighted cities is the farthest north?",
+        "answer": "CHICAGO",
+        "capability": [
+            "ocr",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_102": {
+        "imagename": "v1_102.png",
+        "question": "Where is this photo taken?",
+        "answer": "turkey<OR>syria",
+        "capability": [
+            "rec",
+            "know"
+        ],
+        "imagesource": "web"
+    },
+    "v1_103": {
+        "imagename": "v1_103.png",
+        "question": "Where is this photo taken?",
+        "answer": "oscar<AND>2021",
+        "capability": [
+            "rec",
+            "know"
+        ],
+        "imagesource": "web"
+    },
+    "v1_104": {
+        "imagename": "v1_104.png",
+        "question": "Where is this photo taken?",
+        "answer": "qatar",
+        "capability": [
+            "rec",
+            "know"
+        ],
+        "imagesource": "web"
+    },
+    "v1_105": {
+        "imagename": "v1_105.png",
+        "question": "In which country was this photo taken?",
+        "answer": "australia",
+        "capability": [
+            "rec",
+            "know"
+        ],
+        "imagesource": "web"
+    },
+    "v1_106": {
+        "imagename": "v1_106.jpg",
+        "question": "Are the trees taller than the giraffes?",
+        "answer": "no",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_107": {
+        "imagename": "v1_107.jpg",
+        "question": "Is this airplane taking off or landing?",
+        "answer": "taking off",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_108": {
+        "imagename": "v1_108.jpg",
+        "question": "How many people are sitting down?",
+        "answer": "one",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_109": {
+        "imagename": "v1_109.jpg",
+        "question": "Is the trash empty or full?",
+        "answer": "empty",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_110": {
+        "imagename": "v1_110.jpg",
+        "question": "Does the giraffe appear dangerous?",
+        "answer": "no",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_111": {
+        "imagename": "v1_111.jpg",
+        "question": "Is there any reflection of zebra in water?",
+        "answer": "yes",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_112": {
+        "imagename": "v1_112.jpg",
+        "question": "Is the man happy?",
+        "answer": "yes",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_113": {
+        "imagename": "v1_113.jpg",
+        "question": "Are all of the cats the same color?",
+        "answer": "no",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_114": {
+        "imagename": "v1_114.jpg",
+        "question": "Is that wine in the background?",
+        "answer": "no",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_115": {
+        "imagename": "v1_115.jpg",
+        "question": "Is the man going to fall down?",
+        "answer": "no",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_116": {
+        "imagename": "v1_116.jpg",
+        "question": "What place is pictured?",
+        "answer": "shore",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_117": {
+        "imagename": "v1_117.jpg",
+        "question": "Is it outdoors?",
+        "answer": "no",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_118": {
+        "imagename": "v1_118.jpg",
+        "question": "How's the weather?",
+        "answer": "clear<OR>sunny",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_119": {
+        "imagename": "v1_119.jpg",
+        "question": "What is the color of the fence made of metal?",
+        "answer": "green",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_120": {
+        "imagename": "v1_120.jpg",
+        "question": "Does the person to the left of the man appear to be sitting?",
+        "answer": "yes",
+        "capability": [
+            "rec",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_121": {
+        "imagename": "v1_121.jpg",
+        "question": "Is the plate of the table both dirty and silver?",
+        "answer": "no",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_122": {
+        "imagename": "v1_122.jpg",
+        "question": "Is the curtain on the right side or on the left of the picture?",
+        "answer": "left",
+        "capability": [
+            "rec",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_123": {
+        "imagename": "v1_123.jpg",
+        "question": "Is there a computer in this photo?",
+        "answer": "no",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_124": {
+        "imagename": "v1_124.jpg",
+        "question": "Are there napkins under the utensil to the left of the rice?",
+        "answer": "yes",
+        "capability": [
+            "rec",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_125": {
+        "imagename": "v1_125.jpg",
+        "question": "Are there nuts or vegetables?",
+        "answer": "no",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_126": {
+        "imagename": "v1_126.jpg",
+        "question": "Are there both plates and forks in this picture?",
+        "answer": "yes",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_127": {
+        "imagename": "v1_127.jpg",
+        "question": "What is this bird called?",
+        "answer": "parrot",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_128": {
+        "imagename": "v1_128.jpg",
+        "question": "Which animal in the picture is larger, the cat or the dog?",
+        "answer": "cat",
+        "capability": [
+            "rec",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_129": {
+        "imagename": "v1_129.jpg",
+        "question": "On the right desk, what is to the left of the laptop? ",
+        "answer": "table lamp<OR>desk lamp",
+        "capability": [
+            "rec",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_130": {
+        "imagename": "v1_130.jpg",
+        "question": "Does the man ride a horse?",
+        "answer": "no",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_131": {
+        "imagename": "v1_131.jpg",
+        "question": "Is the surfer to the left or to the right of the surfboard?",
+        "answer": "left",
+        "capability": [
+            "rec",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_132": {
+        "imagename": "v1_132.jpg",
+        "question": "What is the lamp on, a side table or a nightstand?",
+        "answer": "side table",
+        "capability": [
+            "rec",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_133": {
+        "imagename": "v1_133.jpg",
+        "question": "What do both the stump and the fence have in common?",
+        "answer": "material",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_134": {
+        "imagename": "v1_134.jpg",
+        "question": "Is the spoon made of the same material as the chopsticks?",
+        "answer": "yes",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_135": {
+        "imagename": "v1_135.jpg",
+        "question": "Does the shirt have a different color than the kite?",
+        "answer": "yes",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_136": {
+        "imagename": "v1_136.jpg",
+        "question": "Do all these people have the same gender?",
+        "answer": "no",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_137": {
+        "imagename": "v1_137.jpg",
+        "question": "Are these two animals different species?",
+        "answer": "yes",
+        "capability": [
+            "rec"
+        ],
+        "imagesource": "web"
+    },
+    "v1_138": {
+        "imagename": "v1_138.jpg",
+        "question": "Where are the persons? Answer it and give the rationale.",
+        "answer": "They are in a college classroom. I think so because he young woman appears to be college age, and they are surrounded by desks and chairs.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "vcr2542"
+    },
+    "v1_139": {
+        "imagename": "v1_139.jpg",
+        "question": "Why are the persons wearing black clothes? Answer it and give the rationale.",
+        "answer": "They are going to a funeral. I think so because it is traditional for people to wear black to a funeral.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "vcr2557"
+    },
+    "v1_140": {
+        "imagename": "v1_140.jpg",
+        "question": "Why is the woman wearing a robe? Answer it and give the rationale.",
+        "answer": "She is getting ready for bed. I think so because The room appears to be a bedroom and the woman is headed in the general direction of her bed.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "vcr2590"
+    },
+    "v1_141": {
+        "imagename": "v1_141.jpg",
+        "question": "Where is this happening? Answer it and give the rationale.",
+        "answer": "This is happening in a fancy restaurant. I think so because the man is dressed fancily and the background is fancy.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "vcr3005"
+    },
+    "v1_142": {
+        "imagename": "v1_142.jpg",
+        "question": "Is it summertime in the scene? Answer it and give the rationale.",
+        "answer": "No, it looks to be fall. I thinks so because there are pumpkins in the background and they are normally associated with fall.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "vcr3026"
+    },
+    "v1_143": {
+        "imagename": "v1_143.jpg",
+        "question": "Is the woman in red going to be mad at the man, for looking at the woman in dress? Answer it and give the rationale.",
+        "answer": "Yes, the woman in red and the man appear to be a couple and the woman in red would not appreciate the man checking out other women.I think so because in a monogamous relationship, partners are expected to be faithful to one another.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "vcr3065"
+    },
+    "v1_144": {
+        "imagename": "v1_144.jpg",
+        "question": "Why does the woman have both of her hands in the air? Answer it and give the rationale.",
+        "answer": "She just shot a basketball. I think so because Her arms are angled for a basketball shot and they are in a basketball arena.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "vcr3076"
+    },
+    "v1_145": {
+        "imagename": "v1_145.jpg",
+        "question": "What kind of school does the boy go to? Answer it and give the rationale.",
+        "answer": "The boy goes to a private school, not a public school. I think so because the boy is all dressed up in a suit, public schools don't require that but some private schools do.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "vcr3103"
+    },
+    "v1_146": {
+        "imagename": "v1_146.jpg",
+        "question": "Do the persons live in this house? Answer it and give the rationale.",
+        "answer": "No they do not. I think so because they are all looking around at the paintings and decorations, which one would not do if they were used to seeing them.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "vcr3130"
+    },
+    "v1_147": {
+        "imagename": "v1_147.jpg",
+        "question": "Why are the man and woman in white so close to each other? Answer it and give the rationale.",
+        "answer": "They just got married. I think so because they're in wedding clothing and everyone is looking at them.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "vcr3180"
+    },
+    "v1_148": {
+        "imagename": "v1_148.jpg",
+        "question": "Can you explain this meme?",
+        "answer": "This meme is a humorous take on procrastination and the tendency to delay tasks until a specific time. The person in the meme plans to do something at 8 o'clock, but when they miss that deadline by a few minutes, they decide to wait until 9 o'clock instead. The image of Kermit the Frog lying in bed represents the person's laziness and lack of motivation to complete the task.",
+        "capability": [
+            "rec",
+            "ocr",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_149": {
+        "imagename": "v1_149.jpg",
+        "question": "Can you explain this meme?",
+        "answer": "This meme is a commentary on the current situation of online learning due to the COVID-19 pandemic. It shows how different parties are affected by it.\\n\\nThe first two images show the Zoom company and the teachers throwing money in the air, which implies that they are profiting from the situation. Zoom, in particular, has seen a surge in usage and revenue due to the pandemic.\\n\\nThe third image shows the WiFi company also throwing money in the air, which implies that they are also profiting from the situation as more people are using the internet for online learning.\\n\\nThe last image shows a student with a sad clown face, which implies that students are not benefiting from the situation and are struggling with online learning. The \"Put on a happy face\" sign in the background further emphasizes the idea that students are putting on a brave face despite their struggles.",
+        "capability": [
+            "rec",
+            "ocr",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_150": {
+        "imagename": "v1_150.jpg",
+        "question": "Can you explain this meme?",
+        "answer": "This meme is poking fun at the fact that the names of the countries Iceland and Greenland are misleading. Despite its name, Iceland is known for its beautiful green landscapes, while Greenland is mostly covered in ice and snow. The meme is saying that the person has trust issues because the names of these countries do not accurately represent their landscapes.",
+        "capability": [
+            "rec",
+            "ocr",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_151": {
+        "imagename": "v1_151.jpg",
+        "question": "Can you explain this meme?",
+        "answer": "This meme is poking fun at how a student's handwriting deteriorates during an exam. The first two pages show neat and legible handwriting, the middle page shows slightly messier handwriting, and the last two pages show completely illegible scribbles. This is likely due to the student becoming tired or rushed as the exam progresses.",
+        "capability": [
+            "rec",
+            "ocr",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_152": {
+        "imagename": "v1_152.jpg",
+        "question": "Can you explain this meme?",
+        "answer": "This meme is a joke about how new college students (freshmen) are often eager to take notes and learn everything they can in class. The image is from the cartoon SpongeBob SquarePants, where SpongeBob and Patrick are frantically writing down notes. The caption implies that the freshmen are so eager to learn that they are even writing down the professor's greeting.",
+        "capability": [
+            "rec",
+            "ocr",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_153": {
+        "imagename": "v1_153.jpg",
+        "question": "What is funny about this image?",
+        "answer": "It is a cartoon of a rhinoceros painting a picture and each picture has its rhino horn because the rhino horn grows in front of its eyes. The caption \"You see the world as you are!\" is a playful commentary on how our perspective shapes our perception of the world.",
+        "capability": [
+            "rec",
+            "ocr",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_154": {
+        "imagename": "v1_154.png",
+        "question": "What is funny about this image?",
+        "answer": "There are a few things that people might find funny about this image:\\n\\n1. The contrast between the two images: On the left, we see two women who are very emotional and angry, while on the right, we see a cat who is calmly sitting at a dinner table.\\n\\n2. The absurdity of the cat's situation: It is not common to see a cat sitting at a dinner table with a plate of food in front of it, so this image is unexpected and ridiculous.\\n\\n3. The cat's expression: The cat appears to be frightened by the women's yelling, which adds to the humor of the image.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_155": {
+        "imagename": "v1_155.png",
+        "question": "What occasions would someone use this meme?",
+        "answer": "The meme with the sleepy man and the Chinese caption \"\u9664\u4e86\u7761\u89c9\u65f6\u95f4\u4e0d\u60f3\u7761\u89c9\u5176\u4ed6\u65f6\u95f4\u90fd\u60f3\u7761\u89c9\" (Except during sleep time, I don't want to sleep. But during other times, I want to sleep) can be used in various occasions where the theme of feeling sleepy or having conflicting desires is relevant. Here are a few scenarios where this meme could be fitting:\n\n    Relatable sleepiness: The meme can be shared on social media or in conversations when expressing the relatable feeling of being tired or sleepy during the day. It can serve as a lighthearted way to convey that relatable experience and generate a humorous response from others who can relate.\n\n    Work or study-related humor: This meme can be used in work or study-related contexts to humorously express the desire to sleep or feeling drowsy during tasks that require attentiveness and focus. It can be shared among colleagues or classmates to lighten the mood and create a shared understanding of the challenges of staying awake and alert.\n\n    Procrastination humor: The meme can also be used to depict the internal struggle between wanting to sleep or rest instead of engaging in productive activities. It can be shared when discussing procrastination or humorous self-reflections on the constant desire to avoid responsibilities and indulge in relaxation.\n\n    Comedic irony: The meme's contradiction between sleep time and wanting to sleep at other times can be used as a form of comedic irony in various contexts. It can be shared when discussing situations where our desires or behaviors contradict what is expected or appropriate, adding a humorous twist to the conversation.\n\nUltimately, the meme can be employed in different situations where its theme of sleepiness, conflicting desires, or ironic situations aligns with the topic or sentiment being discussed, adding a touch of humor and relatability to the conversation or online interaction.",
+        "capability": [
+            "rec",
+            "ocr",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_156": {
+        "imagename": "v1_156.jpg",
+        "question": "What occasions would someone use this meme?",
+        "answer": "This meme, commonly known as \"Screaming Panda,\" is typically used to express shock, surprise, or fear. It could be used in response to a startling or unexpected event, or to convey a sense of panic or alarm. Some possible occasions where someone might use this meme include:\\n\\n- Reacting to a jump scare in a horror movie\\n- Responding to a surprising plot twist in a TV show or book\\n- Expressing shock at a news headline or current event\\n- Conveying fear or anxiety about an upcoming deadline or exam\\n- Showing surprise at an unexpected outcome in a sports game or other competition.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_157": {
+        "imagename": "v1_157.jpg",
+        "question": "What occasions would someone use this meme?",
+        "answer": "The \"crying cat\" meme with the Chinese caption \"Mom!\" is typically used to express a sense of distress, helplessness, or seeking comfort. Here are some occasions where someone might use this meme:\n\n    Expressing vulnerability: The meme can be used to express a moment of vulnerability or when feeling overwhelmed. It can convey a sense of seeking support or empathy from others by humorously invoking the idea of calling out for one's mother.\n\n    Seeking comfort or sympathy: This meme can be shared to evoke sympathy or support from friends or online communities. By using a relatable and recognizable meme format, it can effectively communicate feelings of sadness, disappointment, or needing emotional support.\n\n    Self-deprecating humor: The meme can also be used in a self-deprecating manner to make light of personal situations or minor mishaps. It allows individuals to humorously highlight their own moments of perceived \"helplessness\" while inviting others to provide comfort or reassurance.\n\n    Playful emotional exaggeration: The meme's dramatic and exaggerated expression can be used in a playful manner to emphasize a situation or event that is not necessarily distressing but may require attention or care. It can add a humorous touch when expressing minor inconveniences or humorous hyperbole.\n\nIt's important to note that meme usage and interpretation can vary, and individuals may find creative ways to adapt it to different contexts. The suggested occasions above provide a general understanding of when this meme could be used based on its common themes and emotional tone.",
+        "capability": [
+            "rec",
+            "ocr",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_158": {
+        "imagename": "v1_158.jpg",
+        "question": "How to cook this dish?",
+        "answer": "The dish is called \"Hungarian Mushroom Soup\". This Hungarian mushroom soup has lots of flavor and is fairly quick to make. It's primarily a mushroom soup but derives a lot of its flavor from other ingredients. My family loves soup and this is one of their favorites.\n\n\nPrep Time:\n15 mins\nCook Time:\n35 mins\nTotal Time:\n50 mins\nServings:\n6\n\n\n Ingredients\n\n    4 tablespoons unsalted butter\n\n    2 cups chopped onions\n\n    1 pound fresh mushrooms, sliced\n\n    2 cups chicken broth\n\n    1 tablespoon soy sauce\n\n    1 tablespoon paprika\n\n    2 teaspoons dried dill weed\n\n    1 cup milk\n\n    3 tablespoons all-purpose flour\n\n    \u00bd cup sour cream\n\n    \u00bc cup chopped fresh parsley\n\n    2 teaspoons lemon juice\n\n    1 teaspoon salt\n\n    ground black pepper to taste\n\n\n Directions\n\nStep1\n    Melt butter in a large pot over medium heat. Add onions; cook and stir until softened, about 5 minutes. Add mushrooms and saut\u00e9 for 5 more minutes. Stir in broth, soy sauce, paprika, and dill; reduce heat to low, cover, and simmer for 15 minutes.\n\nstep2\n    Whisk milk and flour together in a separate bowl; stir into soup until blended. Cover and simmer for 15 more minutes, stirring occasionally.\n\nStep3\n    Add sour cream, parsley, lemon juice, salt, and ground black pepper; stir over low heat until warmed through, about 3 to 5 minutes. Serve immediately. ",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_159": {
+        "imagename": "v1_159.jpg",
+        "question": "How to make this?",
+        "answer": "This is called \"Sparkling Cantaloupe Agua Fresca\". This refreshing agua fresca with cantaloupe and lime juice topped with club soda is perfect on a hot day.\n\nPrep Time:\n15 mins\nTotal Time:\n15 mins\nServings:\n8\n\n Ingredients\n\n    2 pounds fresh cantaloupe cubes (6 cups)\n\n    2 cups water\n\n    6 tablespoons freshly squeezed lime juice (from 2 limes)\n\n    3 tablespoons honey\n\n    1/4 teaspoon salt\n\n    2 cups club soda, chilled\n\n    cantaloupe melon balls or cubes, for garnish \n\n    lime zest twists, for garnish\n\n\n Directions\n\nStep 1\n    Working in batches if needed, blend cantaloupe, water, lime juice, honey, and salt in a blender until smooth. Press through a sieve; discard solids. Add strained juice to a pitcher.\n\nStep 2\n    Chill until ready to serve. Add club soda just before serving. Serve over ice, and garnish glasses with melon balls and lime zest twists. ",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_160": {
+        "imagename": "v1_160.jpg",
+        "question": "How to cook this dish?",
+        "answer": "This dish is called \"Ginger Glazed Mahi Mahi\". This ginger sauce for mahi mahi is bursting with flavor and combines both sweet and sour taste sensations. This recipe is a snap and so delicious. You'll love it! \n\n\nPrep Time:\n5 mins\nCook Time:\n10 mins\nAdditional Time:\n20 mins\nTotal Time:\n35 mins\nServings:\n4\n\n Ingredients\n\n    3 tablespoons honey\n\n    3 tablespoons soy sauce\n\n    3 tablespoons balsamic vinegar\n\n    2 teaspoons olive oil\n\n    1 teaspoon grated fresh ginger root\n\n    1 clove garlic, crushed or to taste\n\n    4 (6 ounce) mahi mahi fillets\n\n    salt and pepper to taste\n\n    1 tablespoon vegetable oil\n\n\n Directions\n\nStep 1\n    Mix honey, soy sauce, balsamic vinegar, olive oil, ginger, and garlic together in a shallow dish. Season fish fillets with salt and pepper; place them skin-sides down in the dish with marinade. Cover and refrigerate for 20 minutes.\n\nStep 2\n    Heat vegetable oil in a large skillet over medium-high heat. Remove fish fillets, reserving marinade. Fry fish for 4 to 6 minutes on each side, turning only once, until fish flakes easily with a fork. Remove fillets to a serving platter and keep warm.\n\nStep 3\n    Pour reserved marinade into the skillet; simmer over medium heat until reduced to a glaze. Spoon glaze over fish and serve. ",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_161": {
+        "imagename": "v1_161.jpg",
+        "question": "How to cook this dish?",
+        "answer": "This dish is called \"Strawberry Rhubarb Pie\". This strawberry rhubarb pie is a favorite springtime dessert in our house. The filling has a sweet-tart flavor; bake in your favorite pie crust and serve with vanilla ice cream.\n\nPrep Time:\n20 mins\nCook Time:\n35 mins\nAdditional Time:\n30 mins\nTotal Time:\n1 hr 25 mins\nServings:\n8\nYield:\n1 9-inch pie\n\n Ingredients\n\n    1 cup white sugar\n\n    \u00bd cup all-purpose flour\n\n    1 pound rhubarb, cut into 1/4 inch slices\n\n    2 pints strawberries, hulled and quartered\n\n    1 recipe pastry for a 9 inch double crust pie\n\n    2 tablespoons butter\n\n    1 large egg yolk\n\n    2 tablespoons white sugar\n\n Directions\n\nStep 1\n    Preheat oven to 400 degrees F (200 degrees C).\n\nStep 2\n    In a large bowl, mix flour and sugar. \n\nStep 3\n    Add strawberries and chopped rhubarb. Toss with sugar and flour and let stand for 30 minutes. \n\nStep 4\n    Pour filling into prepared pie crust. Dot top with butter, and cover with top crust. Seal edges of top and bottom crust with water. \n\nStep 5\n    Apply yolk to top of pie, using a pastry brush. \n\nStep 6\n    Sprinkle with sugar. \n\nStep 7\n    Cut small holes in top to let steam escape. \n\nStep 8\n    Bake at 400 degrees F (200 degrees C), for 35 to 40 minutes, or until bubbly and brown. Cool on rack. \n\nStep 9\n    Enjoy! ",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_162": {
+        "imagename": "v1_162.jpg",
+        "question": "How to cook this dish?",
+        "answer": "This dish is called \"Authentic Chinese Egg Rolls\". These Chinese egg rolls come from my mom who is the best cook ever \u2014 and I am a picky eater. If I like this, then you will. This is very authentic because my family is Chinese and I am too. This recipe is at least 300 years old in the Ling family.\n\n\nPrep Time:\n1 hr\nCook Time:\n30 mins\nAdditional Time:\n1 hr\nTotal Time:\n2 hrs 30 mins\nServings:\n20\nYield:\n20 egg rolls\n\n\n Ingredients\n\n    4 teaspoons vegetable oil, divided\n\n    3 large eggs, beaten\n\n    1 medium head cabbage, finely shredded\n\n    \u00bd carrot, julienned\n\n    1 pound Chinese barbequed or roasted pork, cut into matchsticks\n\n    1 (8 ounce) can shredded bamboo shoots\n\n    1 cup dried, shredded wood ear mushroom, rehydrated\n\n    2 green onions, thinly sliced\n\n    2 \u00bd teaspoons soy sauce\n\n    1 teaspoon salt\n\n    1 teaspoon sugar\n\n    \u00bd teaspoon monosodium glutamate (MSG)\n\n    1 (14 ounce) package egg roll wrappers\n\n    1 egg white, beaten\n\n    4 cups oil for frying, or as needed\n\n Directions\n\nStep 1\n    Heat 1 teaspoon vegetable oil in a wok or large skillet over medium heat. Pour in beaten eggs and cook, without stirring, until firmed up. Flip eggs over and cook for an additional 20 seconds to firm the other side. Set egg pancake aside to cool, then slice into thin strips.\n\nStep 2\n    Heat remaining vegetable oil in a wok or large skillet over high heat. Stir in cabbage and carrot; cook for 2 minutes to wilt. Add pork, bamboo shoots, mushroom, green onions, soy sauce, salt, sugar, and MSG; continue cooking until vegetables soften, about 6 minutes. Stir in sliced egg, then spread the mixture out onto a pan, and refrigerate until cold, about 1 hour.\n\nStep 3\n    To assemble the egg rolls: Place a wrapper onto your work surface with one corner pointing towards you. Place about 3 tablespoons of cooled filling in a heap onto the bottom third of the wrapper. Brush a little beaten egg white onto the top two edges of the wrapper, then fold the bottom corner over the filling and roll firmly to the halfway point. Fold the left and right sides snugly over the egg roll, then continue rolling until the top corners seal the egg roll with the egg white. Repeat with remaining egg roll wrappers, covering finished egg rolls with plastic wrap to keep from drying out.\n\nStep 4\n    Heat about 6 inches of oil in a wok or deep-fryer to 350 degrees F (175 degrees C).\n\nStep 5\n    Fry egg rolls 3 or 4 at a time until golden brown, 5 to 7 minutes. Drain on paper towels. ",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_163": {
+        "imagename": "v1_163.jpg",
+        "question": "How to cook this dish?",
+        "answer": "This dish is called \"Chocolate Coated Peanut Butter Crackers\".\n\nPrep Time:\n30 mins\nCook Time:\n5 mins\nAdditional Time:\n15 mins\nTotal Time:\n50 mins\nServings:\n40\nYield:\n40 sandwich cookies\n\n\nIngredients\n\u00be cup creamy or chunky peanut butter\n\n2 pounds chocolate almond bark, broken into pieces\n\n80 buttery round crackers (such as Ritz\u00ae)\n\n2 \u00bc ounces colored candy sprinkles (Optional)\n\n\nDirections\nStep 1\nSpread approximately 1 teaspoon peanut butter onto each cracker half. Press peanut butter sides together to form 40 peanut butter-filled sandwich cookies.\n\nStep 2\nMelt almond bark in the top of a double boiler over hot, but not boiling, water. Reduce heat and keep melted chocolate in top of double boiler over simmering water.\n\nStep 3\nDip each sandwich cookie into the melted chocolate, allowing excess to drain back into pot.\n\nStep 4\nPlace coated cookies onto waxed paper and immediately sprinkle with candy sprinkles so they adhere to the melted chocolate.\n\nStep 5\nPlace cookies in the refrigerator until chocolate has set, about 15 minutes.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_164": {
+        "imagename": "v1_164.jpg",
+        "question": "How to cook this dish?",
+        "answer": "This dish is called \"Broccoli and Carrot Stir Fry\".\n\nPrep Time:\n10 mins\nCook Time:\n16 mins\nTotal Time:\n26 mins\nServings:\n5\nYield:\n5 cups\n\nIngredients\n5 \u00bd cups broccoli florets\n\n1 carrot, thinly sliced\n\n2 teaspoons water\n\n1 teaspoon cornstarch\n\n1 teaspoon chicken bouillon granules, or to taste\n\nsalt to taste\n\n2 tablespoons peanut oil\n\nDirections\nStep 1\nBring a large pot of lightly salted water to a boil. Add broccoli and cook uncovered until bright green, about 2 minutes. Transfer broccoli to a bowl of ice water using a slotted spoon and immerse for several minutes to stop the cooking process. Drain.\n\nStep 2\nBring water back to a boil in the same large pot; add sliced carrot and cook for 1 minute. Drain.\n\nStep 3\nMix water and cornstarch together in a bowl until smooth. Add chicken granules and salt and mix well.\n\nStep 4\nHeat peanut oil in a wok or large skillet over high heat; saute broccoli and carrots for 2 minutes. Add cornstarch mixture; cook and stir until vegetables are coated evenly, 1 to 2 minutes.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_165": {
+        "imagename": "v1_165.jpg",
+        "question": "How to cook this dish?",
+        "answer": "This dish is called \"Cream Cheese and Crab Sushi Rolls\".\n\nPrep Time:\n20 mins\nCook Time:\n20 mins\nTotal Time:\n40 mins\nServings:\n2\nYield:\n2 sushi rolls\n\n\nIngredients\n1 cup uncooked white rice\n\n2 cups water\n\n2 tablespoons rice vinegar\n\n1 teaspoon salt\n\n2 sheets nori seaweed sheets\n\n\u00bc cucumber, peeled and sliced lengthwise\n\n2 pieces imitation crab legs\n\n\u00bd (3 ounce) package cream cheese, sliced\n\n1 teaspoon minced fresh ginger root\n\n\nDirections\nStep 1\nGather all ingredients.\nStep 2\nBring rice and water to a boil in a saucepan over high heat. Reduce heat to medium-low, cover, and simmer until the rice is tender, and the liquid has been absorbed, 20 to 25 minutes. Stir in rice vinegar and salt. Allow to cool completely.\nStep 3\nLay out seaweed sheets. Moisten hands with water, then spread cooled rice evenly on each sheet, leaving a 1/2-inch gap along one edge, lengthwise. Arrange strips of cucumber, imitation crabmeat, and cream cheese on top of the rice in a straight line along the side opposite the gap. Roll up sushi from the toppings to the seaweed sheet's exposed end.\nStep 4\nUsing a sharp wet knife, slice each roll into 5 or 6 pieces. Serve with minced ginger on the side.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_166": {
+        "imagename": "v1_166.jpg",
+        "question": "How to cook this dish?",
+        "answer": "This dish is called \"Vegan Sweet Potato Chickpea Curry\".\n\nPrep Time:\n10 mins\nCook Time:\n20 mins\nTotal Time:\n30 mins\nServings:\n6\n\nIngredients\n3 tablespoons olive oil\n\n1 onion, chopped\n\n2 cloves garlic, minced\n\n2 teaspoons minced fresh ginger root\n\n1 (15 ounce) can chickpeas, drained\n\n1 (14.5 ounce) can diced tomatoes\n\n1 (14 ounce) can coconut milk\n\n1 sweet potato, cubed\n\n1 tablespoon garam masala\n\n1 teaspoon ground cumin\n\n1 teaspoon ground turmeric\n\n\u00bd teaspoon salt\n\n\u00bc teaspoon red chile flakes\n\n1 cup baby spinach\n\n\nDirections\nStep 1\nHeat oil in a skillet over medium heat. Cook onion, garlic, and ginger in hot oil until softened, about 5 minutes. Add chickpeas, tomatoes, coconut milk, and sweet potato. Bring to a boil, reduce heat to low, and simmer until tender, about 15 minutes.\nStep 2\nSeason with garam masala, cumin, turmeric, salt, and chile flakes. Add spinach right before serving.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_167": {
+        "imagename": "v1_167.jpg",
+        "question": "How to cook this dish?",
+        "answer": "This dish is called \"Lime Chicken Soft Tacos\".\n\nPrep Time:\n20 mins\nCook Time:\n30 mins\nTotal Time:\n50 mins\nYield:\n10 servings\n\nIngredients\n1 \u00bd pounds skinless, boneless chicken breast meat - cubed\n\n2 green onions, chopped\n\n\u215b cup red wine vinegar\n\n\u00bd lime, juiced\n\n2 cloves garlic, minced\n\n1 teaspoon dried oregano\n\n1 teaspoon white sugar\n\n\u00bd teaspoon salt\n\n\u00bd teaspoon ground black pepper\n\n10 (6 inch) flour tortillas\n\n1 tomato, diced\n\n\u00bc cup shredded lettuce\n\n\u00bc cup shredded Monterey Jack cheese\n\n\u00bc cup salsa\n\nDirections\nStep 1\nSaut\u00e9 chicken in a medium saucepan over medium high heat until tender, about 15 to 20 minutes. Add green onions, vinegar, lime juice, garlic, oregano, sugar, salt, and pepper. Simmer over low heat for 10 minutes.\nStep 2\nHeat an iron skillet over medium heat. Place a tortilla in the pan, warm, and turn over to heat the other side. Repeat with remaining tortillas. Serve lime chicken mixture in warm tortillas topped with tomato, lettuce, cheese and salsa.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_168": {
+        "imagename": "v1_168.jpg",
+        "question": "Can you give a short introduction to this movie?",
+        "answer": "The Shawshank Redemption is a 1994 American drama film written and directed by Frank Darabont, based on the 1982 Stephen King novella Rita Hayworth and Shawshank Redemption. The film tells the story of banker Andy Dufresne (Tim Robbins), who is sentenced to life in Shawshank State Penitentiary for the murders of his wife and her lover, despite his claims of innocence. Over the following two decades, he befriends a fellow prisoner, contraband smuggler Ellis \"Red\" Redding (Morgan Freeman), and becomes instrumental in a money laundering operation led by the prison warden Samuel Norton (Bob Gunton). William Sadler, Clancy Brown, Gil Bellows, and James Whitmore appear in supporting roles.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_169": {
+        "imagename": "v1_169.jpg",
+        "question": "Can you give a short introduction to this movie?",
+        "answer": "The Godfather is a 1972 American crime film[2] directed by Francis Ford Coppola, who co-wrote the screenplay with Mario Puzo, based on Puzo's best-selling 1969 novel of the same title. The film stars Marlon Brando, Al Pacino, James Caan, Richard Castellano, Robert Duvall, Sterling Hayden, John Marley, Richard Conte, and Diane Keaton. It is the first installment in The Godfather trilogy, chronicling the Corleone family under patriarch Vito Corleone (Brando) from 1945 to 1955. It focuses on the transformation of his youngest son, Michael Corleone (Pacino), from reluctant family outsider to ruthless mafia boss.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_170": {
+        "imagename": "v1_170.jpg",
+        "question": "Can you give a short introduction to this movie?",
+        "answer": "The Dark Knight is a 2008 superhero film directed by Christopher Nolan from a screenplay he co-wrote with his brother Jonathan. Based on the DC Comics superhero, Batman, it is the sequel to Batman Begins (2005) and the second installment in The Dark Knight Trilogy. The plot follows the vigilante Batman, police lieutenant James Gordon, and district attorney Harvey Dent, who form an alliance to dismantle organized crime in Gotham City. Their efforts are derailed by the Joker, an anarchistic mastermind who seeks to test how far Batman will go to save the city from chaos. The ensemble cast includes Christian Bale, Michael Caine, Heath Ledger, Gary Oldman, Aaron Eckhart, Maggie Gyllenhaal, and Morgan Freeman.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_171": {
+        "imagename": "v1_171.jpg",
+        "question": "Can you give a short introduction to this movie?",
+        "answer": "Twelve Angry Men is an American courtroom drama written by Reginald Rose concerning the jury of a homicide trial. It was broadcast initially as a television play in 1954. The following year it was adapted for the stage. It was adapted for a film of the same name, directed by Sidney Lumet and released in 1957. Since then it has been given numerous remakes, adaptations, and tributes.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_172": {
+        "imagename": "v1_172.jpg",
+        "question": "Can you give a short introduction to this movie?",
+        "answer": "Schindler's List is a 1993 American epic historical drama film directed and produced by Steven Spielberg and written by Steven Zaillian. It is based on the 1982 novel Schindler's Ark by Australian novelist Thomas Keneally. The film follows Oskar Schindler, a German industrialist who saved more than a thousand mostly Polish\u2013Jewish refugees from the Holocaust by employing them in his factories during World War II. It stars Liam Neeson as Schindler, Ralph Fiennes as SS officer Amon G\u00f6th, and Ben Kingsley as Schindler's Jewish accountant Itzhak Stern.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_173": {
+        "imagename": "v1_173.jpg",
+        "question": "Can you give a short introduction to this movie?",
+        "answer": "The Lord of the Rings: The Return of the King is a 2003 epic fantasy adventure film directed by Peter Jackson from a screenplay by Fran Walsh, Philippa Boyens, and Jackson. It is based on 1955's The Return of the King, the third volume of the novel The Lord of the Rings by J. R. R. Tolkien. The sequel to 2002's The Lord of the Rings: The Two Towers, the film is the final instalment in The Lord of the Rings trilogy. It features an ensemble cast including Elijah Wood, Ian McKellen, Liv Tyler, Viggo Mortensen, Sean Astin, Cate Blanchett, John Rhys-Davies, Bernard Hill, Billy Boyd, Dominic Monaghan, Orlando Bloom, Hugo Weaving, Miranda Otto, David Wenham, Karl Urban, John Noble, Andy Serkis, Ian Holm, and Sean Bean. Continuing the plot of the previous film, Frodo, Sam and Gollum are making their final way toward Mount Doom to destroy the One Ring, unaware of Gollum's true intentions, while Merry, Pippin, Gandalf, Aragorn, Legolas, Gimli and the others join forces together against Sauron and his legions in Minas Tirith.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_174": {
+        "imagename": "v1_174.jpg",
+        "question": "Can you give a short introduction to this movie?",
+        "answer": "Pulp Fiction is a 1994 American crime film written and directed by Quentin Tarantino from a story he conceived with Roger Avary.[3] It tells four intertwining tales of crime and violence in Los Angeles, California. The film stars John Travolta, Samuel L. Jackson, Bruce Willis, Tim Roth, Ving Rhames, and Uma Thurman. The title refers to the pulp magazines and hardboiled crime novels popular during the mid-20th century, known for their graphic violence and punchy dialogue.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_175": {
+        "imagename": "v1_175.jpg",
+        "question": "Can you give a short introduction to this movie?",
+        "answer": "The Lord of the Rings: The Fellowship of the Ring is a 2001 epic fantasy adventure film directed by Peter Jackson from a screenplay by Fran Walsh, Philippa Boyens, and Jackson, based on 1954's The Fellowship of the Ring, the first volume of the novel The Lord of the Rings by J. R. R. Tolkien. The film is the first installment in The Lord of the Rings trilogy. It features an ensemble cast including Elijah Wood, Ian McKellen, Liv Tyler, Viggo Mortensen, Sean Astin, Cate Blanchett, John Rhys-Davies, Billy Boyd, Dominic Monaghan, Orlando Bloom, Christopher Lee, Hugo Weaving, Sean Bean, Ian Holm, and Andy Serkis.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_176": {
+        "imagename": "v1_176.jpg",
+        "question": "Can you give a short introduction to this movie?",
+        "answer": "The Godfather Part II is a 1974 American epic crime film produced and directed by Francis Ford Coppola. The film is partially based on the 1969 novel The Godfather by Mario Puzo, who co-wrote the screenplay with Coppola, and it is both a sequel and a prequel to the 1972 film The Godfather, presenting parallel dramas: one picks up the 1958 story of Michael Corleone (Al Pacino), the new Don of the Corleone family, protecting the family business in the aftermath of an attempt on his life; the prequel covers the journey of his father, Vito Corleone (Robert De Niro), from his Sicilian childhood to the founding of his family enterprise in New York City. The ensemble cast also features Robert Duvall, Diane Keaton, Talia Shire, Morgana King, John Cazale, Mariana Hill, and Lee Strasberg.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_177": {
+        "imagename": "v1_177.jpg",
+        "question": "Can you give a short introduction to this movie?",
+        "answer": "Farewell My Concubine is a 1993 Chinese historical drama film directed by Chen Kaige, starring Leslie Cheung, Gong Li and Zhang Fengyi. Adapted for the screen by Lu Wei based on the novel by Lilian Lee, the film is set in a politically tumultuous 20th-century China, from the early days of the Republic of China to the aftermath of the Cultural Revolution. It chronicles the troubled relationships between two Peking opera actors and lifelong friends Cheng Dieyi (Cheung) and Duan Xiaolou (Zhang), and Xiaolou's wife Juxian (Gong).",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_178": {
+        "imagename": "v1_178.jpg",
+        "question": "Can you give a short introduction to this painting?",
+        "answer": "The Mona Lisa is a half-length portrait painting by Italian artist Leonardo da Vinci.\n\nConsidered an archetypal masterpiece of the Italian Renaissance,it has been described as \"the best known, the most visited, the most written about, the most sung about, the most parodied work of art in the world\". The painting's novel qualities include the subject's enigmatic expression, monumentality of the composition, the subtle modelling of forms, and the atmospheric illusionism.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_179": {
+        "imagename": "v1_179.jpg",
+        "question": "Can you give a short introduction to this painting?",
+        "answer": "Girl With A Pearl Earring (Dutch: Meisje met de parel) is an oil painting by Dutch Golden Age painter Johannes Vermeer, dated c. 1665. Going by various names over the centuries, it became known by its present title towards the end of the 20th century after the earring worn by the girl portrayed there. The work has been in the collection of the Mauritshuis in The Hague since 1902 and has been the subject of various literary and cinematic treatments.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_180": {
+        "imagename": "v1_180.jpg",
+        "question": "Can you give a short introduction to this painting?",
+        "answer": "The Starry Night is an oil-on-canvas painting by the Dutch Post-Impressionist painter Vincent van Gogh. Painted in June 1889, it depicts the view from the east-facing window of his asylum room at Saint-R\u00e9my-de-Provence, just before sunrise, with the addition of an imaginary village.It has been in the permanent collection of the Museum of Modern Art in New York City since 1941, acquired through the Lillie P. Bliss Bequest. Widely regarded as Van Gogh's magnum opus, The Starry Night is one of the most recognizable paintings in Western art.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_181": {
+        "imagename": "v1_181.jpg",
+        "question": "Can you give a short introduction to this painting?",
+        "answer": "The Kiss (in German Der Kuss) is an oil-on-canvas painting with added gold leaf, silver and platinum by the Austrian Symbolist painter Gustav Klimt.It was painted at some point in 1907 and 1908, during the height of what scholars call his \"Golden Period\". It was exhibited in 1908 under the title Liebespaar (the lovers) as stated in the catalogue of the exhibition. The painting depicts a couple embracing each other, their bodies entwined in elaborate beautiful robes decorated in a style influenced by the contemporary Art Nouveau style and the organic forms of the earlier Arts and Crafts movement.\n\nThe painting now hangs in the \u00d6sterreichische Galerie Belvedere museum in the Belvedere, Vienna, and is considered a masterpiece of Vienna Secession (local variation of Art Nouveau) and Klimt's most popular work after Portrait of Adele Bloch-Bauer I. It is considered by many as a famous work of art.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_182": {
+        "imagename": "v1_182.jpg",
+        "question": "Can you give a short introduction to this painting?",
+        "answer": "The Birth of Venus is a painting by the Italian artist Sandro Botticelli, probably executed in the mid 1480s. It depicts the goddess Venus arriving at the shore after her birth, when she had emerged from the sea fully-grown (called Venus Anadyomene and often depicted in art). The painting is in the Uffizi Gallery in Florence, Italy.\n\nAlthough the two are not a pair, the painting is inevitably discussed with Botticelli's other very large mythological painting, the Primavera, also in the Uffizi. They are among the most famous paintings in the world, and icons of the Italian Renaissance; of the two, the Birth is better known than the Primavera. As depictions of subjects from classical mythology on a very large scale they were virtually unprecedented in Western art since classical antiquity, as was the size and prominence of a nude female figure in the Birth. It used to be thought that they were both commissioned by the same member of the Medici family, but this is now uncertain.\n\nThey have been endlessly analysed by art historians, with the main themes being: the emulation of ancient painters and the context of wedding celebrations (generally agreed), the influence of Renaissance Neo-Platonism (somewhat controversial), and the identity of the commissioners (not agreed). Most art historians agree, however, that the Birth does not require complex analysis to decode its meaning, in the way that the Primavera probably does. While there are subtleties in the painting, its main meaning is a straightforward, if individual, treatment of a traditional scene from Greek mythology, and its appeal is sensory and very accessible, hence its enormous popularity.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_183": {
+        "imagename": "v1_183.jpg",
+        "question": "Can you give a short introduction to this painting?",
+        "answer": "Arrangement in Grey and Black No. 1, best known under its colloquial name Whistler's Mother or Portrait of Artist's Mother, is a painting in oils on canvas created by the American-born painter James Abbott McNeill Whistler in 1871. The subject of the painting is Whistler's mother, Anna McNeill Whistler. The painting is 56.81 by 63.94 inches (1,443 mm \u00d7 1,624 mm), displayed in a frame of Whistler's own design. It is held by the Mus\u00e9e d'Orsay in Paris, having been bought by the French state in 1891. It is one of the most famous works by an American artist outside the United States. It has been variously described as an American icon and a Victorian Mona Lisa.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_184": {
+        "imagename": "v1_184.jpg",
+        "question": "Can you give a short introduction to this painting?",
+        "answer": "The Arnolfini Portrait (or The Arnolfini Wedding, The Arnolfini Marriage, the Portrait of Giovanni Arnolfini and his Wife, or other titles) is a 1434 oil painting on oak panel by the Early Netherlandish painter Jan van Eyck. It forms a full-length double portrait, believed to depict the Italian merchant Giovanni di Nicolao Arnolfini and his wife, presumably in their residence at the Flemish city of Bruges.\n\nIt is considered one of the most original and complex paintings in Western art, because of its beauty, complex iconography, geometric orthogonal perspective, and expansion of the picture space with the use of a mirror. According to Ernst Gombrich \"in its own way it was as new and revolutionary as Donatello's or Masaccio's work in Italy. A simple corner of the real world had suddenly been fixed on to a panel as if by magic... For the first time in history the artist became the perfect eye-witness in the truest sense of the term\". The portrait has been considered by Erwin Panofsky and some other art historians as a unique form of marriage contract, recorded as a painting. Signed and dated by van Eyck in 1434, it is, with the Ghent Altarpiece by the same artist and his brother Hubert, the oldest very famous panel painting to have been executed in oils rather than in tempera. The painting was bought by the National Gallery in London in 1842.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_185": {
+        "imagename": "v1_185.jpg",
+        "question": "Can you give a short introduction to this painting?",
+        "answer": "Along the River During the Qingming Festival (Qingming Shanghe Tu) is a handscroll painting by the Song dynasty painter Zhang Zeduan (1085\u20131145) and copied many times in the following centuries. It captures the daily life of people and the landscape of the capital, Bianjing (present-day Kaifeng) during the Northern Song. The theme is often said to celebrate the festive spirit and worldly commotion at the Qingming Festival, rather than the holiday's ceremonial aspects, such as tomb sweeping and prayers. Read right to left, as a viewer unrolled it, successive scenes reveal the lifestyle of all levels of the society from rich to poor as well as economic activities in rural areas and the city, and offer glimpses of period clothing and architecture. The painting is considered to be the most renowned work among all Chinese paintings, and it has been called \"China's Mona Lisa.\"",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_186": {
+        "imagename": "v1_186.jpg",
+        "question": "Can you give a short introduction to this painting?",
+        "answer": "Dwelling in the Fuchun Mountains is one of the few surviving works by Chinese painter Huang Gongwang (1269\u20131354) and is considered to be among his greatest works. Painted between 1348 and 1350, the painting was burnt into two pieces in 1650. Today, one piece is kept in the Zhejiang Provincial Museum in Hangzhou, while the other piece is kept in the National Palace Museum in Taipei. Put together, the entire painting would measure 691.3 cm in length.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_187": {
+        "imagename": "v1_187.jpg",
+        "question": "Can you give a short introduction to this painting?",
+        "answer": "Emperor Taizong Receiving the Tibetan Envoy (also called \u6b65\u8f87\u56fe, B\u00f9ni\u01cen T\u00fa ) is a painting on silk by Yan Liben to show the friendly encounter between the Tang dynasty and Tibet. The painting is 129 centimetres (51 in) long by 38.5 centimetres (15.2 in) wide. Bunian Tu is in The Palace Museum in Beijing.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_188": {
+        "imagename": "v1_188.jpg",
+        "question": "What is this disease (give short introduction) and how to treat it?",
+        "answer": "Cedar apple rust (Gymnosporangium juniperi-virginianae) is a fungal disease that requires juniper plants to complete its complicated two year life-cycle. Spores overwinter as a reddish-brown gall on young twigs of various juniper species. In early spring, during wet weather, these galls swell and bright orange masses of spores are blown by the wind where they infect susceptible apple and crab-apple trees. The spores that develop on these trees will only infect junipers the following year. From year to year, the disease must pass from junipers to apples to junipers again; it cannot spread between apple trees.\n\nOn apple and crab-apple trees, look for pale yellow pinhead sized spots on the upper surface of the leaves shortly after bloom. These gradually enlarge to bright orange-yellow spots which make the disease easy to identify. Orange spots may develop on the fruit as well. Heavily infected leaves may drop prematurely.\n\nTreatment\n1. Choose resistant cultivars when available.\n2. Rake up and dispose of fallen leaves and other debris from under trees.\n3. Remove galls from infected junipers. In some cases, juniper plants should be removed entirely.\n4. Apply preventative, disease-fighting fungicides labeled for use on apples weekly, starting with bud break, to protect trees from spores being released by the juniper host. This occurs only once per year, so additional applications after this springtime spread are not necessary.\n5. On juniper, rust can be controlled by spraying plants with a copper solution (0.5 to 2.0 oz/ gallon of water) at least four times between late August and late October.\n6. Safely treat most fungal and bacterial diseases with SERENADE Garden. This broad spectrum bio-fungicide uses a patented strain of Bacillus subtilis that is registered for organic use. Best of all, SERENADE is completely non-toxic to honey bees and beneficial insects.\n7. Containing sulfur and pyrethrins, Bonide\u00ae Orchard Spray is a safe, one-hit concentrate for insect attacks and fungal problems. For best results, apply as a protective spray (2.5 oz/ gallon) early in the season. If disease, insects or wet weather are present, mix 5 oz in one gallon of water. Thoroughly spray all parts of the plant, especially new shoots.\n8. Contact your local Agricultural Extension office for other possible solutions in your area.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_189": {
+        "imagename": "v1_189.jpg",
+        "question": "What is this disease (give short introduction) and how to treat it?",
+        "answer": "Anthracnose. It is caused by fungi in the genus Colletotrichum, a common group of plant pathogens that are responsible for diseases on many plant species. Infected plants develop dark, water soaked lesions on stems, leaves or fruit. The centers of these lesions often become covered with pink, gelatinous masses of spores especially during moist, warm weather. Anthracnose can reduce a beautiful harvest into rotted waste in just a few days.\n\nThe fungal disease overwinters in and on seeds, soil and garden debris. Cool wet weather promotes its development, and the optimum temperature for continued growth of the spores is between 75-85\u02daF. Moisture is required for development and germination of the fungus as well as for infection of the plant. It is spread by wind, rain, insects and garden tools.\n\nTreatment\n1. Choose resistant plant varieties when possible and use western grown seeds which have not been exposed to the disease.\n2. If this fungal problem is common, do NOT save your own seed from plantings.\n3. To avoid spreading the disease, keep out of gardens when plants are wet and make sure to disinfect all garden tools (one part bleach to 4 parts water) after use.\n4. Do not compost infected leaves, fruit or stems and thoroughly clean up garden areas in the fall, after harvest, to reduce over wintering sites for the fungal spores.\n5. Safely treat most fungal and bacterial diseases with SERENADE Garden. This broad spectrum bio-fungicide uses a patented strain of Bacillus subtilis that is registered for organic use. Best of all, SERENADE is completely non-toxic to honey bees and beneficial insects.\n6. Liquid copper sprays and sulfur powders should be applied weekly, starting when foliage begins to develop in the early spring and continuing throughout the growing season. Spray early in the day, and avoid applications during hot weather. Seeds may also be treated prior to planting.\n7. Neem oil spray is an organic, multi-purpose fungicide/insecticide/miticide that kills eggs, larvae and adult stages of insects as well as prevents fungal attack on plants. Apply early, at the first sign of spring budding, every 7-14 days as a preventative measure or on a 7-day schedule until existing problems are eliminated.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_190": {
+        "imagename": "v1_190.jpg",
+        "question": "What is this disease (give short introduction) and how to treat it?",
+        "answer": "It is bacterial canker, most common on cherries and plums, but may also affect apricots, peaches and many other kinds of stone fruits. Suspect this plant disease if sunken, water-soaked or \u201cgummy\u201d lesions form on the trunk or twigs. When trees begin active growth in the spring, a sour smelling sap may ooze from these wounded areas. The cankers become darker than the surrounding healthy bark, and the underlying tissue is reddish-brown to black and moist.\n\nNote: If cankers girdle the branches or trunk, the leaves above the diseased area curl and turn yellow. Growth stops and the branch or tree will eventually die.\n\nThe bacterium that causes canker, Pseudomonas syringae, enters trees through injured bark or an existing wound, such as a pruning cut on a twig or branch. Frost damage in the spring may promote additional infections. Bacterial canker infections occur during fall, winter and early spring (during cool, wet weather) and are spread by rain or water, and pruning tools. The bacteria overwinter in active cankers, in infected buds and on the surface of infected and healthy trees and weeds.\n\nTreatment\n1. Prune flowering trees during blooming when wounds heal fastest.\n2. Remove wilted or dead limbs well below infected areas.\n3. Avoid pruning in early spring and fall when bacteria are most active.\n4. Treat all pruning cuts immediately with Tanglefoot\u00ae Tree Pruning Sealer and make sure to disinfect your pruning equipment \u2014 one part bleach to 4 parts water \u2014 after each cut.\n5. If using string trimmers around the base of trees avoid damaging bark with breathable Tree Wrap to prevent infection.\n6. Brush bark with white latex paint diluted with water to reduce bark-damaging temperature fluctuations.\n7. Research has shown that copper fungicides have some success against this stone fruit problem. However, results are inconsistent. We recommend using it as one part of a total management program.\n8. Remove weeds and grass from around the base of young trees to improve air circulation and keep the trunk and crown dry.\n9. Organocide\u00ae Plant Doctor is an earth-friendly systemic fungicide that works its way through the entire plant to combat a large number of diseases on ornamentals, turf, fruit and more. Mix 1/3 to 3/4 oz per gallon of water and paint or spray over pruning wounds and surrounding areas.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_191": {
+        "imagename": "v1_191.jpg",
+        "question": "What is this disease (give short introduction) and how to treat it?",
+        "answer": "It is blossom end rot. A serious disorder of tomato, pepper, cucumber and eggplant, blossom end rot is an environmental problem (not fungal) most often caused by uneven watering or by calcium deficiency. (These can be related; uneven watering can interfere with the uptake of calcium.) This common garden \u201cdisease\u201d is often brought on by rapid growth from too much fertilizer, high salt levels or drought.\n\nBlossom end rot symptoms occur on both green and ripe fruits and is identified by water-soaked areas that gradually widen and mature into sunken, brown, leathery spots on the bottom end. In many cases, secondary pathogens, which appear as a black, fuzzy-like growth, attack the affected area and cause complete rotting of the fruit. Blossom end rot will not spread from plant to plant.\n\nTreatment\nSince this plant problem is physiological in nature, fungicides will not work as a control measure. We recommend the following:\n\n1. Choose resistant vegetable varieties whenever possible.\n2. Prevent problems by keeping soil evenly moist and by foliar spraying plants with a kelp or calcium solution.\n3. Adding high levels of calcium \u2014 bone meal, oyster shell or gypsum \u2014 to the soil at planting time usually prevents this problem from developing.\n4. A layer of mulch (straw, compost, grass ) will help conserve soil moisture during the hot, dry days of July and August.\n5. Foliar applications of Liquid Calcium 5% (1-2 Tbsp/ gallon of water) can be used to correct or prevent deficiencies of this essential nutrient. For best results, combine with a natural surfactant to increase adhesion and spray leaves to the point of run-off.\n6. Mulching plants will help conserve moisture and provide a more uniform water supply.\n7. Avoid using high nitrogen fertilizers which accelerate vegetative growth and reduce the uptake of calcium by plants. A large selection of balanced organic fertilizers are available at Planet Natural.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_192": {
+        "imagename": "v1_192.jpg",
+        "question": "What is this disease (give short introduction) and how to treat it?",
+        "answer": "It is Brown rot (Monilinia fructicola), the most common fungal disease affecting the blossoms and fruit of almonds, apricots, cherries, peaches and plums. It overwinters in mummified fruit (on the tree and on the ground) and infected twigs.\n\nThe disease first infects blossoms in spring and grows back into the small branches to cause cankers that can kill stems. Large numbers of flower-bearing stems are killed when the disease is severe. Dead flowers often remain attached into the summer. Developing or mature fruits show circular or brown spots that spread rapidly over the surface and light gray masses of spores are produced on the rotted areas. Rotted tissue remains relatively firm and dry.\n\nBrown rot spores are carried by wind, rain and insects to the open or unopened blossoms and young shoots. If water is present \u2014 either from rain, dew or watering \u2014 on the flower surface the spores can germinate and penetrate the plant. Disease development takes place over a wide temperature range and flowers can be infected from the time buds open until petals fall. Under favorable conditions, brown rot spreads quickly and an entire crop can be completely destroyed on the tree.\n\nTreatment\n1. Choose resistant varieties whenever possible.\n2. Prompt removal and destruction of infected plant parts helps breaks the life cycle of the disease in individual trees and small orchards, and may be sufficient to keep brown rot below damaging levels.\n3. It is important to rake up and remove any fallen fruit or debris from under trees.\n4. Prune trees occasionally to improve air circulation. Also, water from below to keep from wetting blossoms, foliage and fruit.\n5. Use Tanglefoot\u00ae Pruning Sealer to seal all cuts and wounds and protect against insects and disease organisms.\n6. Ready to use copper fungicides or sulfur powders should be applied weekly to infected trees starting when the blossoms are just beginning to open and continuing throughout the growing season. If at all possible, time applications so that 12 hours of dry weather follows application.\n7. Organocide\u00ae Plant Doctor is an earth-friendly systemic fungicide that works its way through the entire plant to combat a large number of diseases on ornamentals, turf, fruit and more. Apply as a foliar spray (1 tsp/ gallon of water) to combat this destructive stone fruit problem.\n8. Containing sulfur and pyrethrins, Bonide\u00ae Orchard Spray is a safe, one-hit concentrate for insect attacks and fungal problems. For best results, apply as a protective spray (2.5 oz/ gallon) early in the season. If disease, insects or wet weather are present, mix 5 oz in one gallon of water. Thoroughly spray all parts of the plant, especially new shoots.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_193": {
+        "imagename": "v1_193.jpg",
+        "question": "What is this disease (give short introduction) and how to treat it?",
+        "answer": "It is club root. Affecting most brassica crops (cabbage, broccoli, cauliflower, etc.), club root is a serious plant disease in North American home gardens. It is caused by the soil-borne fungus Plasmodiophora brassicae which infects susceptible plants through root hairs. Diseased roots become swollen, misshapen and deformed (clubbed) often cracking and rotting. As a result, plants have difficulty absorbing water and nutrients properly.\n\nPlants often grow poorly and wilt during the heat of the day; plants often revive during cool nights. Outer leaves may turn yellow, purple or brown. Club root will reduce yields and can cause total crop failure.\n\nFungal spores can be spread by wind, water and garden tools. Disease development can occur over a wide range of conditions, but is favored by excessive moisture, low soil pH and soil temperatures between 64 and 77\u02daF. Spores can survive in the soil for as many as 10 years.\n\nTreatment\n1. Fungicides will NOT treat this soil-dwelling micro-organism.\n2. Choose resistant cultivars when possible.\n3. Try to prevent the occurrence of this disease by keeping a clean garden and rotating crops.\n4. Keep in mind that the disease spores can persist in the soil for up to 20 years. If club root is present you may want to solarize the soil.*\n5. Control susceptible weeds \u2014 mustard, radish, shepherd\u2019s purse \u2014 that may be infected to reduce potential buildup of the disease.\n6. Carefully remove infected plants and sterilize garden tools (one part bleach to 4 parts water) after use.\n7. Raise your soil\u2019s pH to a more alkaline 7.2 by mixing oyster shell or dolomite lime into your garden in the fall. Simple and affordable soil test kits are available to check pH often.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_194": {
+        "imagename": "v1_194.jpg",
+        "question": "What is this disease (give short introduction) and how to treat it?",
+        "answer": "It is corn smut. Frequently found in backyard gardens and small farms, corn smut is caused by the fungus Ustilago zeae and can appear in the stalks, leaves, tassels or ears. Symptoms are most commonly noticed when the ears produce mushroom-like tumors or galls. These \u201cswellings\u201d begin as small, whitish-gray irregularities which expand and turn black as they fill with spores. Ear galls can grow to 4- to 5-inches in diameter and release thousands of spores as they rupture. These fungal spores are blown by the wind for considerable distances to infect new plants. Galls on leaves remain small and eventually become hard and dry.\n\nCorn smut overwinters on garden debris and in the soil. It is carried by wind, rain and irrigation and does best in hot, dry weather. Spores may remain viable for 5- to 7-years. Wounds from various injuries, including cultivation and abrasion from blowing soil, provide points for the fungus to enter the plant.\n\nTreatment\n1. Choose the best resistant varieties, such as silver king, fantasia, brilliant and seneca sensation, when available.\n2. In backyard gardens, collecting and destroying galls before the dark fungal spores are released is suggested. This will limit the number of available fungal spores and help break the disease-cycle.\n3. Reduce infection points by avoiding injury of roots, stalks and leaves during cultivation.\n4. Prevent damage from insects, such as corn borers, with Monterey\u00ae Garden Insect Spray or other organic insecticide.\n5. Fungicides are NOT an effective control option since the disease is so widespread and can persist in the soil for years.\n6. High nitrogen fertilizers may increase the severity of the disease \u2014 use a balanced organic fertilizer in the vegetable garden.\n7. Remove and destroy all garden debris after harvest and practice crop rotation the following year.\n8. Bag or burn infected plant parts \u2014 do NOT compost.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_195": {
+        "imagename": "v1_195.jpg",
+        "question": "What is this disease (give short introduction) and how to treat it?",
+        "answer": "It is crown gall, a common plant disease caused by the soil-borne bacterium Agrobacterium tumefaciens. It is found throughout the world and occurs on woody shrubs and herbaceous plants including grapes, raspberries, blackberries and roses.\n\nCrown gall symptoms include round, wart-like growths \u2014 2 inches or larger in diameter \u2014 that appear at or just above the soil line, or on lower branches and stems. Plants with several galls may be unable to move water and nutrients up the trunk and become weakened, stunted and unproductive. Young plants can be killed by developing gall tissue.\n\nThe bacteria responsible for crown gall can persist in the soil for many years and are released when galls become saturated with moisture or as older galls decompose. Susceptible plants are infected through fresh wounds or abrasions, many of which are a result of pruning, freeze injury, soil insects, cultivation and other factors that may damage plants. Nursery stock is often infected through grafting and budding scars.\n\nTreatment\n1. Select resistant cultivars when possible and purchase plants from a reputable nursery.\n2. Do not buy plants that shows signs of swelling or galling.\n3. When caring for susceptible plants, avoid injury or pruning wounds that may come in contact with the soil.\n4. Use Tree Wrap to protect against string trimmer damage and keep your garden tools clean.\n5. Provide winter protection with natural burlap so bark does not crack.\n6. In many cases, existing galls can be removed with a sharp pruning knife. Destroy the infected plant tissue and treat the wound with pruning sealer. If the plant does not recover, remove and destroy it.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_196": {
+        "imagename": "v1_196.jpg",
+        "question": "What is this disease (give short introduction) and how to treat it?",
+        "answer": "It is gray mold (Botrytis cinerea). Found on a wide range of plants (too many to mention), gray mold is a fungal disease that travels quickly through gardens, especially during damp, cool to mild weather. Disease symptoms appear as grayish colored soft, mushy spots on leaves, stems, flowers and on produce. Spots may become covered with a coating of gray fungus spores, especially if humidity is high. Fruit or plants shrivel and rot and often develop black, stone-like sclerotia \u2014 a compact mass of hardened fungal filaments \u2014 under rotted parts.\n\nGray mold is often found near the soil surface or in the densest areas of the plant canopy. It develops on wilted flowers first, then spreads quickly to other parts of the plant. The disease may also occur in storage areas causing rotting of harvested fruits and vegetables.\n\nBotrytis blight overwinters on plants, in or on the soil, and as sclerotia. Spores develop when conditions are optimal, and are moved by wind or splashing water onto blossoms or young leaves, where they germinate and enter the plant. Spores require cool temperatures (45-60 F.) and high humidity (93% and above) to germinate. Germinating spores rarely penetrate green, healthy tissue directly, but can enter through wounds on growing plants. Cuttings are particularly susceptible to infection.\n\nTreatment\n1. Prune or stake plants to improve air circulation between plants. Make sure to disinfect your pruning equipment (one part bleach to 4 parts water) after each cut.\n2. If growing indoors use a small clip-on fan to improve air flow.\n3. Keep the soil under plants clean and rake up any fallen debris.\n4. Add a good amount of organic compost or mulch under plants. Mulches will prevent the fungal spores from splashing back up onto flowers and leaves.\n5. Water in the early morning hours, or use a soaker hose, to give plants time to dry out during the day.\n6. Do not compost infected plant leaves or stems, and thoroughly clean up garden areas in the fall to reduce over wintering sites for the fungal spores.\n7. Copper-Soap fungicides will help by protecting plants from disease spores. Apply at the start of flowering and continue every 7-10 days until harvest. Fungicidal sprays are especially warranted when weather forecasts predict a long period of cool, wet weather.\n8. Safely treat most fungal diseases, including Botrytis blight, with SERENADE Garden. This broad spectrum bio-fungicide uses a patented strain of Bacillus subtilis that is registered for organic use. Best of all, SERENADE is completely non-toxic to honey bees and beneficial insects.\n9. Mycostop, a biological fungicide approved for organic use, has shown suppression of the disease. Direct spray (5 gm/ 50 liters of water) to susceptible leaves, flowers and fruits to point of run-off. Apply every 2-3 weeks, or as needed depending on disease pressure.\n10. Green Cure Fungicide contains a patented formula of potassium bicarbonate \u2014 commonly used in food products \u2014 that kills many plant diseases on contact and provides up to 2 weeks of residual protection. At first sign of disease, mix 1-2 Tbsp/ gallon of water and apply to all exposed surfaces of the plant. For best protection, repeat at 1-2 week intervals until conditions are no longer favorable for disease development.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_197": {
+        "imagename": "v1_197.jpg",
+        "question": "What is this disease (give short introduction) and how to treat it?",
+        "answer": "It is early blight. Common on tomato and potato plants, early blight is caused by the fungus Alternaria solani and occurs throughout the United States. Symptoms first appear on the lower, older leaves as small brown spots with concentric rings that form a \u201cbull\u2019s eye\u201d pattern. As the disease matures, it spreads outward on the leaf surface causing it to turn yellow, wither and die. Eventually the stem, fruit and upper portion of the plant will become infected. Crops can be severely damaged.\n\nEarly blight overwinters on infected plant tissue and is spread by splashing rain, irrigation, insects and garden tools. The disease is also carried on tomato seeds and in potato tubers. In spite of its name, early blight can occur any time throughout the growing season. High temperatures (80-85\u02daF.) and wet, humid conditions promote its rapid spread. In many cases, poorly nourished or stressed plants are attacked.\n\nTreatment\nPrune or stake plants to improve air circulation and reduce fungal problems.\nMake sure to disinfect your pruning shears (one part bleach to 4 parts water) after each cut.\nKeep the soil under plants clean and free of garden debris. Add a layer of organic compost to prevent the spores from splashing back up onto vegetation.\nDrip irrigation and soaker hoses can be used to help keep the foliage dry.\nFor best control, apply copper-based fungicides early, two weeks before disease normally appears or when weather forecasts predict a long period of wet weather. Alternatively, begin treatment when disease first appears, and repeat every 7-10 days for as long as needed.\nContaining copper and pyrethrins, Bonide\u00ae Garden Dust is a safe, one-step control for many insect attacks and fungal problems. For best results, cover both the tops and undersides of leaves with a thin uniform film or dust. Depending on foliage density, 10 oz will cover 625 sq ft. Repeat applications every 7-10 days, as needed.\nSERENADE Garden is a broad spectrum, preventative bio-fungicide recommended for the control or suppression of many important plant diseases. For best results, treat prior to foliar disease development or at the first sign of infection. Repeat at 7-day intervals or as needed.\nRemove and destroy all garden debris after harvest and practice crop rotation the following year.\nBurn or bag infected plant parts. Do NOT compost.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_198": {
+        "imagename": "v1_198.jpg",
+        "question": "Can you give a short introduction to this person?",
+        "answer": "Sir Isaac Newton FRS (25 December 1642 \u2013 20 March 1726/27) was an English mathematician, physicist, astronomer, alchemist, theologian, and author who was described in his time as a natural philosopher. He was a key figure in the Scientific Revolution and the Enlightenment that followed. His pioneering book Philosophi\u00e6 Naturalis Principia Mathematica (Mathematical Principles of Natural Philosophy), first published in 1687, consolidated many previous results and established classical mechanics. Newton also made seminal contributions to optics, and shares credit with German mathematician Gottfried Wilhelm Leibniz for developing infinitesimal calculus.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_199": {
+        "imagename": "v1_199.jpg",
+        "question": "Can you give a short introduction to this person?",
+        "answer": "Confucius (/k\u0259n\u02c8fju\u02d0\u0283\u0259s/ k\u0259n-FEW-sh\u0259s; Chinese: \u5b54\u592b\u5b50; pinyin: K\u01d2ng F\u016bz\u01d0, \"Master K\u01d2ng\"; or commonly \u5b54\u5b50; K\u01d2ngz\u01d0; c.\u2009551 \u2013 c.\u2009479 BCE) was a Chinese philosopher and politician of the Spring and Autumn period who is traditionally considered the paragon of Chinese sages. Confucius's teachings and philosophy underpin East Asian culture and society, remaining influential across China and East Asia to this day.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_200": {
+        "imagename": "v1_200.jpg",
+        "question": "Can you give a short introduction to this person?",
+        "answer": "Cai Lun (Chinese: \u8521\u4f26; courtesy name: Jingzhong (\u656c\u4ef2); c.\u200950\u201362 \u2013 121 CE), formerly romanized as Ts'ai Lun, was a Chinese eunuch court official of the Eastern Han dynasty. He is traditionally regarded as the inventor of paper and the modern papermaking process. Although early forms of paper had existed since the 3rd century BCE, he occupies a pivotal place in the history of paper due to his addition of pulp via tree bark and hemp ends which resulted in the large-scale manufacture and worldwide spread of paper.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_201": {
+        "imagename": "v1_201.jpg",
+        "question": "Can you give a short introduction to this person?",
+        "answer": "Christopher Columbus (between 25 August and 31 October 1451 \u2013 20 May 1506) was an Italian explorer and navigator from the Republic of Genoa who completed four Spanish-based voyages across the Atlantic Ocean sponsored by the Catholic Monarchs, opening the way for the widespread European exploration and European colonization of the Americas. His expeditions were the first known European contact with the Caribbean and Central and South America.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_202": {
+        "imagename": "v1_202.jpg",
+        "question": "Can you give a short introduction to this person?",
+        "answer": "Albert Einstein (14 March 1879 \u2013 18 April 1955) was a German-born theoretical physicist. Best known for developing the theory of relativity, he also made important contributions to the development of the theory of quantum mechanics, and thus to modern physics. His mass\u2013energy equivalence formula E = mc2, which arises from relativity theory, has been dubbed \"the world's most famous equation\". His work is also known for its influence on the philosophy of science. He received the 1921 Nobel Prize in Physics \"for his services to theoretical physics, and especially for his discovery of the law of the photoelectric effect\", a pivotal step in the development of quantum theory. Einsteinium, one of the synthetic elements in the periodic table, was named in his honor.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_203": {
+        "imagename": "v1_203.jpg",
+        "question": "Can you give a short introduction to this person?",
+        "answer": "Louis Pasteur ForMemRS (27 December 1822 \u2013 28 September 1895) was a French chemist and microbiologist renowned for his discoveries of the principles of vaccination, microbial fermentation, and pasteurization, the last of which was named after him. His research in chemistry led to remarkable breakthroughs in the understanding of the causes and preventions of diseases, which laid down the foundations of hygiene, public health and much of modern medicine. Pasteur's works are credited with saving millions of lives through the developments of vaccines for rabies and anthrax. He is regarded as one of the founders of modern bacteriology and has been honored as the \"father of bacteriology\" and the \"father of microbiology\" (together with Robert Koch; the latter epithet also attributed to Antonie van Leeuwenhoek).",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_204": {
+        "imagename": "v1_204.jpg",
+        "question": "Can you give a short introduction to this person?",
+        "answer": "Galileo di Vincenzo Bonaiuti de' Galilei (15 February 1564 \u2013 8 January 1642) was an Italian astronomer, physicist and engineer, sometimes described as a polymath. Commonly referred to as Galileo, his name is pronounced /\u02cc\u0261\u00e6l\u026a\u02c8le\u026a.o\u028a \u02cc\u0261\u00e6l\u026a\u02c8le\u026a.i\u02cc/ (GAL-ih-LAY-oh GAL-ih-LAY-ee, Italian: [\u0261ali\u02c8l\u025b\u02d0o \u0261ali\u02c8l\u025bi]). He was born in the city of Pisa, then part of the Duchy of Florence. Galileo has been called the father of observational astronomy, modern-era classical physics, the scientific method, and modern science.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_205": {
+        "imagename": "v1_205.jpg",
+        "question": "Can you give a short introduction to this person?",
+        "answer": "Joshua Abraham Norton (February 4, 1818 \u2013 January 8, 1880), known as Emperor Norton, was a resident of San Francisco, California, who in 1859 proclaimed himself \"Norton I., Emperor of the United States\". In 1863, after Napoleon III invaded Mexico, he took the secondary title of \"Protector of Mexico\".",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_206": {
+        "imagename": "v1_206.jpg",
+        "question": "Can you give a short introduction to this person?",
+        "answer": "Lionel Andr\u00e9s Messi (Spanish pronunciation: [ljo\u02c8nel an\u02c8d\u027ees \u02c8mesi] (listen); born 24 June 1987), also known as Leo Messi, is an Argentine professional footballer who plays as a forward for Ligue 1 club Paris Saint-Germain and captains the Argentina national team. Widely regarded as one of the greatest players of all time, Messi has won a record seven Ballon d'Or awards and a record six European Golden Shoes, and in 2020 he was named to the Ballon d'Or Dream Team. Until leaving the club in 2021, he had spent his entire professional career with Barcelona, where he won a club-record 34 trophies, including ten La Liga titles, seven Copa del Rey titles and the UEFA Champions League four times. With his country, he won the 2021 Copa Am\u00e9rica and the 2022 FIFA World Cup. A prolific goalscorer and creative playmaker, Messi holds the records for most goals in La Liga (474), most hat-tricks in La Liga (36) and the UEFA Champions League (eight), and most assists in La Liga (192) and the Copa Am\u00e9rica (17). He also has the most international goals by a South American male (102). Messi has scored over 800 senior career goals for club and country, and has the most goals by a player for a single club (672).",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_207": {
+        "imagename": "v1_207.jpg",
+        "question": "Can you give a short introduction to this person?",
+        "answer": "Alan Mathison Turing OBE FRS (/\u02c8tj\u028a\u0259r\u026a\u014b/; 23 June 1912 \u2013 7 June 1954) was an English mathematician, computer scientist, logician, cryptanalyst, philosopher, and theoretical biologist. Turing was highly influential in the development of theoretical computer science, providing a formalisation of the concepts of algorithm and computation with the Turing machine, which can be considered a model of a general-purpose computer. He is widely considered to be the father of theoretical computer science and artificial intelligence.",
+        "capability": [
+            "rec",
+            "know",
+            "gen"
+        ],
+        "imagesource": "web"
+    },
+    "v1_208": {
+        "imagename": "v1_208.png",
+        "question": "The graph below shows the long-term international migration, UK, 1999-2008.\n\nSummarize the information by selecting and reporting the main features, and make comparisons where relevant.\n\nYou should write at least 150 words.",
+        "answer": "The chart gives information about UK immigration, emigration and net migration between 1999 and 2008.\n\nBoth immigration and emigration rates rose over the period shown, but the figures for immigration were significantly higher. Net migration peaked in 2004 and 2007.\n\nIn 1999, over 450,000 people came to live in the UK, while the number of people who emigrated stood at just under 300,000. The figure for net migration was around 160,000, and it remained at a similar level until 2003. From 1999 to 2004, the immigration rate rose by nearly 150,000 people, but there was a much smaller rise in emigration. Net migration peaked at almost 250,000 people in 2004.\n\nAfter 2004, the rate of immigration remained high, but the number of people emigrating fluctuated. Emigration fell suddenly in 2007, before peaking at about 420,000 people in 2008. As a result, the net migration figure rose to around 240,000 in 2007, but fell back to around 160,000 in 2008.",
+        "capability": [
+            "rec",
+            "ocr",
+            "gen",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_209": {
+        "imagename": "v1_209.png",
+        "question": "The graph and table below give information about water use worldwide and water consumption in two different countries.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.\n\nYou should write at least 150 words.",
+        "answer": "The charts compare the amount of water used for agriculture, industry and homes around the world, and water use in Brazil and the Democratic Republic of Congo.\n\nIt is clear that global water needs rose significantly between 1900 and 2000, and that agriculture accounted for the largest proportion of water used. We can also see that water consumption was considerably higher in Brazil than in the Congo.\n\nIn 1900, around 500km\u00b3 of water was used by the agriculture sector worldwide. The figures for industrial and domestic water consumption stood at around one fifth of that amount. By 2000, global water use for agriculture had increased to around 3000km\u00b3, industrial water use had risen to just under half that amount, and domestic consumption had reached approximately 500km\u00b3.\n\nIn the year 2000, the populations of Brazil and the Congo were 176 million and 5.2 million respectively. Water consumption per person in Brazil, at 359m\u00b3, was much higher than that in the Congo, at only 8m\u00b3, and this could be explained by the fact that Brazil had 265 times more irrigated land.",
+        "capability": [
+            "rec",
+            "ocr",
+            "gen",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_210": {
+        "imagename": "v1_210.png",
+        "question": "The charts below give information about USA marriage and divorce rates between 1970 and 2000, and the marital status of adult Americans in two of the years.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.\n\nYou should write at least 150 words.",
+        "answer": "The first bar chart shows changes in the number of marriages and divorces in the USA, and the second chart shows figures for the marital status of American adults in 1970 and 2000.\n\nIt is clear that there was a fall in the number of marriages in the USA between 1970 and 2000. The majority of adult Americans were married in both years, but the proportion of single adults was higher in 2000.\n\nIn 1970, there were 2.5 million marriages in the USA and 1 million divorces. The marriage rate remained stable in 1980, but fell to 2 million by the year 2000. In contrast, the divorce rate peaked in 1980, at nearly 1.5 million divorces, before falling back to 1 million at the end\nof the period.\n\nAround 70% of American adults were married in 1970, but this figure dropped to just under 60% by 2000. At the same time, the proportion of unmarried people and divorcees rose by about 10% in total. The proportion of widowed Americans was slightly lower in 2000.",
+        "capability": [
+            "rec",
+            "ocr",
+            "gen",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_211": {
+        "imagename": "v1_211.png",
+        "question": "The chart below shows the amount spent on six consumer goods in four European countries.\n\nWrite a report for a university lecturer describing the information shown below.\n\nYou should write at least 150 words.",
+        "answer": "The bar chart compares consumer spending on six different items in Germany, Italy, France and Britain.\n\nIt is clear that British people spent significantly more money than people in the other three countries on all six goods. Of the six items, consumers spent the most money on photographic film.\n\nPeople in Britain spent just over \u00a3170,000 on photographic film, which is the highest figure shown on the chart. By contrast, Germans were the lowest overall spenders, with roughly the same figures (just under \u00a3150,000) for each of the six products. \n\nThe figures for spending on toys were the same in both France and Italy, at nearly \u00a3160,000. However, while French people spent more than Italians on photographic film and CDs, Italians paid out more for personal stereos, tennis racquets and perfumes. The amount spent by French people on tennis racquets, around \u00a3145,000, is the lowest figure shown on the chart.",
+        "capability": [
+            "rec",
+            "ocr",
+            "gen",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_212": {
+        "imagename": "v1_212.png",
+        "question": "The table below gives information about the underground railway systems in six cities.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.\n\nYou should write at least 150 words.",
+        "answer": "The table shows data about the underground rail networks in six major cities.\n\nThe table compares the six networks in terms of their age, size and the number of people who use them each year. It is clear that the three oldest underground systems are larger and serve significantly more passengers than the newer systems.\n\nThe London underground is the oldest system, having opened in 1863. It is also the largest system, with 394 kilometres of route. The second largest system, in Paris, is only about half the size of the London underground, with 199 kilometres of route. However, it serves more people per year. While only third in terms of size, the Tokyo system is easily the most used, with 1927 million passengers per year.\n\nOf the three newer networks, the Washington DC underground is the most extensive, with 126 kilometres of route, compared to only 11 kilometres and 28 kilometres for the Kyoto and Los Angeles systems. The Los Angeles network is the newest, having opened in 2001, while the Kyoto network is the smallest and serves only 45 million passengers per year.",
+        "capability": [
+            "ocr",
+            "gen",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_213": {
+        "imagename": "v1_213.jpg",
+        "question": "The table below gives information on consumer spending on different items in five different countries in 2002.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.\n\nYou should write at least 150 words.",
+        "answer": "The table shows percentages of consumer expenditure for three categories of products and services in five countries in 2002.\n\nIt is clear that the largest proportion of consumer spending in each country went on food, drinks and tobacco. On the other hand, the leisure/education category has the lowest percentages in the table.\n\nOut of the five countries, consumer spending on food, drinks and tobacco was noticeably higher in Turkey, at 32.14%, and Ireland, at nearly 29%. The proportion of spending on leisure and education was also highest in Turkey, at 4.35%, while expenditure on clothing and footwear was significantly higher in Italy, at 9%, than in any of the other countries.\n\nIt can be seen that Sweden had the lowest percentages of national consumer expenditure for food/drinks/tobacco and for clothing/footwear, at nearly 16% and just over 5% respectively. Spain had slightly higher figures for these categories, but the lowest figure for leisure/education, at only 1.98%.",
+        "capability": [
+            "ocr",
+            "gen",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_214": {
+        "imagename": "v1_214.png",
+        "question": "The pie charts below show units of electricity production by fuel source in Australia and France in 1980 and 2000.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.\n\nYou should write at least 150 words.",
+        "answer": "The pie charts compare the amount of electricity produced using five different sources of fuel in two countries over two separate years.\n\nTotal electricity production increased dramatically from 1980 to 2000 in both Australia and France. While the totals for both countries were similar, there were big differences in the fuel sources used.\n\nCoal was used to produce 50 of the total 100 units of electricity in Australia in 1980, rising to 130 out of 170 units in 2000. By contrast, nuclear power became the most important fuel source in France in 2000, producing almost 75% of the country\u2019s electricity.\n\nAustralia depended on hydro power for just under 25% of its electricity in both years, but the amount of electricity produced using this type of power fell from 5 to only 2 units in France. Oil, on the other hand, remained a relatively important fuel source in France, but its use declined in Australia. Both countries relied on natural gas for electricity production significantly more in 1980 than in 2000.",
+        "capability": [
+            "rec",
+            "ocr",
+            "gen",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_215": {
+        "imagename": "v1_215.jpg",
+        "question": "Chorleywood is a village near London whose population has increased steadily since the middle of the nineteenth century. The map below shows the development of the village.\n\nWrite a report for a university lecturer describing the development of the village. \n\nYou should write at least 150 words.",
+        "answer": "The map shows the growth of a village called Chorleywood between 1868 and 1994.\n\nIt is clear that the village grew as the transport infrastructure was improved. Four periods of development are shown on the map, and each of the populated areas is near to the main roads, the railway or the motorway.\n\nFrom 1868 to 1883, Chorleywood covered a small area next to one of the main roads. Chorleywood Park and Golf Course is now located next to this original village area. The village grew along the main road to the south between 1883 and 1922, and in 1909 a railway line was built crossing this area from west to east. Chorleywood station is in this part of the village.\n\nThe expansion of Chorleywood continued to the east and west alongside the railway line until 1970. At that time, a motorway was built to the east of the village, and from 1970 to 1994, further development of the village took place around motorway intersections with the railway and one of the main roads.",
+        "capability": [
+            "rec",
+            "ocr",
+            "gen",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_216": {
+        "imagename": "v1_216.png",
+        "question": "The map below is of the town of Garlsdon. A new supermarket (S) is planned for the town. The map shows two possible sites for the supermarket.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant. \n\nYou should write at least 150 words.",
+        "answer": "The map shows two potential locations (S1 and S2) for a new supermarket in a town called Garlsdon.\n\nThe main difference between the two sites is that S1 is outside the town, whereas S2 is in the town centre. The sites can also be compared in terms of access by road or rail, and their positions relative to three smaller towns.\n\nLooking at the information in more detail, S1 is in the countryside to the north west of Garlsdon, but it is close to the residential area of the town. S2 is also close to the housing area, which surrounds the town centre.\n\nThere are main roads from Hindon, Bransdon and Cransdon to Garlsdon town centre, but this is a no traffic zone, so there would be no access to S2 by car. By contrast, S1 lies on the main road to Hindon, but it would be more difficult to reach from Bransdon and Cransdon. Both supermarket sites are close to the railway that runs through Garlsdon from Hindon to Cransdon.",
+        "capability": [
+            "rec",
+            "ocr",
+            "gen",
+            "spat"
+        ],
+        "imagesource": "web"
+    },
+    "v1_217": {
+        "imagename": "v1_217.png",
+        "question": "The diagram below shows how the Australian Bureau of Meteorology collects up-to-the-minute information on the weather in order to produce reliable forecasts.\n\nWrite a report for a university lecturer describing the information shown below. \n\nYou should write at least 150 words.",
+        "answer": "The figure illustrates the process used by the Australian Bureau of Meteorology to forecast the weather.\n\nThere are four stages in the process, beginning with the collection of information about the weather. This information is then analysed, prepared for presentation, and finally broadcast to the public.\n\nLooking at the first and second stages of the process, there are three ways of collecting weather data and three ways of analysing it. Firstly, incoming information can be received by satellite and presented for analysis as a satellite photo. The same data can also be passed to a radar station and presented on a radar screen or synoptic chart. Secondly, incoming information may be collected directly by radar and analysed on a radar screen or synoptic chart. Finally, drifting buoys also receive data which can be shown on a synoptic chart.\n\nAt the third stage of the process, the weather broadcast is prepared on computers. Finally, it is delivered to the public on television, on the radio, or as a recorded telephone announcement.",
+        "capability": [
+            "rec",
+            "ocr",
+            "gen",
+            "spat"
+        ],
+        "imagesource": "web"
+    }
+}

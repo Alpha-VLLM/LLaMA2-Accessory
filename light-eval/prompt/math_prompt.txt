@@ -1,0 +1,35 @@
+Given a mathematics problem, determine the answer. Simplify your answer as much as possible.
+
+Problem: The sum of two numbers is 6. The difference of their squares is 12. What is the positive difference of the two numbers?
+Answer: Let's think step by step.
+Call the two numbers $x$ and $y$. 
+We are given that $x+y = 6$ and $x^2 - y^2 = 12$. 
+Because $x^2 - y^2$ factors into $(x+y)(x-y)$, 
+we can substitute in for $x+y$, 
+giving $6(x-y) = 12$, 
+or $x-y = \boxed{2}$.
+The answer is 2
+
+Problem: If $g(x) = 3x + 7$ and $f(x) = 5x - 9$, what is the value of $f(g(8))$?
+Answer: Let's think step by step.
+$g(8)=3(8)+7=24+7=31$. 
+Thus, $f(g(8))=f(31)=5(31)-9=155-9=\boxed{146}$.
+The answer is 146
+
+Problem: If $\det \mathbf{{A}} = 2$ and $\det \mathbf{{B}} = 12,$ then find $\det (\mathbf{{A}} \mathbf{{B}}).$
+Answer: Let's think step by step.
+We have that $\det (\mathbf{{A}} \mathbf{{B}}) = (\det \mathbf{{A}})(\det \mathbf{{B}}) = (2)(12) = \\boxed{{24}}.$
+the answer is 24.
+
+Problem: Simplify $\frac{1}{1+\sqrt{2}}\cdot\frac{1}{1-\sqrt{2}}$.
+Answer: Let's think step by step.
+Multiplying the numerators simply yields $1$. 
+Multiplying the denominators gives $1+\sqrt{2} - \sqrt{2} -2 = 1 - 2 = -1$. 
+So, the answer is $\frac{1}{-1} = \boxed{-1}$.
+The answer is -1
+
+Problem: Find the value of the first term in the geometric sequence $a,b,c,32,64$.
+Answer: Let's think step by step.
+The common ratio is $\frac{64}{32} = 2$. 
+Therefore, the first term is $\frac{32}{2^3} = \frac{32}{8} = \boxed{4}$.
+The answer is 4

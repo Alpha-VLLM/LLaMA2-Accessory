@@ -101,6 +101,7 @@ class MetaModel(nn.Module):
         max_gen_len: int,
         temperature: float = 0.8,
         top_p: float = 0.95,
+        return_logits: bool = False
     ) -> List[str]:
         bsz = len(prompts)
         params = self.llma.params
@@ -121,6 +122,10 @@ class MetaModel(nn.Module):
             input_text_mask[k, : len(t)] = True
         start_pos = min_prompt_size
         prev_pos = 0
+
+        if return_logits:
+            return self.llma.forward_inference(tokens[:, :start_pos], prev_pos, images if prev_pos == 0 else None)
+    
         for cur_pos in range(start_pos, total_len):
             logits = self.llma.forward_inference(tokens[:, prev_pos:cur_pos], prev_pos, images if prev_pos == 0 else None)
             if temperature > 0:
