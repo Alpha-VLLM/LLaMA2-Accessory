@@ -15,7 +15,7 @@ We present $\color{goldenrod}{SPHINX}$, a versatile multi-modal large language m
 
 - **Embedding Mix.** We capture robust visual representations by fusing distinct visual architectures, pre-training, and granularity.
 
-- **Domain Mix.** For data from real-world and synthetic domains, we mix the weights of two independently trained specialized models.
+- **Domain Mix.** For data from real-world and synthetic domains, we mix the weights of two domain-specific models for complementarity.
 
 <p align="center">                                                                                                                                          <img src="figs/pipeline.png"/ width="90%"> <br>
 </p>
