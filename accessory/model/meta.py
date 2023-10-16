@@ -93,6 +93,7 @@ class MetaModel(nn.Module):
         return c_loss
 
 
+    @ torch.inference_mode()
     def generate(
         self,
         prompts: List[str],
@@ -151,10 +152,11 @@ class MetaModel(nn.Module):
         return decoded
 
 
+    @ torch.inference_mode()
     def stream_generate(
         self,
         prompt: str,
-        images,
+        images: torch.Tensor,
         max_gen_len: int,
         temperature: float = 0.8,
         top_p: float = 0.95,
@@ -175,7 +177,7 @@ class MetaModel(nn.Module):
         tokens[:len(prompt_tokens)] = torch.tensor(prompt_tokens).long()
         start_pos = prompt_size
         prev_pos = 0
-        generate_util = start_pos
+        generate_until = start_pos
         for cur_pos in range(start_pos, total_len):
             logits = self.llma.forward_inference(tokens[None, prev_pos:cur_pos], prev_pos, images if prev_pos == 0 else None)
             if temperature > 0:
@@ -190,10 +192,10 @@ class MetaModel(nn.Module):
 
             tokens[cur_pos] = next_token
             prev_pos = cur_pos
-            generate_util = cur_pos + 1
-            yield {"text": self.tokenizer.decode(tokens[start_pos:generate_util].tolist()), "end_of_content": False}
+            generate_until = cur_pos + 1
+            yield {"text": self.tokenizer.decode(tokens[start_pos:generate_until].tolist()), "end_of_content": False}
 
-        yield {"text": self.tokenizer.decode(tokens[start_pos:generate_util].tolist()), "end_of_content": True}
+        yield {"text": self.tokenizer.decode(tokens[start_pos:generate_until].tolist()), "end_of_content": True}
 
 
     def sample_top_p(self, probs, p):

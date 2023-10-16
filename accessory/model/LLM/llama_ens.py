@@ -275,21 +275,17 @@ class Transformer(nn.Module):
         self.image_words = 0
         self.cache_image_words = 0 # for inference
         if with_visual:
-            print("build llama model with qformerv2")
-            self.qformer = Blip2Model.from_pretrained("Salesforce/blip2-opt-2.7b", torch_dtype=self.norm.weight.dtype)
-
-            self.qformer.language_projection = None
-            self.qformer.language_model = None
-
-            self.qformer_proj = nn.Sequential(
-                nn.Linear(768, params.dim),
-                nn.LayerNorm(params.dim)
-            )
-
-            print("build llama model with clip")
 
             default_dtype = torch.get_default_dtype()
             torch.set_default_dtype(torch.float32)
+
+            print("build llama model with qformerv2")
+            self.qformer = Blip2Model.from_pretrained("Salesforce/blip2-opt-2.7b", torch_dtype=self.norm.weight.dtype)
+            self.qformer.language_projection = None
+            self.qformer.language_model = None
+            self.qformer.to(self.norm.weight)
+
+            print("build llama model with clip")
             self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
             self.clip.transformer = None
             self.clip.to(self.norm.weight)
@@ -311,6 +307,11 @@ class Transformer(nn.Module):
                 self.dinov2_vitg14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14")
             self.dinov2_vitg14.to(self.norm.weight)
             torch.set_default_dtype(default_dtype)
+
+            self.qformer_proj = nn.Sequential(
+                nn.Linear(768, params.dim),
+                nn.LayerNorm(params.dim)
+            )
 
             self.visual_proj = nn.Sequential(
                 nn.Linear(3072 + 1024 + 1536, params.dim),
@@ -364,7 +365,6 @@ class Transformer(nn.Module):
         # [B, 32, 768]
         self.clip.eval()
         self.openclip_convnext_xxl.eval()
-        image = image.half()
         image_bs = image.size(0)
         mp_world_size = fs_init.get_model_parallel_world_size()
         mp_rank = fs_init.get_model_parallel_rank()
@@ -384,8 +384,8 @@ class Transformer(nn.Module):
 
             local_clip_image_feats = self.clip_encode_image(local_image)
             local_convnext_image_feats = self.openclip_convnext_xxl(
-                F.interpolate(local_image, size=(256, 256))
-            )
+                F.interpolate(local_image.half(), size=(256, 256))
+            ).to(local_image)
             assert local_convnext_image_feats.size()[1:] == (3072, 8, 8)
             local_convnext_image_feats = local_convnext_image_feats.repeat_interleave(
                 2, dim=-1
