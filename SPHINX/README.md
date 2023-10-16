@@ -1,8 +1,11 @@
-# SPHINX: A Mixer of Tasks, Domains, and Embeddings
+# 🔥 SPHINX: A Mixer of Tasks, Domains, and Embeddings
 
 Official implementation of ['SPHINX: A Mixer of Tasks, Domains, and Embeddings Advances Multi-modal Large Language Models']().
 
+Try out our web demo 🤗 here: [SPHINX]() 🚀
+
 ## News
+* **[2023-10-16]** We release the demo, code, and model of SPHINX 🎉.
 
 ## Introduction
 
@@ -14,7 +17,7 @@ We present $\color{goldenrod}{SPHINX}$, a versatile multi-modal large language m
 
 - **Domain Mix.** For data from real-world and synthetic domains, we mix the weights of independently trained specialized models.
 
-Via our proposed three-fold mixer, $\color{goldenrod}{SPHINX}$ exhibits superior multi-modal understanding and reasoning powers.
-
 <p align="center">                                                                                                                                          <img src="figs/pipeline.png"/ width="90%"> <br>
 </p>
+
+Via our proposed three-fold mixer, $\color{goldenrod}{SPHINX}$ exhibits superior multi-modal understanding and reasoning powers.
