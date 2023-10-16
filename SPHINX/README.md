@@ -8,10 +8,13 @@ Official implementation of ['SPHINX: A Mixer of Tasks, Domains, and Embeddings A
 
 We present $\color{goldenrod}{SPHINX}$, a versatile multi-modal large language model (MLLM) with a mixer of training tasks, data domains, and visual embeddings. 
 
-- **Tasks Mix.** For all-purpose capabilities, we mix a variety of vision-language tasks for joint training, including VQA, REC, REG, OCR, etc. 
+- **Tasks Mix.** For all-purpose capabilities, we mix a variety of vision-language tasks for joint training: VQA, REC, REG, OCR, etc. 
 
-- **Domain Mix.** For data from different domain sources (real-world and synthetic), we mix the weights of independently trained specialized models.
+- **Domain Mix.** For data from real-world and synthetic domains, we mix the weights of independently trained specialized models.
 
-- **Embedding Mix.** We capture robust visual representations by distinct visual architectures, pre-training paradigms, and information granularity.
+- **Embedding Mix.** We capture robust visual representations by distinct visual architectures, pre-training, and granularity.
 
 Via our proposed three-fold mixer, $\color{goldenrod}{SPHINX}$ exhibits superior multi-modal understanding and reasoning powers.
+
+<p align="center">                                                                                                                                          <img src="figs/pipeline.png"/ width="90%"> <br>
+</p>
