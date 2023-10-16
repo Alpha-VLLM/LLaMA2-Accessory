@@ -19,7 +19,6 @@ from util.tensor_parallel import load_tensor_parallel_model_list
 from util.tensor_type import default_tensor_type
 from model.meta import MetaModel
 from data.conversation.lib import conv_templates, SeparatorStyle
-from util.quant import quantize
 from PIL import Image
 from data.transform import get_transform
 
@@ -70,6 +69,7 @@ def model_worker(
     load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
     print("load result:\n", load_result)
     if args.quant:
+        from util.quant import quantize
         print("Quantizing model to 4bit!")
         from transformers.utils.quantization_config import BitsAndBytesConfig
         quantization_config = BitsAndBytesConfig.from_dict(
@@ -172,11 +172,11 @@ def gradio_worker(
         msg = ""
         return chatbot, msg
 
-    with gr.Blocks() as demo:
-        gr.Markdown("# LLaMA2-Accessory Chatbot Demo")
-        with gr.Row():
+    with gr.Blocks(css="#image_input {height: 100% !important}") as demo:
+        gr.Markdown("# SPHINX-MLLM Demo")
+        with gr.Row() as r:
             with gr.Column(scale=1):
-                img_path = gr.Image(label='Image Input', type='filepath')
+                img_path = gr.Image(label='Image Input', type='filepath', elem_id="image_input")
             with gr.Column(scale=2):
                 chatbot = gr.Chatbot()
                 msg = gr.Textbox()
