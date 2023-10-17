@@ -1,5 +1,5 @@
 # Installation Guide
-**1. Basic setup**
+**1. Basic Setup**
 
 ```bash
 # Create a new conda environment named 'accessory' with Python 3.10
