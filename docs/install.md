@@ -23,4 +23,4 @@ pip install flash-attn --no-build-isolation
 
 LLaMA2-Accessory also utilizes [apex](https://github.com/NVIDIA/apex), which needs to be compiled from source. Please follow the [official instructions](https://github.com/NVIDIA/apex#from-source) for installation.
 
-**We strongly advise installing this package for optimal performance*. However, if you have difficulty installing this package, LLaMA2-Accessory can operate smoothly without it.
+*We strongly advise installing this package for optimal performance*. However, if you have difficulty installing this package, LLaMA2-Accessory can operate smoothly without it.
