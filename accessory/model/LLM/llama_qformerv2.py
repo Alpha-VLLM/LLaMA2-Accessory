@@ -17,7 +17,7 @@ from fairscale.nn.model_parallel.layers import (
     ColumnParallelLinear
 )
 
-from apex.normalization import FusedRMSNorm as RMSNorm
+from ..components import RMSNorm
 from transformers import Blip2Processor, Blip2Model
 
 import configs.global_configs

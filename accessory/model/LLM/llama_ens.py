@@ -18,7 +18,7 @@ from fairscale.nn.model_parallel.layers import (
     ColumnParallelLinear
 )
 
-from apex.normalization import FusedRMSNorm as RMSNorm
+from ..components import RMSNorm
 from transformers import Blip2Processor, Blip2Model
 import open_clip
 
@@ -29,7 +29,7 @@ if configs.global_configs.USE_FLASH_ATTENTION:
 
 default_linear_init = functools.partial(nn.init.kaiming_uniform_, a=math.sqrt(5))
 
-from .llama import precompute_freqs_cis, reshape_for_broadcast, apply_rotary_emb, repeat_kv
+from .llama import precompute_freqs_cis, apply_rotary_emb, repeat_kv
 
 
 @dataclass

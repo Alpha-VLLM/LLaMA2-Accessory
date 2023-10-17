@@ -20,7 +20,7 @@ from fairscale.nn.model_parallel.layers import (
 
 from ..peft import LoraColumnParallelLinear, LoraRowParallelLinear
 
-from apex.normalization import FusedRMSNorm as RMSNorm
+from ..components import RMSNorm
 from transformers import Blip2Processor, Blip2Model
 import open_clip
 

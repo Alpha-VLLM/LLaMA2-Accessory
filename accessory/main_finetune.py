@@ -1,6 +1,8 @@
 import argparse
 import datetime
 import json
+import warnings
+
 import numpy as np
 import os
 import time
@@ -28,7 +30,11 @@ from torch.distributed.fsdp.wrap import (
 
 from fairscale.nn.model_parallel import initialize as fs_init
 
-from apex.optimizers import FusedAdam
+try:
+    from apex.optimizers import FusedAdam as AdamW
+except ModuleNotFoundError:
+    warnings.warn("cannot import FusedAdam from apex, use torch AdamW instead")
+    from torch.optim import AdamW
 
 import util.misc as misc
 from util.misc import NativeScalerWithGradNormCount as NativeScaler

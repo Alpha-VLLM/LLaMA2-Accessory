@@ -23,6 +23,8 @@ from PIL import Image
 from data.transform import get_transform
 
 
+class Ready: pass
+
 def model_worker(
     rank: int, args: argparse.Namespace, barrier: mp.Barrier,
     request_queue: mp.Queue, response_queue: Optional[mp.Queue] = None,
@@ -88,6 +90,8 @@ def model_worker(
     barrier.wait()
 
     while True:
+        if response_queue is not None:
+            response_queue.put(Ready())
         img_path, chatbot, max_gen_len, temperature, top_p, img_transform = request_queue.get()
         if img_path is not None:
             image = Image.open(img_path).convert('RGB')
@@ -153,6 +157,10 @@ def gradio_worker(
         return "", chatbot + [[msg, None]]
 
     def stream_model_output(img_path, chatbot, max_gen_len, gen_t, top_p, img_transform):
+        while True:
+            content_piece = response_queue.get()
+            if isinstance(content_piece, Ready):
+                break
         for queue in request_queues:
             queue.put((img_path, chatbot, max_gen_len, gen_t, top_p, img_transform))
         while True:

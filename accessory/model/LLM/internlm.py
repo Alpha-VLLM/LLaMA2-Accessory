@@ -18,7 +18,7 @@ from fairscale.nn.model_parallel.layers import (
     ColumnParallelLinear
 )
 
-from apex.normalization import FusedRMSNorm as RMSNorm
+from ..components import RMSNorm
 
 import configs.global_configs
 if configs.global_configs.USE_FLASH_ATTENTION:

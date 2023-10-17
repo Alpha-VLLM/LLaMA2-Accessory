@@ -17,7 +17,7 @@ from fairscale.nn.model_parallel.layers import (
     ColumnParallelLinear
 )
 
-from apex.normalization import FusedRMSNorm as RMSNorm
+from ..components import RMSNorm
 import open_clip
 
 from util.tensor_type import default_tensor_type

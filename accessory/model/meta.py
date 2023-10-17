@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import json
-from typing import List
+from typing import List, Optional
 
 from fairscale.nn.model_parallel import initialize as fs_init
 
@@ -113,7 +113,11 @@ class MetaModel(nn.Module):
         min_prompt_size = min([len(t) for t in prompt_tokens])
         max_prompt_size = max([len(t) for t in prompt_tokens])
 
-        total_len = min(params.max_seq_len, max_gen_len + max_prompt_size)
+        max_seq_len = params.max_seq_len
+        if images is not None:
+            max_seq_len -= self.llma.image_words
+
+        total_len = min(max_seq_len, max_gen_len + max_prompt_size)
 
         tokens = torch.full((bsz, total_len), 0).cuda().long()
         input_text_mask = torch.full((bsz, total_len), False).cuda()
@@ -161,7 +165,7 @@ class MetaModel(nn.Module):
     def stream_generate(
         self,
         prompt: str,
-        images: torch.Tensor,
+        images: Optional[torch.Tensor],
         max_gen_len: int,
         temperature: float = 0.8,
         top_p: float = 0.95,
@@ -170,12 +174,16 @@ class MetaModel(nn.Module):
 
         prompt_tokens = self.tokenizer.encode(prompt, bos=True, eos=False)
         # truncate from the left. leave some space for generation.
-        max_prompt_size = params.max_seq_len - max_gen_len
+        max_seq_len = params.max_seq_len
+        if images is not None:
+            max_seq_len -= self.llma.image_words
+
+        max_prompt_size = max_seq_len - max_gen_len
         prompt_tokens = prompt_tokens[-max_prompt_size:]
 
         prompt_size = len(prompt_tokens)
 
-        total_len = min(params.max_seq_len, max_gen_len + prompt_size)
+        total_len = min(max_seq_len, max_gen_len + prompt_size)
 
         tokens = torch.full([total_len], 0).cuda().long()
 

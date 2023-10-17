@@ -18,7 +18,7 @@ from fairscale.nn.model_parallel.layers import (
 )
 from ..peft import LoraColumnParallelLinear, LoraRowParallelLinear
 
-from apex.normalization import FusedRMSNorm as RMSNorm
+from ..components import RMSNorm
 import open_clip
 
 import configs.global_configs

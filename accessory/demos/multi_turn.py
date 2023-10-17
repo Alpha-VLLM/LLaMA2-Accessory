@@ -19,8 +19,9 @@ from util.tensor_parallel import load_tensor_parallel_model_list
 from util.tensor_type import default_tensor_type
 from model.meta import MetaModel
 from data.conversation.lib import conv_templates, SeparatorStyle
-from util.quant import quantize
 
+
+class Ready: pass
 
 def model_worker(
     rank: int, args: argparse.Namespace, barrier: mp.Barrier,
@@ -67,6 +68,7 @@ def model_worker(
     print("Loading pretrained weights ...")
     load_tensor_parallel_model_list(model, args.pretrained_path)
     if args.quant:
+        from util.quant import quantize
         print("Quantizing model to 4bit!")
         from transformers.utils.quantization_config import BitsAndBytesConfig
         quantization_config = BitsAndBytesConfig.from_dict(
@@ -85,6 +87,8 @@ def model_worker(
     barrier.wait()
 
     while True:
+        if response_queue is not None:
+            response_queue.put(Ready())
         chatbot, max_gen_len, temperature, top_p = request_queue.get()
         conv = conv_templates["v1"].copy()
         for user, bot in chatbot:
@@ -143,6 +147,10 @@ def gradio_worker(
         return "", chatbot + [[msg, None]]
 
     def stream_model_output(chatbot, max_gen_len, gen_t, top_p):
+        while True:
+            content_piece = response_queue.get()
+            if isinstance(content_piece, Ready):
+                break
         for queue in request_queues:
             queue.put((chatbot, max_gen_len, gen_t, top_p))
         while True:

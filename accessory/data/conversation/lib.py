@@ -28,7 +28,7 @@ class Conversation:
         if self.sep_style == SeparatorStyle.SINGLE:
             ret = self.system + '\n\n' + self.sep
             for role, message in self.messages:
-                if message:
+                if message is not None:
                     if type(message) is tuple:
                         message, _, _ = message
                     ret += role + ": " + message + '\n' + self.sep

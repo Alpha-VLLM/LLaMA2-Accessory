@@ -1,1 +1,8 @@
-USE_FLASH_ATTENTION=True
+import warnings
+
+try:
+    from flash_attn import flash_attn_func
+    USE_FLASH_ATTENTION=True
+except ModuleNotFoundError:
+    warnings.warn("Cannot import flash_attn, switch to vanilla implementation. ")
+    USE_FLASH_ATTENTION=False
