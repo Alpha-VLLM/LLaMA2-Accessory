@@ -52,7 +52,7 @@
 * SPHINX: [demo](https://github.com/Alpha-VLLM/LLaMA2-Accessory/blob/main/SPHINX/README.md#demo)
 
 <img src="./docs/examples/finetune/mm/sphinx_1.png" width="80%" />
-<img src="./docs/examples/finetune/mm/sphinx_2.png" width="80%" />
+<img src="./docs/examples/finetune/mm/sphinx_4.png" width="80%" />
 <img src="./docs/examples/finetune/mm/sphinx_3.png" width="80%" />
 
 ## Core Contributors
