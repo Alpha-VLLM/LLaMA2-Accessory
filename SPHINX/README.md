@@ -20,7 +20,10 @@ We present $\color{goldenrod}{SPHINX}$, a versatile multi-modal large language m
 <p align="center">                                                                                                                                          <img src="figs/pipeline.png"/ width="90%"> <br>
 </p>
 
+## Demo
 Via our proposed three-fold mixer, $\color{goldenrod}{SPHINX}$ exhibits superior multi-modal understanding and reasoning powers.
+<p align="center">                                                                                                                                          <img src="figs/7.png"/ width="90%"> <br>
+</p>
 
 ## Inference
 This section provides a step-by-step guide for hosting a local SPHINX demo. If you're already familiar with the LLAMA2-Accessory toolkit, note that hosting a SPHINX demo follows the same pipeline as hosting demos for the other models supported by LLAMA2-Accessory.
@@ -50,8 +53,3 @@ Explanation of each argument:
 + `--tokenizer_path`: Path to the official LLaMA2 tokenizer. Note that the tokenizer file is the same for both LLaMA and LLaMA2. You may download it from [here](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/config/tokenizer.model).
 + `--llama_type`: The model architecture of SPHINX is defined in [accessory/model/LLM/llama_ens.py](../accessory/model/LLM/llama_ens.py),  and specifying `--llama_type=llama_ens ` tells the demo program to use this architecture.
 + `--pretrained_path`: The path to pre-trained checkpoint.
-
-
-
-
-
