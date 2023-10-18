@@ -28,9 +28,9 @@ Via our proposed three-fold mixer, $\color{goldenrod}{SPHINX}$ exhibits superior
 </p>
 <p align="center">                                                                                                                                          <img src="figs/3.png"/ width="70%"> <br>
 </p>
-<p align="center">                                                                                                                                          <img src="figs/4.png"/ width="70%"> <br>
+<p align="center">                                                                                                                                          <img src="figs/4.png"/ width="50%"> <br>
 </p>
-<p align="center">                                                                                                                                          <img src="figs/5.png"/ width="70%"> <br>
+<p align="center">                                                                                                                                          <img src="figs/5.png"/ width="60%"> <br>
 </p>
 
 ## Inference
