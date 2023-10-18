@@ -8,6 +8,7 @@
 │       └── InternLM
 └── finetune
     ├── mm
+    │   ├── sphinx-sft
     │   ├── alpacaLlava_llamaQformerv2
     │   ├── alpacaLlava_llamaQformerv2_13b
     │   ├── alpacaLlava_llamaQformerv2Peft_13b
