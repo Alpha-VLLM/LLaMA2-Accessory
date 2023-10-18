@@ -22,7 +22,15 @@ We present $\color{goldenrod}{SPHINX}$, a versatile multi-modal large language m
 
 ## Demo
 Via our proposed three-fold mixer, $\color{goldenrod}{SPHINX}$ exhibits superior multi-modal understanding and reasoning powers.
-<p align="center">                                                                                                                                          <img src="figs/7.png"/ width="70%"> <br>
+<p align="center">                                                                                                                                          <img src="figs/1.png"/ width="70%"> <br>
+</p>
+<p align="center">                                                                                                                                          <img src="figs/2.png"/ width="70%"> <br>
+</p>
+<p align="center">                                                                                                                                          <img src="figs/3.png"/ width="70%"> <br>
+</p>
+<p align="center">                                                                                                                                          <img src="figs/4.png"/ width="70%"> <br>
+</p>
+<p align="center">                                                                                                                                          <img src="figs/5.png"/ width="70%"> <br>
 </p>
 
 ## Inference
