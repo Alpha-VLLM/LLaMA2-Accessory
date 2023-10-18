@@ -8,6 +8,7 @@
 🚀**LLaMA2-Accessory** is an open-source toolkit for pre-training, fine-tuning and deployment of **Large Language Models (LLMs)** and **mutlimodal LLMs**. This repo is mainly inherited from [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter) with more advanced features.🧠
 
 ## News
+- **[2023.10.17]** We release the demo, code, and model of SPHINX!🔥🔥🔥
 - **[2023.09.15]** We now support Falcon 180B!🔥🔥🔥
 - **[2023.09.14]** [WeMix-LLaMA2-70B](https://github.com/Alpha-VLLM/WeMix-LLM) shows excellent performance on the [OpenCompass](https://opencompass.org.cn/leaderboard-llm) benchmark!🔥🔥🔥
 - **[2023.09.02]** We now support InternLM🔥🔥🔥
@@ -48,12 +49,11 @@
 * Instruction-tuned LLaMA2: [alpaca](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/alpaca.html) & [gorilla](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/gorilla.html).
 * Chatbot LLaMA2: [dialog_sharegpt](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/dialog_sharegpt.html) & [dialog_lima](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/dialog_lima.html) & [llama2-chat](https://alpha-vllm.github.io/demo_presentation/examples/finetune/sg/llama2-chat.html).
 * Multimodal LLaMA2: [in-context](https://alpha-vllm.github.io/demo_presentation/examples/finetune/mm/in-context.html) & [alpacaLlava_llamaQformerv2_13b](https://alpha-vllm.github.io/demo_presentation/examples/finetune/mm/alpacaLlava_llamaQformerv2_13b.html)
+* SPHINX: [demo](https://github.com/Alpha-VLLM/LLaMA2-Accessory/blob/main/SPHINX/README.md#demo)
 
-<img src="./docs/examples/finetune/mm/demo1.png" width="80%" />
-<img src="./docs/examples/finetune/mm/demo2.png" width="80%" />
-<img src="./docs/examples/finetune/mm/demo3.png" width="80%" />
-<img src="./docs/examples/finetune/mm/demo4.png" width="80%" />
-<img src="./docs/examples/finetune/mm/demo5.png" width="80%" />
+<img src="./docs/examples/finetune/mm/sphinx_1.png" width="80%" />
+<img src="./docs/examples/finetune/mm/sphinx_2.png" width="80%" />
+<img src="./docs/examples/finetune/mm/sphinx_3.png" width="80%" />
 
 ## Core Contributors
 
