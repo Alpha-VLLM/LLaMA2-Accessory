@@ -40,7 +40,7 @@ This section provides a step-by-step guide for hosting a local SPHINX demo. If y
 SPHINX is built upon LLaMA2-Accessory, please follow the instructions [here](https://llama2-accessory.readthedocs.io/en/latest/install.html) for environment setup.
 
 ### Weights
-We provide the beta-version checkpoints on [HuggingFace 🤗](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/sphinx-sft). Please download them to your own machine. The file structure should appear as follows:
+We provide the beta-version checkpoints on [HuggingFace🤗](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/sphinx-sft). Please download them to your own machine. The file structure should appear as follows:
 ```
 ckpt_path/
 ├── consolidated.00-of-02.model.pth
