@@ -17,3 +17,4 @@ Ninja
 bitsandbytes
 httpx[socks]
 einops
+regex

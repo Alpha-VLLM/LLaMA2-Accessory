@@ -55,7 +55,7 @@ def get_args_parser():
     # Model parameters
     parser.add_argument('--llama_type', default='llama', type=str, metavar='MODEL',
                         help='Name of model to train')
-    parser.add_argument('--llama_config', default=['params.json'], nargs="*",
+    parser.add_argument('--llama_config', default=[], nargs="*",
                         help='Path to llama model config')
     parser.add_argument('--tokenizer_path', type=str, default="../tokenizer.model",
                         help='path to tokenizer.model')
@@ -221,7 +221,7 @@ def main(args):
 
     # following timm: set wd as 0 for bias and norm layers
     param_groups = misc.add_weight_decay(model, args.weight_decay)
-    optimizer = FusedAdam(param_groups, lr=args.lr, betas=(0.9, 0.95))
+    optimizer = AdamW(param_groups, lr=args.lr, betas=(0.9, 0.95))
     print(optimizer)
     loss_scaler = NativeScaler(args)
 

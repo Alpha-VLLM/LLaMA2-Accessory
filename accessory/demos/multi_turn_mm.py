@@ -247,7 +247,7 @@ if __name__ == "__main__":
         help="LLaMA model type."
     )
     parser.add_argument(
-        "--llama_config", type=str, required=True, nargs="*",
+        "--llama_config", type=str, default=[], nargs="*",
         help="Path to the llama model config json."
     )
     parser.add_argument(

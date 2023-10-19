@@ -91,13 +91,13 @@ class FinetuneDataset(Dataset):
 
     def __getitem__(self, index):
         data_item: dict = self.ann[index]
-        image = data_item.pop("image", None)
+        image = data_item.get("image", None)
         if image is not None:
             image = Image.open(image).convert('RGB')
             # warnings.warn("image channel format: BGR")
             # image = Image.fromarray(cv2.imread(image))
             image = self.transform(image)
-        answer = data_item.pop("output")
+        answer = data_item["output"]
 
         input1 = format_prompt(data_item, data_item["sys_prompt"])
         input2 = input1 + answer
@@ -113,7 +113,7 @@ class FinetuneDataset(Dataset):
             input2 = torch.cat((input2, torch.zeros(padding, dtype=torch.int64) - 1))
         elif padding < 0:
             input2 = input2[:max_words]
-            print(f'Warning for truncation input!\nImage name: {data_item["image"]} question: {data_item["question"][:10]}')
+            warnings.warn(f'Warning for truncation input!\n{data_item}')
         labels = copy.deepcopy(input2)
         labels[:len(input1)] = -1
         input2_mask = input2.ge(0)
