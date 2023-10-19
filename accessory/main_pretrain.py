@@ -55,7 +55,7 @@ def get_args_parser():
     # Model parameters
     parser.add_argument('--llama_type', default='llama', type=str, metavar='MODEL',
                         help='Name of model to train')
-    parser.add_argument('--llama_config', default=['params.json'], nargs="+",
+    parser.add_argument('--llama_config', default=['params.json'], nargs="*",
                         help='Path to llama model config')
     parser.add_argument('--tokenizer_path', type=str, default="../tokenizer.model",
                         help='path to tokenizer.model')

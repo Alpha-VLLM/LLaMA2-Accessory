@@ -22,7 +22,7 @@ def get_args_parser():
     # Model parameters
     parser.add_argument('--llama_type', default='llama', type=str, metavar='MODEL',
                         help='type of llama')
-    parser.add_argument('--llama_config', default='/path/to/params.json', type=str, nargs="+",
+    parser.add_argument('--llama_config', default='/path/to/params.json', type=str, nargs="*",
                         help='Path to llama model config')
     parser.add_argument('--tokenizer_path', type=str, default="../tokenizer.model",
                         help='path to tokenizer.model')
