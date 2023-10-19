@@ -4,7 +4,7 @@ import torch.nn as nn
 
 try:
     from apex.normalization import FusedRMSNorm as RMSNorm
-except ModuleNotFoundError:
+except ImportError:
     warnings.warn("Cannot import apex RMSNorm, switch to vanilla implementation")
 
     class RMSNorm(torch.nn.Module):

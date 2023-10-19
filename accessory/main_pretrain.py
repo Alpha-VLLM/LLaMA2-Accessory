@@ -32,7 +32,7 @@ from fairscale.nn.model_parallel import initialize as fs_init
 
 try:
     from apex.optimizers import FusedAdam as AdamW
-except ModuleNotFoundError:
+except ImportError:
     warnings.warn("cannot import FusedAdam from apex, use torch AdamW instead")
     from torch.optim import AdamW
 
