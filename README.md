@@ -51,8 +51,9 @@
 * Multimodal LLaMA2: [in-context](https://alpha-vllm.github.io/demo_presentation/examples/finetune/mm/in-context.html) & [alpacaLlava_llamaQformerv2_13b](https://alpha-vllm.github.io/demo_presentation/examples/finetune/mm/alpacaLlava_llamaQformerv2_13b.html)
 * SPHINX: [demo](https://github.com/Alpha-VLLM/LLaMA2-Accessory/blob/main/SPHINX/README.md#demo)
 
+<img src="./docs/examples/finetune/mm/sphinx_box_1.png" width="100%" />
 <img src="./docs/examples/finetune/mm/sphinx_1.png" width="80%" />
-<img src="./docs/examples/finetune/mm/sphinx_4.png" width="80%" />
+<img src="./docs/examples/finetune/mm/sphinx_2.png" width="80%" />
 <img src="./docs/examples/finetune/mm/sphinx_3.png" width="80%" />
 
 ## Core Contributors
