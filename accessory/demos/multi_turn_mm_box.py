@@ -20,12 +20,11 @@ from util.tensor_parallel import load_tensor_parallel_model_list
 from util.tensor_type import default_tensor_type
 from model.meta import MetaModel
 from data.conversation.lib import conv_templates, SeparatorStyle
-from PIL import Image
-from PIL import ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 from data.transform import get_transform, PadToSquare
+from segment_anything import sam_model_registry, SamPredictor
 
-import re
-
+import regex as re
 
 class Ready: pass
 
@@ -96,9 +95,9 @@ def model_worker(
     while True:
         if response_queue is not None:
             response_queue.put(Ready())
-        img_path, chatbot, max_gen_len, temperature, top_p, img_transform = request_queue.get()
-        if img_path is not None:
-            image = Image.open(img_path).convert('RGB')
+        image, chatbot, max_gen_len, temperature, top_p, img_transform = request_queue.get()
+        if image is not None:
+            image = image.convert("RGB")
             image = get_transform(img_transform)(image).unsqueeze(0).cuda().to(target_dtype)
         else:
             image = None
@@ -153,12 +152,6 @@ def extract_and_color(input_string):
                Second element is a Markdown-formatted string with uniquely colored substrings.
     """
 
-    # Regular expression to match '<p>...</p>[...]' pattern
-    pattern = r'<p>(.*?)<\/p>\s*(\[[\d.,;\s]*\])'
-
-    # Find all matches
-    matches = re.findall(pattern, input_string)
-
     # Initialize result list
     result = []
 
@@ -171,10 +164,17 @@ def extract_and_color(input_string):
     # Counter for color index
     color_idx = 0
 
+    # Regular expression to match '<p>...</p>[...]' pattern
+    pattern = r'<p>(.*?)<\/p>\s*(\[[\d.,;\s]*\])'
+
+    # Find all matches
+    matches = list(re.finditer(pattern, markdown_str))
+    matches = sorted(matches, key=lambda x: x.start(), reverse=True)
+
     # Parse each match
     for match in matches:
         # Extract text and list as string
-        text, list_str = match
+        text, list_str = match.groups()
 
         # Convert the list string to an actual list of floats
         float_list = [float(x) for x in re.findall(r'\d+\.\d+', list_str)]
@@ -186,16 +186,48 @@ def extract_and_color(input_string):
         result.append((text, float_list, color))
 
         # Replace text in Markdown string with colored version
-        colored_text = f'<span style="color:{color}">{text}</span>'
-        markdown_str = markdown_str.replace(f'<p>{text}</p>', colored_text, 1)  # Replace only the first occurrence
+        # ||| as temporary mark, will be removed finally
+        colored_text = f'<span style="color:{color}">{text}|||{list_str}</span>'
+        markdown_str = markdown_str[:match.span()[0]] + colored_text + markdown_str[match.span()[1]:]
 
         # Move to next color
         color_idx = (color_idx + 1) % len(colors)  # Cycle through colors
 
+    # Regular expression to match '[...]' pattern with no preceding </p>
+    pattern2 = r'(?<!\|\|\|)(\[[\d.,;\s]*\])'
+    matches2 = list(re.finditer(pattern2, markdown_str))
+    matches2 = sorted(matches2, key = lambda x: x.start(), reverse=True)
+    # Parse each match
+    for match in matches2:
+        # Extract text and list as string
+        list_str = match.groups()[0]
+
+        # Convert the list string to an actual list of floats
+        float_list = [float(x) for x in re.findall(r'\d+\.\d+', list_str)]
+
+        # Assign color
+        color = colors[color_idx]
+
+        # Append to result list
+        result.append(("", float_list, color))
+
+        # Replace text in Markdown string with colored version
+        colored_text = f'<span style="color:{color}">{list_str}</span>'
+        markdown_str = markdown_str[:match.span()[0]] + colored_text + markdown_str[match.span()[1]:]
+
+    markdown_str = markdown_str.replace("|||[", "[")
+
     return result, markdown_str
 
-def draw_box_on_image(img_path, l_name_box_color):
-    img = Image.open(img_path).convert("RGB")
+def show_mask(img: Image, mask: torch.Tensor, color):
+    alpha_value = int(0.5 * 255)
+    alpha_mask = (mask * alpha_value).byte()
+    mask_img = Image.new("RGB", img.size, color)
+
+    blended_img = Image.composite(mask_img, img, Image.fromarray(alpha_mask.cpu().numpy(), "L"))
+    return blended_img
+
+def draw_box_mask_on_image(img: Image, l_name_box_color, predictor):
     max_edge = max((img.width, img.height))
 
     if img.width < img.height:
@@ -205,7 +237,10 @@ def draw_box_on_image(img_path, l_name_box_color):
         x_origin = 0
         y_origin = (img.width - img.height) // 2
 
-    draw = ImageDraw.Draw(img)
+    img_box = img.copy()
+    draw = ImageDraw.Draw(img_box)
+    boxes = []
+    colors = []
     for name, points_in_square, color in l_name_box_color:
         for per_box_start in range(0, len(points_in_square), 4):
             x1, y1, x2, y2 = points_in_square[per_box_start:per_box_start+4]
@@ -215,9 +250,26 @@ def draw_box_on_image(img_path, l_name_box_color):
             y2 = y2 * max_edge - y_origin
 
             draw.rectangle((x1, y1, x2, y2), outline=color, width=2)
-            draw.text((x1 + 3, y1 + 3), name, font=ImageFont.truetype("../asset/arial.ttf", 15), fill=color)
+            boxes.append([int(x1), int(y1), int(x2), int(y2)])
+            colors.append(color)
+            # draw.text((x1 + 3, y1 + 3), name, font=ImageFont.truetype("../asset/arial.ttf", 15), fill=color)
 
-    return img
+    if len(boxes) > 0:
+        img_mask = img.copy()
+        img_array = np.array(img)
+        predictor.set_image(img_array)
+        masks, _, _ = predictor.predict_torch(
+            point_coords=None,
+            point_labels=None,
+            boxes=predictor.transform.apply_boxes_torch(torch.tensor(boxes).cuda(), img_array.shape[:2]),
+            multimask_output=False,
+        )
+        for mask, color in zip(masks, colors):
+            img_mask = show_mask(img_mask, mask[0], color)
+    else:
+        img_mask = img
+
+    return img_box, img_mask
 
 
 def gradio_worker(
@@ -236,33 +288,44 @@ def gradio_worker(
             of Web UI to be after the start of the model.
     """
 
-    def show_user_input(msg, chatbot):
-        return "", chatbot + [[msg, None]]
+    sam = sam_model_registry["vit_h"](checkpoint="sam_vit_h_4b8939.pth").cuda() # todo path
+    sam_predictor = SamPredictor(sam)
 
-    def stream_model_output(img_path, chatbot, max_gen_len, gen_t, top_p, img_transform):
+    def show_user_input(msg, chatbot, chatbox_display):
+        return "", chatbot + [[msg, None]], chatbox_display + [[msg, None]]
+
+    def stream_model_output(img, chatbot, chatbot_display, max_gen_len, gen_t, top_p, img_transform):
         while True:
             content_piece = response_queue.get()
             if isinstance(content_piece, Ready):
                 break
+        # chatbot_for_model = copy.deepcopy(chatbot)
+        #         # for queue in request_queues:
+        #         #     for i in range(len(chatbot_for_model)):
+        #         #         if chatbot_for_model[i][0] is not None:
+        #         #             chatbot_for_model[i][0] = chatbot_for_model[i][0].replace("&lt;", "<").replace("&gt;", ">")
+        #         #         if chatbot_for_model[i][1] is not None:
+        #         #             chatbot_for_model[i][1] = chatbot_for_model[i][1].replace("&lt;", "<").replace("&gt;", ">")
+        #         #     queue.put((img, chatbot_for_model, max_gen_len, gen_t, top_p, img_transform))
         for queue in request_queues:
-            chatbot_for_model = copy.deepcopy(chatbot)
-            for i in range(len(chatbot_for_model)):
-                if chatbot_for_model[i][0] is not None:
-                    chatbot_for_model[i][0] = chatbot_for_model[i][0].replace("&lt;", "<").replace("&gt;", ">")
-                if chatbot_for_model[i][1] is not None:
-                    chatbot_for_model[i][1] = chatbot_for_model[i][1].replace("&lt;", "<").replace("&gt;", ">")
-            queue.put((img_path, chatbot_for_model, max_gen_len, gen_t, top_p, img_transform))
+            queue.put((img, chatbot, max_gen_len, gen_t, top_p, img_transform))
         while True:
             content_piece = response_queue.get()
-            chatbot[-1][1] = content_piece['text'].replace("<", "&lt;").replace(">", "&gt;")
-
+            # chatbot[-1][1] = content_piece['text'].replace("<", "&lt;").replace(">", "&gt;")
+            chatbot_display[-1][1] = content_piece['text'].replace("<", "&lt;").replace(">", "&gt;")
             if content_piece["end_of_content"]:
+                # chatbot_for_model[-1][1] = content_piece['text']
+                chatbot[-1][1] = content_piece['text']
                 boxed_objects, colored_piece = extract_and_color(content_piece['text'])
-                boxed_image = draw_box_on_image(img_path, boxed_objects)
-                yield chatbot, [(colored_piece, None)], boxed_image
+                chatbot_display[-1][1] = colored_piece
+                if img is not None:
+                    boxed_image, masked_image = draw_box_mask_on_image(img, boxed_objects, sam_predictor)
+                else:
+                    boxed_image, masked_image = None, None
+                yield chatbot, chatbot_display, boxed_image, masked_image
                 break
             else:
-                yield chatbot, None, None
+                yield chatbot, chatbot_display, None, None
 
     def undo(chatbot):
         if len(chatbot) > 0:
@@ -271,21 +334,30 @@ def gradio_worker(
 
     def clear():
         chatbot = []
+        chatbot_display = []
         msg = ""
-        return chatbot, msg
+        return chatbot, chatbot_display, msg
 
     with gr.Blocks(css="#image_input {height: 100% !important}") as demo:
-        gr.Markdown("# SPHINX-MLLM Demo")
+        gr.Markdown("# SPHINX-MLLM Demo\n\n"
+                    "### Examples\n"
+                    "**General Question Answering:**\n\n"
+                    "+ What's in the image?\n\n"
+                    "**Referring Expression Comprehension (REC):**\n\n"
+                    "+ Please provide the bounding box coordinate of the region this sentence describes: blue backpack.\n\n"
+                    "**Grounding Caption:**\n\n"
+                    "+ Describe the image concisely. Include the bounding box for each mentioned object.\n\n")
         with gr.Row() as r:
             with gr.Column(scale=1):
-                img_path = gr.Image(label='Image Input', type='filepath', elem_id="image_input")
+                img_input = gr.Image(label='Image Input', type='pil', elem_id="image_input")
             with gr.Column(scale=2):
-                chatbot = gr.Chatbot()
+                chatbot = gr.Chatbot(visible=False)
+                chatbot_display = gr.Chatbot()
                 msg = gr.Textbox()
         with gr.Row():
             submit_button = gr.Button("Submit", variant="primary")
             undo_button = gr.Button("Undo")
-            clear_button = gr.ClearButton([chatbot, msg, img_path])
+            clear_button = gr.ClearButton([chatbot, chatbot_display, msg, img_input])
         with gr.Row():
             max_gen_len = gr.Slider(
                 minimum=1, maximum=args.model_max_seq_len // 2,
@@ -301,25 +373,25 @@ def gradio_worker(
                 label="Top-p",
             )
             img_transform = gr.Dropdown(choices=["padded_resize", "resized_center_crop"],
-                                          value="padded_resize", label="Image Transform")
+                                          value="padded_resize", label="Image Transform", visible=False)
         with gr.Row(equal_height=True):
-            colored_text = gr.Chatbot()
-            image_show = gr.Image(label="Result", interactive=False)
+            image_box = gr.Image(show_label=False, interactive=False)
+            image_mask = gr.Image(show_label=False, interactive=False)
 
         msg.submit(
-            show_user_input, [msg, chatbot], [msg, chatbot],
+            show_user_input, [msg, chatbot, chatbot_display], [msg, chatbot, chatbot_display],
         ).then(
-            stream_model_output, [img_path, chatbot, max_gen_len, gen_t, top_p, img_transform],
-            [chatbot, colored_text, image_show],
+            stream_model_output, [img_input, chatbot, chatbot_display, max_gen_len, gen_t, top_p, img_transform],
+            [chatbot, chatbot_display, image_box, image_mask]
         )
         submit_button.click(
-            show_user_input, [msg, chatbot], [msg, chatbot],
+            show_user_input, [msg, chatbot, chatbot_display], [msg, chatbot, chatbot_display],
         ).then(
-            stream_model_output, [img_path, chatbot, max_gen_len, gen_t, top_p, img_transform],
-            [chatbot, colored_text, image_show]
+            stream_model_output, [img_input, chatbot, chatbot_display, max_gen_len, gen_t, top_p, img_transform],
+            [chatbot, chatbot_display, image_box, image_mask]
         )
         undo_button.click(undo, chatbot, chatbot)
-        img_path.change(clear, [], [chatbot, msg])
+        img_input.change(clear, [], [chatbot, chatbot_display, msg])
     barrier.wait()
     demo.queue(api_open=True, concurrency_count=1).launch(share=True)
 
@@ -347,7 +419,7 @@ if __name__ == "__main__":
         help="LLaMA model type."
     )
     parser.add_argument(
-        "--llama_config", type=str, required=True, nargs="+",
+        "--llama_config", type=str, default=[], nargs="*",
         help="Path to the llama model config json."
     )
     parser.add_argument(
