@@ -288,7 +288,7 @@ def gradio_worker(
             of Web UI to be after the start of the model.
     """
 
-    sam = sam_model_registry["vit_h"](checkpoint="sam_vit_h_4b8939.pth").cuda() # todo path
+    sam = sam_model_registry["vit_h"](checkpoint="sam_vit_h_4b8939.pth").cuda()
     sam_predictor = SamPredictor(sam)
 
     def show_user_input(msg, chatbot, chatbox_display):
