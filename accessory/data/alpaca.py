@@ -120,12 +120,10 @@ class FinetuneDataset(Dataset):
         label_mask = labels.ge(0)
         input2[~input2_mask] = 0
         labels[~label_mask] = 0
-        input2_mask = input2_mask.float()
-        label_mask = label_mask.float()
         if image is None:
-            return input2, labels, input2_mask
+            return input2, labels,
         else:
-            return input2, labels, input2_mask, image
+            return input2, labels, image
 
 
     def groups(self):
