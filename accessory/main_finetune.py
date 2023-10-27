@@ -277,7 +277,8 @@ def main(args):
         DatasetClass = FinetuneDialogDataset
     else:
         DatasetClass = FinetuneDataset
-    dataset_train = DatasetClass(args.data_config, get_transform(args.image_transform),
+    dataset_train = DatasetClass(args.data_config,
+                                 transform=get_transform(args.image_transform, getattr(model.llma, 'image_size', 224)),
                                  max_words=args.max_words, image_words=model.get_image_words(),
                                  tokenizer_path=args.tokenizer_path)
     print(dataset_train)

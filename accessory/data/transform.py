@@ -34,36 +34,44 @@ class PadToSquare:
         return format_string
 
 
-T_random_resized_crop = transforms.Compose([
-    transforms.RandomResizedCrop(size=(224, 224), scale=(0.9, 1.0), ratio=(0.75, 1.3333), interpolation=BICUBIC,
-                                 antialias=None),  # 3 is bicubic
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711])])
-
-T_resized_center_crop = transforms.Compose([
-    transforms.Resize(
-        224, interpolation=transforms.InterpolationMode.BICUBIC
-    ),
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711])])
-
-T_padded_resize = transforms.Compose([
-    PadToSquare(background_color=(0.48145466, 0.4578275, 0.40821073)),
-    transforms.Resize(
-        224, interpolation=transforms.InterpolationMode.BICUBIC
-    ),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711])])
+def T_random_resized_crop(size=224):
+    t = transforms.Compose([
+        transforms.RandomResizedCrop(size=(size, size), scale=(0.9, 1.0), ratio=(0.75, 1.3333), interpolation=BICUBIC,
+                                     antialias=None),  # 3 is bicubic
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711])])
+    return t
 
 
-def get_transform(transform_type: str):
+def T_resized_center_crop(size=224):
+    t = transforms.Compose([
+        transforms.Resize(
+            size, interpolation=transforms.InterpolationMode.BICUBIC
+        ),
+        transforms.CenterCrop(size),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711])])
+    return t
+
+
+def T_padded_resize(size=224):
+    t = transforms.Compose([
+        PadToSquare(background_color=(0.48145466, 0.4578275, 0.40821073)),
+        transforms.Resize(
+            size, interpolation=transforms.InterpolationMode.BICUBIC
+        ),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711])])
+    return t
+
+
+def get_transform(transform_type: str, size=224):
     if transform_type == "random_resized_crop":
-        transform = T_random_resized_crop
+        transform = T_random_resized_crop(size)
     elif transform_type == "resized_center_crop":
-        transform = T_resized_center_crop
+        transform = T_resized_center_crop(size)
     elif transform_type == "padded_resize":
-        transform = T_padded_resize
+        transform = T_padded_resize(size)
     else:
         raise ValueError("unknown transform type: transform_type")
     return transform

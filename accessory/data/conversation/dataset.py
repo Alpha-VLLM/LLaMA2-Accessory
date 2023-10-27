@@ -6,7 +6,6 @@ from torch.utils.data import Dataset
 from PIL import Image
 import json
 from model.tokenizer import Tokenizer
-from ..transform import T_random_resized_crop
 import os
 
 from . import lib as conversation_lib
@@ -85,7 +84,7 @@ class ConversationGenerator:
 
 
 class FinetuneDialogDataset(Dataset):
-    def __init__(self, config_path, transform=T_random_resized_crop, max_words=30, image_words=257, tokenizer_path=None):
+    def __init__(self, config_path, transform, max_words=30, image_words=257, tokenizer_path=None):
         print(f"read dataset config from {config_path}")
         with open(config_path, 'r') as f:
             self.config = yaml.load(f, Loader=yaml.FullLoader)
