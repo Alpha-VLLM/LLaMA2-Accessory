@@ -19,7 +19,7 @@ from fairscale.nn.model_parallel.layers import (
 )
 
 from ..components import RMSNorm
-from transformers import Blip2Processor, Blip2Model, Blip2Config
+from transformers import Blip2Processor, Blip2Model
 import open_clip
 
 
@@ -318,8 +318,8 @@ class Transformer(nn.Module):
                 nn.LayerNorm(params.dim),
             )
 
-            self.image_words = (32 + 257 + 2) * 5
-            self.image_size = 448
+            self.image_words = (32 + 257 + 2) * 10
+            self.image_size = 672
             # add image tags
             self.start_img = nn.Parameter(torch.rand(1, 1, params.dim))
             self.end_img = nn.Parameter(torch.rand(1, 1, params.dim))
@@ -369,9 +369,12 @@ class Transformer(nn.Module):
         # images should be of size [bsz, 448, 448]
         # convert them to 5 224*224 images
         image_224 = F.interpolate(image.half(), size=(224,224), mode="bicubic").to(image)
-        image_parts = [image[..., :224, :224], image[..., :224, 224:], image[..., 224:, :224], image[..., 224:, 224:]]
+        image_parts = []
+        for y_start in range(0, image.shape[-2], 224):
+            for x_start in range(0, image.shape[-1], 224):
+                image_parts.append(image[...,y_start:y_start+224,x_start:x_start+224])
         image: torch.Tensor = torch.cat([image_224] + image_parts, dim=0)
-
+        n_views_per_image = len(image_parts) + 1
 
         image_bs = image.size(0)
         mp_world_size = fs_init.get_model_parallel_world_size()
@@ -442,7 +445,7 @@ class Transformer(nn.Module):
         # image_feats = self.qformer_proj(image_feats)
 
 
-        image_feats = list(torch.chunk(image_feats, 5))
+        image_feats = list(torch.chunk(image_feats, n_views_per_image))
         return image_feats
 
 

@@ -98,7 +98,8 @@ def model_worker(
         image, chatbot, max_gen_len, temperature, top_p, img_transform = request_queue.get()
         if image is not None:
             image = image.convert("RGB")
-            image = get_transform(img_transform)(image).unsqueeze(0).cuda().to(target_dtype)
+            transform = get_transform(img_transform, getattr(model.llma, 'image_size', 224))
+            image = transform(image).unsqueeze(0).cuda().to(target_dtype)
         else:
             image = None
         conv = conv_templates["v1"].copy()
@@ -175,9 +176,8 @@ def extract_and_color(input_string):
     for match in matches:
         # Extract text and list as string
         text, list_str = match.groups()
-
         # Convert the list string to an actual list of floats
-        float_list = [float(x) for x in re.findall(r'\d+\.\d+', list_str)]
+        float_list = [[float(x) for x in re.findall(r'\d+\.\d+', _)] for _ in list_str.split(";")]
 
         # Assign color
         color = colors[color_idx]
@@ -203,7 +203,7 @@ def extract_and_color(input_string):
         list_str = match.groups()[0]
 
         # Convert the list string to an actual list of floats
-        float_list = [float(x) for x in re.findall(r'\d+\.\d+', list_str)]
+        float_list = [[float(x) for x in re.findall(r'\d+\.\d+', _)] for _ in list_str.split(";")]
 
         # Assign color
         color = colors[color_idx]
@@ -240,19 +240,39 @@ def draw_box_mask_on_image(img: Image, l_name_box_color, predictor):
     img_box = img.copy()
     draw = ImageDraw.Draw(img_box)
     boxes = []
-    colors = []
-    for name, points_in_square, color in l_name_box_color:
-        for per_box_start in range(0, len(points_in_square), 4):
-            x1, y1, x2, y2 = points_in_square[per_box_start:per_box_start+4]
-            x1 = x1 * max_edge - x_origin
-            y1 = y1 * max_edge - y_origin
-            x2 = x2 * max_edge - x_origin
-            y2 = y2 * max_edge - y_origin
+    box_colors = []
 
-            draw.rectangle((x1, y1, x2, y2), outline=color, width=2)
-            boxes.append([int(x1), int(y1), int(x2), int(y2)])
-            colors.append(color)
+    key_point_cache = {} # todo support multi-object pose
+    key_point_names = ["nose","left_eye","right_eye","left_ear","right_ear","left_shoulder","right_shoulder",
+                       "left_elbow","right_elbow","left_wrist","right_wrist","left_hip","right_hip",
+                       "left_knee","right_knee","left_ankle","right_ankle"]
+    skeleton = [[16, 14], [14, 12], [17, 15], [15, 13], [12, 13], [6, 12], [7, 13], [6, 7], [6, 8], [7, 9], [8, 10],
+                 [9, 11], [2, 3], [1, 2], [1, 3], [2, 4], [3, 5], [4, 6], [5, 7]]
+    for name, l_points_in_square, color in l_name_box_color:
+        for points_in_square in l_points_in_square:
+            if len(points_in_square) == 2:
+                x1, y1 = points_in_square
+                x1 = x1 * max_edge - x_origin
+                y1 = y1 * max_edge - y_origin
+                draw.ellipse([x1-5, y1-5, x1+5, y1+5], fill=color)
+                key_point_cache[name.replace(" ", "_")] = (x1, y1)
+            elif len(points_in_square) == 4:
+                x1, y1, x2, y2 = points_in_square
+                x1 = x1 * max_edge - x_origin
+                y1 = y1 * max_edge - y_origin
+                x2 = x2 * max_edge - x_origin
+                y2 = y2 * max_edge - y_origin
+
+                draw.rectangle((x1, y1, x2, y2), outline=color, width=2)
+                boxes.append([int(x1), int(y1), int(x2), int(y2)])
+                box_colors.append(color)
             # draw.text((x1 + 3, y1 + 3), name, font=ImageFont.truetype("../asset/arial.ttf", 15), fill=color)
+
+    # draw skeleton:
+    for edge_s, edge_t in skeleton:
+        edge_s_name, edge_t_name = key_point_names[edge_s-1], key_point_names[edge_t-1]
+        if edge_s_name in key_point_cache and edge_t_name in key_point_cache:
+            draw.line([key_point_cache[edge_s_name], key_point_cache[edge_t_name]], fill="green", width=3)
 
     if len(boxes) > 0:
         img_mask = img.copy()
@@ -264,7 +284,7 @@ def draw_box_mask_on_image(img: Image, l_name_box_color, predictor):
             boxes=predictor.transform.apply_boxes_torch(torch.tensor(boxes).cuda(), img_array.shape[:2]),
             multimask_output=False,
         )
-        for mask, color in zip(masks, colors):
+        for mask, color in zip(masks, box_colors):
             img_mask = show_mask(img_mask, mask[0], color)
     else:
         img_mask = img
@@ -299,22 +319,12 @@ def gradio_worker(
             content_piece = response_queue.get()
             if isinstance(content_piece, Ready):
                 break
-        # chatbot_for_model = copy.deepcopy(chatbot)
-        #         # for queue in request_queues:
-        #         #     for i in range(len(chatbot_for_model)):
-        #         #         if chatbot_for_model[i][0] is not None:
-        #         #             chatbot_for_model[i][0] = chatbot_for_model[i][0].replace("&lt;", "<").replace("&gt;", ">")
-        #         #         if chatbot_for_model[i][1] is not None:
-        #         #             chatbot_for_model[i][1] = chatbot_for_model[i][1].replace("&lt;", "<").replace("&gt;", ">")
-        #         #     queue.put((img, chatbot_for_model, max_gen_len, gen_t, top_p, img_transform))
         for queue in request_queues:
             queue.put((img, chatbot, max_gen_len, gen_t, top_p, img_transform))
         while True:
             content_piece = response_queue.get()
-            # chatbot[-1][1] = content_piece['text'].replace("<", "&lt;").replace(">", "&gt;")
             chatbot_display[-1][1] = content_piece['text'].replace("<", "&lt;").replace(">", "&gt;")
             if content_piece["end_of_content"]:
-                # chatbot_for_model[-1][1] = content_piece['text']
                 chatbot[-1][1] = content_piece['text']
                 boxed_objects, colored_piece = extract_and_color(content_piece['text'])
                 chatbot_display[-1][1] = colored_piece
@@ -324,13 +334,14 @@ def gradio_worker(
                     boxed_image, masked_image = None, None
                 yield chatbot, chatbot_display, boxed_image, masked_image
                 break
-            else:
-                yield chatbot, chatbot_display, None, None
+            # else:
+            #     yield chatbot, chatbot_display, None, None
 
-    def undo(chatbot):
+    def undo(chatbot, chatbot_display):
         if len(chatbot) > 0:
             chatbot = chatbot[:-1]
-        return chatbot
+            chatbot_display = chatbot_display[:-1]
+        return chatbot, chatbot_display
 
     def clear():
         chatbot = []
@@ -343,10 +354,23 @@ def gradio_worker(
                     "### Examples\n"
                     "**General Question Answering:**\n\n"
                     "+ What's in the image?\n\n"
+                    "**Detailed Caption:**\n\n"
+                    "+ Generate a detailed description about the image.\n\n"
+                    "**Short caption:**\n\n"
+                    "+ Provide a one-sentence caption for the provided image.\n\n"
                     "**Referring Expression Comprehension (REC):**\n\n"
                     "+ Please provide the bounding box coordinate of the region this sentence describes: blue backpack.\n\n"
                     "**Grounding Caption:**\n\n"
-                    "+ Describe the image concisely. Include the bounding box for each mentioned object.\n\n")
+                    "+ Describe the image concisely. Include the bounding box for each mentioned object.\n\n"
+                    "**Object Detection:**\n\n"
+                    "+ Detect all people shown in the image.\n\n"
+                    "+ Detect all objects shown in the image.\n\n"
+                    "**Human Keypoint Detection:**\n\n"
+                    "+ Detect the key points of the person in the region [x1, y1, x2, y2].\n\n"
+                    )
+
+
+
         with gr.Row() as r:
             with gr.Column(scale=1):
                 img_input = gr.Image(label='Image Input', type='pil', elem_id="image_input")
@@ -360,8 +384,8 @@ def gradio_worker(
             clear_button = gr.ClearButton([chatbot, chatbot_display, msg, img_input])
         with gr.Row():
             max_gen_len = gr.Slider(
-                minimum=1, maximum=args.model_max_seq_len // 2,
-                value=args.model_max_seq_len // 2, interactive=True,
+                minimum=1, maximum=args.model_max_seq_len // 4,
+                value=args.model_max_seq_len // 4, interactive=True,
                 label="Single-turn max response length",
             )
             gen_t = gr.Slider(
@@ -390,7 +414,7 @@ def gradio_worker(
             stream_model_output, [img_input, chatbot, chatbot_display, max_gen_len, gen_t, top_p, img_transform],
             [chatbot, chatbot_display, image_box, image_mask]
         )
-        undo_button.click(undo, chatbot, chatbot)
+        undo_button.click(undo, [chatbot, chatbot_display], [chatbot, chatbot_display])
         img_input.change(clear, [], [chatbot, chatbot_display, msg])
     barrier.wait()
     demo.queue(api_open=True, concurrency_count=1).launch(share=True)

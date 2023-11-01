@@ -19,7 +19,7 @@ from fairscale.nn.model_parallel.layers import (
 )
 
 from ..components import RMSNorm
-from transformers import Blip2Processor, Blip2Model, Blip2Config
+from transformers import Blip2Processor, Blip2Model
 import open_clip
 
 
@@ -318,7 +318,7 @@ class Transformer(nn.Module):
                 nn.LayerNorm(params.dim),
             )
 
-            self.image_words = (32 + 257 + 2) * 5
+            self.image_words = 32 + 257 + 2 + (32 + 1 + 256 // 4 + 2) * 4
             self.image_size = 448
             # add image tags
             self.start_img = nn.Parameter(torch.rand(1, 1, params.dim))
@@ -368,6 +368,7 @@ class Transformer(nn.Module):
         self.openclip_convnext_xxl.eval()
         # images should be of size [bsz, 448, 448]
         # convert them to 5 224*224 images
+        ori_bs = image.shape[0]
         image_224 = F.interpolate(image.half(), size=(224,224), mode="bicubic").to(image)
         image_parts = [image[..., :224, :224], image[..., :224, 224:], image[..., 224:, :224], image[..., 224:, 224:]]
         image: torch.Tensor = torch.cat([image_224] + image_parts, dim=0)
@@ -432,18 +433,26 @@ class Transformer(nn.Module):
             dist.all_gather_into_tensor(ens_image_feats, local_ens_image_feats,
                                         group=fs_init.get_model_parallel_group())
 
-            ens_image_feats = ens_image_feats.float()[:image_bs]
             image_feats = image_feats.float()[:image_bs]
+            ens_image_feats = ens_image_feats.float()[:image_bs]
+            main_view_image_feats = ens_image_feats[:ori_bs]
+            part_view_image_feats = ens_image_feats[ori_bs:]
+            # squeeze number of patch tokens
+            part_view_patch_feats = part_view_image_feats[:,1:,:].view(-1, 16, 16, part_view_image_feats.shape[-1])
+            part_view_patch_feats = part_view_patch_feats.permute(0, 3, 1, 2)
+            part_view_patch_feats = F.interpolate(part_view_patch_feats, scale_factor=1/2, mode="bilinear")
+            part_view_patch_feats = part_view_patch_feats.flatten(-2).permute(0, 2, 1)
+            part_view_image_feats = torch.cat([part_view_image_feats[:,:1], part_view_patch_feats], dim=1)
+
 
         image_feats = self.qformer_proj(image_feats)
-        ens_image_feats = self.visual_proj(ens_image_feats)
-        image_feats = torch.cat([image_feats, ens_image_feats], dim=1)
-        # image_feats = torch.zeros([image.size(0), 32, 768], dtype=torch.half, device=image.device)
-        # image_feats = self.qformer_proj(image_feats)
-
-
-        image_feats = list(torch.chunk(image_feats, 5))
-        return image_feats
+        main_view_image_feats = self.visual_proj(main_view_image_feats)
+        part_view_image_feats = self.visual_proj(part_view_image_feats)
+        l_feats = [
+            torch.cat([image_feats[:ori_bs], main_view_image_feats], dim=1),
+            *torch.chunk(torch.cat([image_feats[ori_bs:], part_view_image_feats], dim=1), 4),
+        ]
+        return l_feats
 
 
     def forward(self, examples, image=None):

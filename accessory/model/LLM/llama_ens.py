@@ -19,7 +19,7 @@ from fairscale.nn.model_parallel.layers import (
 )
 
 from ..components import RMSNorm
-from transformers import Blip2Processor, Blip2Model
+from transformers import Blip2Processor, Blip2Model, Blip2Config
 import open_clip
 
 
