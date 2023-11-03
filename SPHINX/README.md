@@ -3,6 +3,9 @@
 Official implementation of ['SPHINX: A Mixer of Tasks, Domains, and Embeddings Advances Multi-modal Large Language Models']().
 
 Try out our [web demo 🚀](http://imagebind-llm.opengvlab.com/) here!
+<p align="center">
+   🤗 <a href="https://huggingface.co/Alpha-VLLM/SPHINX" target="_blank">HF Repo</a> • 👋 join our <a href="docs/wechat.md" target="_blank">WeChat</a>
+</p>
 
 ## News
 * **[2023-10-17]** We release the demo, code, and model of SPHINX 🎉.
