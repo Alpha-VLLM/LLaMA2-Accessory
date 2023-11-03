@@ -4,7 +4,7 @@ Official implementation of ['SPHINX: A Mixer of Tasks, Domains, and Embeddings A
 
 Try out our [web demo 🚀](http://imagebind-llm.opengvlab.com/) here!
 <p align="center">
-   🤗 <a href="https://huggingface.co/Alpha-VLLM/SPHINX" target="_blank">HF Repo</a> • 👋 join our <a href="docs/wechat.md" target="_blank">WeChat</a>
+   🤗 <a href="https://huggingface.co/Alpha-VLLM/SPHINX" target="_blank">HF Repo</a> • 👋 join our <a href="/home/zyc/proj/sphinx/LLaMA2-Accessory/docs/wechat.md" target="_blank">WeChat</a>
 </p>
 
 ## News
