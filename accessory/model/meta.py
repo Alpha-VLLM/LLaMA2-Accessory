@@ -9,6 +9,8 @@ from .tokenizer import Tokenizer
 from . import LLM
 from util import misc
 
+import torch.distributed as dist
+
 
 class MetaModel(nn.Module):
     """ Masked Autoencoder with VisionTransformer backbone
@@ -79,6 +81,11 @@ class MetaModel(nn.Module):
                     pos -= 1
                 else:
                     break
+
+            if pos == -1:  # nothing to predict in the whole batch
+                print(f"[RANK {dist.get_rank()}] nothing to predict in the whole batch!", force=True)
+                print(examples.cpu().tolist(), force=True)
+                pos = 2
             examples = examples[:, :pos+1]
             labels = labels[:, :pos+1]
 

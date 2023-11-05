@@ -93,7 +93,7 @@ def train_one_epoch(model: torch.nn.Module,
 
 
         # save within epoch
-        n_update_per_save = 10000 // accum_iter
+        n_update_per_save = args.save_iteration_interval // accum_iter
         if update_grad and ((data_iter_step + 1) // accum_iter) % n_update_per_save == 0:
             misc.save_checkpoint(
                 output_dir=args.output_dir,

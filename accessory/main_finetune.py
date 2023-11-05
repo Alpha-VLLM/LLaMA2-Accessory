@@ -106,6 +106,8 @@ def get_args_parser():
                         help='path where to tensorboard log')
     parser.add_argument('--save_interval', default=1, type=int,
                         help='number of epochs between model saving')
+    parser.add_argument('--save_iteration_interval', default=5000, type=int,
+                        help='number of iterations between within-epoch model saving')
     parser.add_argument('--only_save_trainable', default=False, action="store_true",
                         help='only save trainable model parameters')
     parser.add_argument('--device', default='cuda',
@@ -114,7 +116,7 @@ def get_args_parser():
     parser.add_argument('--resume', default='',
                         help='resume from checkpoint')
 
-    parser.add_argument('--num_workers', default=5, type=int)
+    parser.add_argument('--num_workers', default=2, type=int)
     parser.add_argument('--pin_mem', action='store_true',
                         help='Pin CPU memory in DataLoader for more efficient (sometimes) transfer to GPU.')
     parser.add_argument('--no_pin_mem', action='store_false', dest='pin_mem')
