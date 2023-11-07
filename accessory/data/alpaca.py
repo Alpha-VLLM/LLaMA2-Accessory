@@ -12,11 +12,12 @@ import numpy as np
 import os
 from torch.utils.data import Sampler, Dataset
 from .system_prompt import format_prompt
-from .transform import T_random_resized_crop
+
+IGNORE_INDEX = -100
 
 
 class FinetuneDataset(Dataset):
-    def __init__(self, config_path, transform=T_random_resized_crop, max_words=30, image_words=257, tokenizer_path=None):
+    def __init__(self, config_path, transform, max_words, media_words:Dict, tokenizer_path=None):
         print(f"read dataset config from {config_path}")
         with open(config_path, 'r') as f:
             self.config = yaml.load(f, Loader=yaml.FullLoader)
@@ -69,7 +70,7 @@ class FinetuneDataset(Dataset):
         for meta_type, meta_l in group_ann.items():
             meta_l.sort(
                 key=lambda data_item: len(format_prompt(data_item, data_item["sys_prompt"]) + data_item['output'])
-            )
+            )  # todo more accurate sequence length estimation with flexible # of media, or maybe fix it with meta-type
 
         self.group_ann = group_ann
         self.ann = sum(list(self.group_ann.values()), start=[])
@@ -83,51 +84,131 @@ class FinetuneDataset(Dataset):
         print(f"total length: {len(self)}")
         self.transform = transform
         self.max_words = max_words
-        self.image_words = image_words
         self.tokenizer = Tokenizer(model_path=tokenizer_path)
+
+        self.d_media_symbol_words = copy.deepcopy(media_words)
+        print(f"Number of occupied tokens for each media symbol:\n{self.d_media_symbol_words}")
+        self.d_media_token_words = {}
+        self.d_media_symbol_token = {}
+        self.d_media_token_symbol = {}
+        self.tokenizer.tokenizer.add_tokens(list(self.d_media_symbol_words.keys()))
+        for media_symbol in self.d_media_symbol_words:
+            media_token = self.tokenizer.encode(media_symbol, bos=False, eos=False)[0]
+            self.d_media_symbol_token[media_symbol] = media_token
+            self.d_media_token_words[media_token] = self.d_media_symbol_words[media_symbol]
+            self.d_media_token_symbol[media_token] = media_symbol
 
     def __len__(self):
         return len(self.ann)
 
     def __getitem__(self, index):
         data_item: dict = self.ann[index]
-        image = data_item.get("image", None)
-        if image is not None:
-            image = Image.open(image).convert('RGB')
-            # warnings.warn("image channel format: BGR")
-            # image = Image.fromarray(cv2.imread(image))
-            image = self.transform(image)
+
+        d_media = {}
+
+        for media_symbol in self.d_media_symbol_words:
+            if media_symbol in data_item:
+                l_media_path = data_item[media_symbol]  # a list of media paths
+            elif media_symbol.lstrip("<").rstrip(">") in data_item:
+                l_media_path = data_item[media_symbol.lstrip("<").rstrip(">")]
+            else:
+                l_media_path = []
+            if not isinstance(l_media_path, list):  # data with only one media, in format {"image": image_name, ...}
+                l_media_path = [l_media_path]
+
+            d_media[media_symbol] = []
+            for media_path in l_media_path:
+                image = Image.open(media_path).convert('RGB')
+                # warnings.warn("image channel format: BGR")
+                # image = Image.fromarray(cv2.imread(image))
+                image = self.transform(image)
+                d_media[media_symbol].append(image)
+
         answer = data_item["output"]
 
         input1 = format_prompt(data_item, data_item["sys_prompt"])
         input2 = input1 + answer
-        input1 = torch.tensor(self.tokenizer.encode(input1, bos=True, eos=False), dtype=torch.int64)
-        input2 = torch.tensor(self.tokenizer.encode(input2, bos=True, eos=True), dtype=torch.int64)
-        if image is not None:
-            max_words = self.max_words - self.image_words
-        else:
-            max_words = self.max_words
+        input1 = self.tokenizer.encode(input1, bos=True, eos=False)
+        input2 = self.tokenizer.encode(input2, bos=True, eos=True)
+        labels = [IGNORE_INDEX for _ in input2]
+        labels[len(input1):] = input2[len(input1):]
 
-        padding = max_words - input2.shape[0]
+        def reserve_space_for_media(tokens, labels, _d_media):
+            # check if the number of media symbols is the same as the number of given media resouces.
+            for media_symbol in self.d_media_symbol_words:
+                l_media = _d_media[media_symbol]
+                media_token = self.d_media_symbol_token[media_symbol]
+                media_token_count = tokens.count(media_token)
+                if media_token_count > 0:
+                    # if media symbols already exist in dialog data
+                    # the number of symbols should equal to number of media
+                    assert media_token_count == len(l_media), \
+                        f"{media_token_count} {media_symbol} exists in text, but {len(l_media)} actual media are given"
+                else:
+                    # add media symbols after BOS token
+                    tokens = tokens[:1] + [media_token] * len(l_media) + tokens[1:]  # todo may need special logics to support multiple media types
+                    labels = labels[:1] + [IGNORE_INDEX] * len(l_media) + labels[1:]
+
+            # convert media token to reserved placeholders
+            new_tokens = []
+            new_labels = []
+            d_media_spans = {media_symbol:[] for media_symbol in self.d_media_symbol_words}
+            assert len(tokens) == len(labels)
+            for t, l in zip(tokens, labels):
+                if t in self.d_media_token_symbol:
+                    media_symbol = self.d_media_token_symbol[t]
+                    d_media_spans[media_symbol].append((len(new_tokens), len(new_tokens)+self.d_media_token_words[t]))
+                    new_tokens = new_tokens + [-2] * self.d_media_token_words[t]
+                    new_labels = new_labels + [l] * self.d_media_token_words[t]
+                else:
+                    new_tokens.append(t)
+                    new_labels.append(l)
+
+            return new_tokens, new_labels, d_media_spans
+
+        input2, labels, d_media_span = reserve_space_for_media(input2, labels, d_media)
+        input2 = torch.tensor(input2, dtype=torch.int64)
+        labels = torch.tensor(labels, dtype=torch.int64)
+
+        padding = self.max_words - input2.shape[0]
         if padding > 0:
             input2 = torch.cat((input2, torch.zeros(padding, dtype=torch.int64) - 1))
+            labels = torch.cat((labels, torch.zeros(padding, dtype=torch.int64) - 1))
         elif padding < 0:
-            input2 = input2[:max_words]
+            input2 = input2[:self.max_words]  # todo avoid truncation within an image span, especially for supporting image generation
+            labels = labels[:self.max_words]
+            for symbol, l_span in d_media_span.items():
+            # avoid truncation within an image span, especially for supporting image generation
+                new_l_span = []
+                new_l_media = []
+                for span, media in zip(l_span, d_media[symbol]):
+                    if span[1] <= self.max_words:
+                        new_l_span.append(span)
+                        new_l_media.append(media)
+                d_media_span[symbol] = new_l_span
+                d_media[symbol] = new_l_media
             warnings.warn(f'Warning for truncation input!\n{data_item}')
-        labels = copy.deepcopy(input2)
-        labels[:len(input1)] = -1
-        input2_mask = input2.ge(0)
-        label_mask = labels.ge(0)
-        input2[~input2_mask] = 0
-        labels[~label_mask] = 0
-        if image is None:
-            return input2, labels,
-        else:
-            return input2, labels, image
 
+        input2_mask = input2.ge(0)
+        labels_mask = labels.ge(0)
+        input2[~input2_mask] = 0
+        labels[~labels_mask] = 0
+
+        assert len(input2) == len(labels)
+
+        additional_dict = {key: {"data": d_media[key], "span": d_media_span[key]} for key in d_media}
+        return input2, labels, additional_dict
 
     def groups(self):
         return list(self.group_indices.values())
+
+    @staticmethod
+    def collate_func(data):
+        input, label, additional_dict = [_[0] for _ in data], [_[1] for _ in data], [_[2] for _ in data]
+        input = torch.stack(input, dim=0)
+        label = torch.stack(label, dim=0)
+        additional_dict = {key: [_[key] for _ in additional_dict] for key in additional_dict[0]}
+        return input, label, additional_dict
 
 
 class MetaPreprocessor:

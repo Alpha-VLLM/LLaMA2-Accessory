@@ -29,7 +29,7 @@ def train_one_epoch(model: torch.nn.Module,
 
     if log_writer is not None:
         print('log_dir: {}'.format(log_writer.log_dir))
-    for data_iter_step, (examples, labels, example_mask, item_states) in enumerate(
+    for data_iter_step, (examples, labels, item_states) in enumerate(
         metric_logger.log_every(data_loader, print_freq, header, start_iter), start=start_iter
     ):
 
@@ -125,7 +125,7 @@ def val_one_epoch(model: torch.nn.Module,
 
     if log_writer is not None:
         print('log_dir: {}'.format(log_writer.log_dir))
-    for data_iter_step, (examples, labels, example_mask) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+    for data_iter_step, (examples, labels) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
 
         with torch.cuda.amp.autocast(dtype=torch.bfloat16):
              c_loss = model(examples, labels)

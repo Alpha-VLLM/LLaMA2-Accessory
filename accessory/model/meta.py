@@ -70,7 +70,7 @@ class MetaModel(nn.Module):
             value.requires_grad = True
 
 
-    def forward(self, examples, labels, images=None):
+    def forward(self, examples, labels, additional):
         with torch.no_grad():
             non_zero_ = torch.count_nonzero(labels, dim=0)
             pos = non_zero_.shape[0] - 1
@@ -82,7 +82,7 @@ class MetaModel(nn.Module):
             examples = examples[:, :pos+1]
             labels = labels[:, :pos+1]
 
-        output = self.llma(examples, images)
+        output = self.llma(examples, additional)
         output = output[:, :-1, :]
         labels = labels[:, 1:]
 
@@ -222,5 +222,11 @@ class MetaModel(nn.Module):
         return next_token
 
 
-    def get_image_words(self):
-        return self.llma.image_words
+    def get_media_words(self):
+        if hasattr(self.llma, "d_media_symbol_words"):
+            return self.llma.d_media_symbol_words
+        elif hasattr(self.llma, "image_words"):
+            return {"<image>": self.llma.image_words}
+        else:
+            raise AttributeError(f"Cannot identify the number of tokens that media occupies, "
+                                 f"as {type(self.llma)} has neither 'd_media_symbol_words' nor 'image_words' attribute")

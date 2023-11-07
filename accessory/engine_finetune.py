@@ -29,11 +29,9 @@ def train_one_epoch(model: torch.nn.Module,
         print('log_dir: {}'.format(log_writer.log_dir))
     for data_iter_step, batch_data in enumerate(
         metric_logger.log_every(data_loader, print_freq, header, start_iter), start=start_iter):
-        if len(batch_data) == 4:
-            examples, labels, example_mask, imgs = batch_data
-        else:
-            examples, labels, example_mask = batch_data
-            imgs = None
+
+        examples, labels, additional = batch_data
+
         if data_iter_step % accum_iter == 0:
             lr_sched.adjust_learning_rate_epoch(optimizer, data_iter_step / len(data_loader) + epoch, args)
 
@@ -43,10 +41,8 @@ def train_one_epoch(model: torch.nn.Module,
             "tf32": contextlib.nullcontext(),
         }[args.precision]
         with autocast_ctx:
-             c_loss = model(examples, labels, images=imgs)
-        loss = c_loss
+             loss = model(examples, labels, additional=additional)
         loss_value = loss.item()
-        c_loss_value = c_loss.item()
         if not math.isfinite(loss_value):
             print("Loss is {}, stopping training".format(loss_value))
             sys.exit(1)
@@ -72,13 +68,12 @@ def train_one_epoch(model: torch.nn.Module,
 
         torch.cuda.synchronize()
 
-        metric_logger.update(closs=c_loss_value)
+        metric_logger.update(loss=loss_value)
 
         lr = optimizer.param_groups[0]["lr"]
         metric_logger.update(lr=lr)
 
         loss_value_reduce = misc.all_reduce_mean(loss_value)
-        c_loss_value_reduce = misc.all_reduce_mean(c_loss_value)
         if update_grad:
             grad_norm_reduce = misc.all_reduce_mean(grad_norm)
         if log_writer is not None and update_grad:
@@ -86,7 +81,7 @@ def train_one_epoch(model: torch.nn.Module,
             This calibrates different curves when batch size changes.
             """
             epoch_1000x = int((data_iter_step / len(data_loader) + epoch) * 1000)
-            log_writer.add_scalar('c_train_loss', c_loss_value_reduce, epoch_1000x)
+            log_writer.add_scalar('c_train_loss', loss_value_reduce, epoch_1000x)
             if update_grad:
                 log_writer.add_scalar('grad_norm', grad_norm_reduce, epoch_1000x)
             log_writer.add_scalar('lr', lr, epoch_1000x)
