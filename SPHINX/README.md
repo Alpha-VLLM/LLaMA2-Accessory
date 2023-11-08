@@ -23,18 +23,6 @@ We present $\color{goldenrod}{SPHINX}$, a versatile multi-modal large language m
 <p align="center">                                                                                                                                          <img src="figs/pipeline.png"/ width="90%"> <br>
 </p>
 
-## Demo
-Via our proposed three-fold mixer, $\color{goldenrod}{SPHINX}$ exhibits superior multi-modal understanding and reasoning powers.
-<p align="center">                                                                                                                                          <img src="figs/1.png"/ width="70%"> <br>
-</p>
-<p align="center">                                                                                                                                          <img src="figs/2.png"/ width="70%"> <br>
-</p>
-<p align="center">                                                                                                                                          <img src="figs/3.png"/ width="70%"> <br>
-</p>
-<p align="center">                                                                                                                                          <img src="figs/4.png"/ width="50%"> <br>
-</p>
-<p align="center">                                                                                                                                          <img src="figs/5.png"/ width="60%"> <br>
-</p>
 
 ## Inference
 This section provides a step-by-step guide for hosting a local SPHINX demo. If you're already familiar with the LLAMA2-Accessory toolkit, note that hosting a SPHINX demo follows the same pipeline as hosting demos for the other models supported by LLAMA2-Accessory.
