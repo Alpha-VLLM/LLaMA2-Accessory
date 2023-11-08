@@ -351,26 +351,17 @@ def gradio_worker(
 
     with gr.Blocks(css="#image_input {height: 100% !important}") as demo:
         gr.Markdown("# SPHINX-MLLM Demo\n\n"
-                    "### Examples\n"
-                    "**General Question Answering:**\n\n"
-                    "+ What's in the image?\n\n"
-                    "**Detailed Caption:**\n\n"
-                    "+ Generate a detailed description about the image.\n\n"
-                    "**Short caption:**\n\n"
-                    "+ Provide a one-sentence caption for the provided image.\n\n"
-                    "**Referring Expression Comprehension (REC):**\n\n"
-                    "+ Please provide the bounding box coordinate of the region this sentence describes: blue backpack.\n\n"
-                    "**Grounding Caption:**\n\n"
-                    "+ Describe the image concisely. Include the bounding box for each mentioned object.\n\n"
-                    "**Object Detection:**\n\n"
-                    "+ Detect all people shown in the image.\n\n"
-                    "+ Detect all objects shown in the image.\n\n"
-                    "**Human Keypoint Detection:**\n\n"
-                    "+ Detect the key points of the person in the region [x1, y1, x2, y2].\n\n"
+                    "**General Question Answering:** What's in the image?\n\n"
+                    "**Detailed Caption:** Generate a detailed description about the image.\n\n"
+                    "**Short Caption:** Provide a one-sentence caption for the provided image.\n\n"
+                    "**Referring Expression Comprehension (REC):** Please provide the bounding box coordinate of the region this sentence describes: blue backpack.\n\n"
+                    "**Relationship Grounding:** Please provide the bounding box coordinate of the region this sentence describes: people on car.\n\n"
+                    "**Grounding Caption:** Describe the image concisely. Include the bounding box for each mentioned object.\n\n"
+                    "**Object Detection:** Detect all people shown in the image.\n\n"
+                    "**Human Keypoint Detection:** Detect the key points of the person in the region [x1, y1, x2, y2].\n\n"
+                    "**Text Detection:** Please detect all texts and provide their bounding box coordinate.\n\n"
+                    "**Chart Parsing:** Convert this chart to a table.\n\n"
                     )
-
-
-
         with gr.Row() as r:
             with gr.Column(scale=1):
                 img_input = gr.Image(label='Image Input', type='pil', elem_id="image_input")
@@ -447,7 +438,7 @@ if __name__ == "__main__":
         help="Path to the llama model config json."
     )
     parser.add_argument(
-        "--model_max_seq_len", type=int, default=2048,
+        "--model_max_seq_len", type=int, default=4096,
         help="Max sequence length accepted by the pretrained model."
     )
     parser.add_argument(
