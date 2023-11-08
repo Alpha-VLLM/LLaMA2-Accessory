@@ -61,9 +61,6 @@
 
 
 <img src="./docs/examples/finetune/mm/sphinx_box_0.png" width="90%" />
-<img src="./docs/examples/finetune/mm/sphinx_1.png" width="80%" />
-<img src="./docs/examples/finetune/mm/sphinx_2.png" width="80%" />
-<img src="./docs/examples/finetune/mm/sphinx_3.png" width="80%" />
 
 ## Core Contributors
 
