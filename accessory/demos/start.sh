@@ -26,15 +26,17 @@ while true; do
   echo -e "${YELLOW}Choose the inference scenario:${NC}"
   echo -e "${GREEN}1) Single-turn Dialogue (Single-modal)${NC}"
   echo -e "${GREEN}2) Multi-turn Dialogue (Single-modal)${NC}"
-  echo -e "${GREEN}3) Multi-modal Dialogue (Multi-modal)${NC}"
+  echo -e "${GREEN}3) Single-turn Dialogue (Multi-modal)${NC}"
+  echo -e "${GREEN}4) Multi-turn Dialogue (Multi-modal)${NC}"  # New option
+  echo -e "${GREEN}5) Multi-turn Dialogue (Multi-modal) Box Mode${NC}"  # New option
   read -p "Please enter the option number: " SCENARIO
   case $SCENARIO in
     1|2)
       OPTIONS=("internlm" "llama_adapter" "llama_peft" "llama")
       break
       ;;
-    3)
-      OPTIONS=("llama_qformerv2" "llama_qformerv2_peft" "llama_ens")
+    3|4|5)  # Updated case for multi-modal options
+      OPTIONS=("llama_qformerv2" "llama_qformerv2_peft" "llama_ens" "llama_ens5" "llama_ens10" "llama_ens5p2" "llama_ens_peft")
       break
       ;;
     * ) echo -e "${RED}Invalid option. Please re-enter.${NC}";;
@@ -131,6 +133,14 @@ case $SCENARIO in
   3)
     echo -e "${GREEN}Running single_turn_mm.py...${NC}"
     torchrun --nproc-per-node=$NPROC --master-port=$PORT demos/single_turn_mm.py --llama_config $PARAMS --tokenizer_path $TOKENIZER --pretrained_path $PRETRAINED $QUANT --llama_type $LLAMA_TYPE
+    ;;
+  4)  # New case for Multi-turn Dialogue (Multi-modal)
+    echo -e "${GREEN}Running multi_turn_mm.py...${NC}"
+    torchrun --nproc-per-node=$NPROC --master-port=$PORT demos/multi_turn_mm.py --llama_config $PARAMS --tokenizer_path $TOKENIZER --pretrained_path $PRETRAINED $QUANT --llama_type $LLAMA_TYPE
+    ;;
+  5)  # New case for Multi-turn Dialogue (Multi-modal) Box Mode
+    echo -e "${GREEN}Running multi_turn_mm_box.py...${NC}"
+    torchrun --nproc-per-node=$NPROC --master-port=$PORT demos/multi_turn_mm_box.py --llama_config $PARAMS --tokenizer_path $TOKENIZER --pretrained_path $PRETRAINED $QUANT --llama_type $LLAMA_TYPE
     ;;
   *)
     echo -e "${RED}Invalid option. Exiting.${NC}"

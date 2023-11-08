@@ -6,6 +6,7 @@ import torch
 import yaml
 from torch.utils.data import Dataset
 from PIL import Image
+from ..data_reader import read_img_general
 import json
 from model.tokenizer import Tokenizer
 import os
@@ -173,7 +174,7 @@ class FinetuneDialogDataset(Dataset):
 
             d_media[media_symbol] = []
             for media_path in l_media_path:
-                image = Image.open(media_path).convert('RGB')
+                image = read_img_general(media_path)
                 # warnings.warn("image channel format: BGR")
                 # image = Image.fromarray(cv2.imread(image))
                 image = self.transform(image)

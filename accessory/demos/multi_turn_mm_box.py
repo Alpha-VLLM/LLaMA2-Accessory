@@ -98,7 +98,8 @@ def model_worker(
         image, chatbot, max_gen_len, temperature, top_p, img_transform = request_queue.get()
         if image is not None:
             image = image.convert("RGB")
-            image = get_transform(img_transform)(image).unsqueeze(0).cuda().to(target_dtype)
+            transform = get_transform(img_transform, getattr(model.llma, 'image_size', 224))
+            image = transform(image).unsqueeze(0).cuda().to(target_dtype)
         else:
             image = None
         conv = conv_templates["v1"].copy()
@@ -240,6 +241,13 @@ def draw_box_mask_on_image(img: Image, l_name_box_color, predictor):
     draw = ImageDraw.Draw(img_box)
     boxes = []
     box_colors = []
+
+    key_point_cache = {} # todo support multi-object pose
+    key_point_names = ["nose","left_eye","right_eye","left_ear","right_ear","left_shoulder","right_shoulder",
+                       "left_elbow","right_elbow","left_wrist","right_wrist","left_hip","right_hip",
+                       "left_knee","right_knee","left_ankle","right_ankle"]
+    skeleton = [[16, 14], [14, 12], [17, 15], [15, 13], [12, 13], [6, 12], [7, 13], [6, 7], [6, 8], [7, 9], [8, 10],
+                 [9, 11], [2, 3], [1, 2], [1, 3], [2, 4], [3, 5], [4, 6], [5, 7]]
     for name, l_points_in_square, color in l_name_box_color:
         for points_in_square in l_points_in_square:
             if len(points_in_square) == 2:
@@ -247,6 +255,7 @@ def draw_box_mask_on_image(img: Image, l_name_box_color, predictor):
                 x1 = x1 * max_edge - x_origin
                 y1 = y1 * max_edge - y_origin
                 draw.ellipse([x1-5, y1-5, x1+5, y1+5], fill=color)
+                key_point_cache[name.replace(" ", "_")] = (x1, y1)
             elif len(points_in_square) == 4:
                 x1, y1, x2, y2 = points_in_square
                 x1 = x1 * max_edge - x_origin
@@ -258,6 +267,12 @@ def draw_box_mask_on_image(img: Image, l_name_box_color, predictor):
                 boxes.append([int(x1), int(y1), int(x2), int(y2)])
                 box_colors.append(color)
             # draw.text((x1 + 3, y1 + 3), name, font=ImageFont.truetype("../asset/arial.ttf", 15), fill=color)
+
+    # draw skeleton:
+    for edge_s, edge_t in skeleton:
+        edge_s_name, edge_t_name = key_point_names[edge_s-1], key_point_names[edge_t-1]
+        if edge_s_name in key_point_cache and edge_t_name in key_point_cache:
+            draw.line([key_point_cache[edge_s_name], key_point_cache[edge_t_name]], fill="green", width=3)
 
     if len(boxes) > 0:
         img_mask = img.copy()
@@ -319,8 +334,8 @@ def gradio_worker(
                     boxed_image, masked_image = None, None
                 yield chatbot, chatbot_display, boxed_image, masked_image
                 break
-            else:
-                yield chatbot, chatbot_display, None, None
+            # else:
+            #     yield chatbot, chatbot_display, None, None
 
     def undo(chatbot, chatbot_display):
         if len(chatbot) > 0:
@@ -339,10 +354,23 @@ def gradio_worker(
                     "### Examples\n"
                     "**General Question Answering:**\n\n"
                     "+ What's in the image?\n\n"
+                    "**Detailed Caption:**\n\n"
+                    "+ Generate a detailed description about the image.\n\n"
+                    "**Short caption:**\n\n"
+                    "+ Provide a one-sentence caption for the provided image.\n\n"
                     "**Referring Expression Comprehension (REC):**\n\n"
                     "+ Please provide the bounding box coordinate of the region this sentence describes: blue backpack.\n\n"
                     "**Grounding Caption:**\n\n"
-                    "+ Describe the image concisely. Include the bounding box for each mentioned object.\n\n")
+                    "+ Describe the image concisely. Include the bounding box for each mentioned object.\n\n"
+                    "**Object Detection:**\n\n"
+                    "+ Detect all people shown in the image.\n\n"
+                    "+ Detect all objects shown in the image.\n\n"
+                    "**Human Keypoint Detection:**\n\n"
+                    "+ Detect the key points of the person in the region [x1, y1, x2, y2].\n\n"
+                    )
+
+
+
         with gr.Row() as r:
             with gr.Column(scale=1):
                 img_input = gr.Image(label='Image Input', type='pil', elem_id="image_input")
@@ -356,8 +384,8 @@ def gradio_worker(
             clear_button = gr.ClearButton([chatbot, chatbot_display, msg, img_input])
         with gr.Row():
             max_gen_len = gr.Slider(
-                minimum=1, maximum=args.model_max_seq_len // 2,
-                value=args.model_max_seq_len // 2, interactive=True,
+                minimum=1, maximum=args.model_max_seq_len // 4,
+                value=args.model_max_seq_len // 4, interactive=True,
                 label="Single-turn max response length",
             )
             gen_t = gr.Slider(

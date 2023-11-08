@@ -1,7 +1,7 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 # This software may be used and distributed according to the terms of the Llama 2 Community License Agreement.
 
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, List
 from dataclasses import dataclass
 import math
 import functools
@@ -19,7 +19,7 @@ from fairscale.nn.model_parallel.layers import (
 )
 
 from ..components import RMSNorm
-from transformers import Blip2Processor, Blip2Model, Blip2Config
+from transformers import Blip2Processor, Blip2Model
 import open_clip
 
 
@@ -318,7 +318,8 @@ class Transformer(nn.Module):
                 nn.LayerNorm(params.dim),
             )
 
-            self.image_words = 32 + 257 + 2
+            self.image_words = 32 + 257 + 2 + (32 + 1 + 256 // 4 + 2) * 4
+            self.image_size = 448
             # add image tags
             self.start_img = nn.Parameter(torch.rand(1, 1, params.dim))
             self.end_img = nn.Parameter(torch.rand(1, 1, params.dim))
@@ -365,6 +366,14 @@ class Transformer(nn.Module):
         # [B, 32, 768]
         self.clip.eval()
         self.openclip_convnext_xxl.eval()
+        # images should be of size [bsz, 448, 448]
+        # convert them to 5 224*224 images
+        ori_bs = image.shape[0]
+        image_224 = F.interpolate(image.half(), size=(224,224), mode="bicubic").to(image)
+        image_parts = [image[..., :224, :224], image[..., :224, 224:], image[..., 224:, :224], image[..., 224:, 224:]]
+        image: torch.Tensor = torch.cat([image_224] + image_parts, dim=0)
+
+
         image_bs = image.size(0)
         mp_world_size = fs_init.get_model_parallel_world_size()
         mp_rank = fs_init.get_model_parallel_rank()
@@ -424,16 +433,27 @@ class Transformer(nn.Module):
             dist.all_gather_into_tensor(ens_image_feats, local_ens_image_feats,
                                         group=fs_init.get_model_parallel_group())
 
-            ens_image_feats = ens_image_feats.float()[:image_bs]
             image_feats = image_feats.float()[:image_bs]
+            ens_image_feats = ens_image_feats.float()[:image_bs]
+            main_view_image_feats = ens_image_feats[:ori_bs]
+            part_view_image_feats = ens_image_feats[ori_bs:]
+            # squeeze number of patch tokens
+            part_view_patch_feats = part_view_image_feats[:,1:,:].view(-1, 16, 16, part_view_image_feats.shape[-1])
+            part_view_patch_feats = part_view_patch_feats.permute(0, 3, 1, 2)
+            part_view_patch_feats = F.interpolate(part_view_patch_feats, scale_factor=1/2, mode="bilinear")
+            part_view_patch_feats = part_view_patch_feats.flatten(-2).permute(0, 2, 1)
+            part_view_image_feats = torch.cat([part_view_image_feats[:,:1], part_view_patch_feats], dim=1)
+
 
         image_feats = self.qformer_proj(image_feats)
-        ens_image_feats = self.visual_proj(ens_image_feats)
-        image_feats = torch.cat([image_feats, ens_image_feats], dim=1)
-        # image_feats = torch.zeros([image.size(0), 32, 768], dtype=torch.half, device=image.device)
-        # image_feats = self.qformer_proj(image_feats)
+        main_view_image_feats = self.visual_proj(main_view_image_feats)
+        part_view_image_feats = self.visual_proj(part_view_image_feats)
+        l_feats = [
+            torch.cat([image_feats[:ori_bs], main_view_image_feats], dim=1),
+            *torch.chunk(torch.cat([image_feats[ori_bs:], part_view_image_feats], dim=1), 4),
+        ]
+        return l_feats
 
-        return image_feats
 
     def forward(self, examples, image=None):
         self._destroy_kv_cache()  # training always disables kv cache
@@ -444,9 +464,16 @@ class Transformer(nn.Module):
         image_words = 0
         if image is not None:
             h_bos, h_caption = h[:, :1], h[:, 1:]
-            image_tokens = self.encode_image(image)
-            h = torch.cat((h_bos, self.start_img.expand(_bsz, -1, -1), image_tokens, self.end_img.expand(_bsz, -1, -1), h_caption), dim=1)
-            image_words = image_tokens.shape[1] + 1 + 1
+            l_image_tokens: List = self.encode_image(image)
+            for i, image_tokens in enumerate(l_image_tokens):
+                image_tokens = torch.cat((self.start_img.expand(_bsz, -1, -1),
+                                          image_tokens,
+                                          self.end_img.expand(_bsz, -1, -1)), dim=1)
+                l_image_tokens[i] = image_tokens
+            image_tokens = torch.cat(l_image_tokens, dim=1)
+            image_words = image_tokens.shape[1]
+            assert image_words == self.image_words, f"{image_words} v.s. {self.image_words}, {[_.shape for _ in l_image_tokens]}"
+            h = torch.cat((h_bos, image_tokens, h_caption), dim=1)
             seqlen = h.shape[1]
 
         freqs_cis = self.freqs_cis[:seqlen]
@@ -468,9 +495,16 @@ class Transformer(nn.Module):
         if image is not None:
             assert start_pos == 0
             h_bos, h_caption = h[:, :1], h[:, 1:]
-            image_tokens = self.encode_image(image)
-            self.cache_image_words = image_tokens.shape[1] + 1 + 1
-            h = torch.cat((h_bos, self.start_img.repeat(_bsz, 1, 1), image_tokens, self.end_img.repeat(_bsz, 1, 1), h_caption), dim=1)
+            l_image_tokens: List = self.encode_image(image)
+            for i, image_tokens in enumerate(l_image_tokens):
+                image_tokens = torch.cat((self.start_img.expand(_bsz, -1, -1),
+                                          image_tokens,
+                                          self.end_img.expand(_bsz, -1, -1)), dim=1)
+                l_image_tokens[i] = image_tokens
+            image_tokens = torch.cat(l_image_tokens, dim=1)
+            self.cache_image_words = image_tokens.shape[1]
+            assert self.cache_image_words == self.image_words
+            h = torch.cat((h_bos, image_tokens, h_caption), dim=1)
             seqlen = h.shape[1]
             freqs_cis = self.freqs_cis[0: seqlen]
         else:
