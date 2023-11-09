@@ -21,6 +21,7 @@ from PIL import Image
 
 
 # *********************** Begin Configuration ***********************
+# todo Please modify the following variables to fit your environment and needs
 
 SPHINX_TYPE = "Long-SPHINX"  # "SPHINX" or "Long-SPHINX"
 TOKENIZER_PATH = "PATH/TO/tokenizer.model"  # path to llama tokenizer
