@@ -1,6 +1,6 @@
 # 🔥 SPHINX: A Mixer of Tasks, Domains, and Embeddings
 
-Official implementation of ['SPHINX: A Mixer of Tasks, Domains, and Embeddings Advances Multi-modal Large Language Models']().
+Official implementation of ['SPHINX: A Mixer of Tasks, Domains, and Embeddings Advances Multi-modal Large Language Models'](https://github.com/Alpha-VLLM/LLaMA2-Accessory/blob/main/SPHINX/SPHINX_paper.pdf).
 
 Try out our [web demo 🚀](http://imagebind-llm.opengvlab.com/) here!
 <p align="center">
@@ -8,6 +8,7 @@ Try out our [web demo 🚀](http://imagebind-llm.opengvlab.com/) here!
 </p>
 
 ## News
+* **[2023-11-09]** We release the [technical report](https://github.com/Alpha-VLLM/LLaMA2-Accessory/blob/main/SPHINX/SPHINX_paper.pdf) of SPHINX 🔥.
 * **[2023-10-17]** We release the demo, code, and model of SPHINX 🎉.
 
 ## Introduction
