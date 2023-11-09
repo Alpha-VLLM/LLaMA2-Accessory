@@ -1,6 +1,3 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# This software may be used and distributed according to the terms of the Llama 2 Community License Agreement.
-
 from typing import Optional, Tuple, Union
 from dataclasses import dataclass
 import math
@@ -48,6 +45,8 @@ class ModelArgs:
     max_seq_len: int = 2048
 
     rope_scaling: Optional[float] = None
+
+    load_pretrained_visual_encoder: bool = False
 
 
 class Attention(nn.Module):
@@ -280,31 +279,43 @@ class Transformer(nn.Module):
             torch.set_default_dtype(torch.float32)
 
             print("build llama model with qformerv2")
-            self.qformer = Blip2Model.from_pretrained("Salesforce/blip2-opt-2.7b", torch_dtype=self.norm.weight.dtype)
+            if self.params.load_pretrained_visual_encoder:
+                self.qformer = Blip2Model.from_pretrained(
+                    "Salesforce/blip2-opt-2.7b", torch_dtype=self.norm.weight.dtype
+                )
+            else:
+                self.qformer = Blip2Model(Blip2Config.from_pretrained("Salesforce/blip2-opt-2.7b"))
             self.qformer.language_projection = None
             self.qformer.language_model = None
             self.qformer.to(self.norm.weight)
 
             print("build llama model with clip")
-            self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
+            if self.params.load_pretrained_visual_encoder:
+                self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
+            else:
+                self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained=None)
             self.clip.transformer = None
             self.clip.to(self.norm.weight)
 
             print("build llama model with openclip")
-            self.openclip_convnext_xxl, _, _ = open_clip.create_model_and_transforms(
-                "convnext_xxlarge", pretrained="laion2b_s34b_b82k_augreg_soup"
-            )
+            if self.params.load_pretrained_visual_encoder:
+                self.openclip_convnext_xxl, _, _ = open_clip.create_model_and_transforms(
+                    "convnext_xxlarge", pretrained="laion2b_s34b_b82k_augreg_soup"
+                )
+            else:
+                self.openclip_convnext_xxl, _, _ = open_clip.create_model_and_transforms(
+                    "convnext_xxlarge", pretrained=None
+                )
             self.openclip_convnext_xxl = self.openclip_convnext_xxl.visual.trunk
             self.openclip_convnext_xxl.head.global_pool = nn.Identity()
             self.openclip_convnext_xxl.head.flatten = nn.Identity()
             self.openclip_convnext_xxl.to(self.norm.weight)
 
             print("build llama model with dinov2")
-            import os.path
-            if os.path.exists("/mnt/petrelfs/gaopeng/.cache/torch/hub/facebookresearch_dinov2_main"):
-                self.dinov2_vitg14 = torch.hub.load("/mnt/petrelfs/gaopeng/.cache/torch/hub/facebookresearch_dinov2_main", "dinov2_vitg14", source="local")
+            if self.params.load_pretrained_visual_encoder:
+                self.dinov2_vitg14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14", pretrained=True)
             else:
-                self.dinov2_vitg14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14")
+                self.dinov2_vitg14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14", pretrained=False)
             self.dinov2_vitg14.to(self.norm.weight)
             torch.set_default_dtype(default_dtype)
 
@@ -319,6 +330,7 @@ class Transformer(nn.Module):
             )
 
             self.image_words = 32 + 257 + 2
+            self.image_size = 224
             # add image tags
             self.start_img = nn.Parameter(torch.rand(1, 1, params.dim))
             self.end_img = nn.Parameter(torch.rand(1, 1, params.dim))
@@ -330,8 +342,6 @@ class Transformer(nn.Module):
         for name, para in self.named_parameters():
             if not any([name.startswith(_) for _ in no_train_prefix]):
                 trainable[name] = para
-            else:
-                print(f'not trainable {name}')
 
         return trainable
 
