@@ -42,15 +42,16 @@ path/to/sphinx
 
 
 ### Simple Inference
-We provide a simple script [inference.py](inference.py) to illustrate how to use SPHINX for inference.
+We provide a simple script [inference.py](inference.py) to illustrate how to use SPHINX for inference:
 ```bash
 python inference.py
 ```
 Please modify the configuration variables within the script before running it.
 
 ### Host Local Demo
-For thoes who want to host a demo like [our official one](http://imagebind-llm.opengvlab.com/) locally, this section provides a step-by-step guide. If you're already familiar with the LLAMA2-Accessory toolkit, note that hosting a SPHINX demo follows the same pipeline as hosting demos for the other models supported by LLAMA2-Accessory.
-+ [SAM](https://github.com/facebookresearch/segment-anything.git) should be installed to enable segmentation.
+For thoes who want to host a demo like [our official one](http://imagebind-llm.opengvlab.com/) locally, this section provides a step-by-step guide. 
++ [SAM](https://github.com/facebookresearch/segment-anything.git) should be installed to enable segmentation. 
++ *If you're already familiar with the LLAMA2-Accessory toolkit, note that hosting a SPHINX demo follows the same pipeline as hosting demos for the other models supported by LLAMA2-Accessory.*
 
 
 #### SPHINX
