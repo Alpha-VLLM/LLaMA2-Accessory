@@ -24,13 +24,13 @@ from PIL import Image
 # todo Please modify the following variables to fit your environment and needs
 
 SPHINX_TYPE = "Long-SPHINX"  # "SPHINX" or "Long-SPHINX"
-TOKENIZER_PATH = "PATH/TO/tokenizer.model"  # path to llama tokenizer
+TOKENIZER_PATH = "/PATH/TO/tokenizer.model"  # path to llama tokenizer
 PRETRAINED_PATH = "/PATH/TO/PRETRAINED"
 
 IMAGE_PATH = "examples/1.jpg"  # image for inference, can be None as SPHINX also supports text-only dialog
 INSTRUCTION = "Please describe the image in detail."
 
-N_GPU = 2  # number of GPUs to use for inference, current either 1 or 2 is supported
+MODEL_PARALLEL_SIZE = 2  # equal to the number of GPUs to use for inference, current either 1 or 2 is supported
 
 # ************************ End Configuration ************************
 
@@ -127,15 +127,15 @@ def main(world_size=1, rank=0) -> None:
 
 
 if __name__ == "__main__":
-    if N_GPU == 1:
+    if MODEL_PARALLEL_SIZE == 1:
         main(world_size=1, rank=0)
-    elif N_GPU == 2:
+    elif MODEL_PARALLEL_SIZE == 2:
         mp.set_start_method("spawn")
-        for rank in range(N_GPU):
+        for rank in range(MODEL_PARALLEL_SIZE):
             process = mp.Process(
                 target=main,
-                args=(N_GPU, rank),
+                args=(MODEL_PARALLEL_SIZE, rank),
             )
             process.start()
     else:
-        raise ValueError("Currently only 1 or 2 is supported for N_GPU")
+        raise ValueError("Currently only 1 or 2 is supported for MODEL_PARALLEL_SIZE")
