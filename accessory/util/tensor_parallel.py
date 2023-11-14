@@ -332,7 +332,7 @@ def infer_checkpoint_format_and_mp_size(path: str) -> str:
              for x in os.listdir(path)]
         )
         raise NotImplementedError(
-            f"Files in the given folder do not match  any format. "
+            f"Files in the given folder do not match any format. "
             f"Contents in the folder: [{folder_contents}]."
         )
 
@@ -420,7 +420,7 @@ def load_tensor_parallel_model_list(
     for i, path in enumerate(path_list):
         inferred_format, _ = infer_checkpoint_format_and_mp_size(path)
         print(f"Loading from checkpoint at: {path} ({i + 1} of "
-              f"{len(path_list)}, format is \"{inferred_format})\"")
+              f"{len(path_list)}, format is \"{inferred_format}\")")
         assert i != 0 or not inferred_format.endswith("_diff"), (
             "The first checkpoint in the list cannot be a *_diff checkpoint."
         )
