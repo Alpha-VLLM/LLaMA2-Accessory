@@ -46,7 +46,7 @@ from data.alpaca import FinetuneDataset, FinetuneDistSampler
 from data.conversation.dataset import FinetuneDialogDataset
 from data.transform import get_transform
 
-from util.tensor_parallel import load_tensor_parallel_model
+from util.tensor_parallel import load_tensor_parallel_model_list
 
 
 def get_args_parser():
@@ -185,7 +185,7 @@ def main(args):
 
                 # load pre-trained weights
                 print(f"## Load pretrained from {args.pretrained_path}", force=True)
-                load_tensor_parallel_model(model, args.pretrained_path)
+                load_tensor_parallel_model_list(model, [args.pretrained_path])
 
                 print("## Quantizing model to 4bit!", force=True)
                 quantization_config = BitsAndBytesConfig.from_dict(
@@ -210,7 +210,7 @@ def main(args):
         promote_trainable_params_to_fp32(model)
         misc.print_param_status(model)
         print(f"load pretrained from {args.pretrained_path}")
-        load_tensor_parallel_model(model, args.pretrained_path)
+        load_tensor_parallel_model_list(model, [args.pretrained_path])
     print("Unwrapped Model = %s" % str(model))
 
     # resume stage1
