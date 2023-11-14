@@ -5,6 +5,7 @@ import time
 from collections import defaultdict, deque
 from pathlib import Path
 import subprocess
+import contextlib
 
 import torch
 import torch.distributed as dist
@@ -301,7 +302,7 @@ class NativeScalerWithGradNormCount:
     def __init__(self, args):
         self._scaler = ShardedGradScaler(enabled=args.precision in ["fp16"])
 
-    def __call__(self, loss, optimizer, model: FSDP, clip_grad=None, parameters=None, create_graph=False, update_grad=True):
+    def __call__(self, loss, optimizer, model: FSDP, clip_grad=None, parameters=None, create_graph=False, update_grad=True, no_sync_if_not_update: bool = True):
         if update_grad:
             self._scaler.scale(loss).backward(create_graph=create_graph)
             if clip_grad is None:
@@ -311,7 +312,8 @@ class NativeScalerWithGradNormCount:
             self._scaler.step(optimizer)
             self._scaler.update()
         else:
-            with model.no_sync():
+            no_sync_ctx = model.no_sync() if no_sync_if_not_update else contextlib.nullcontext()
+            with no_sync_ctx:
                 self._scaler.scale(loss).backward(create_graph=create_graph)
             norm = None
         return norm

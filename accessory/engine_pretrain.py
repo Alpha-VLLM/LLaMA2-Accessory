@@ -27,6 +27,9 @@ def train_one_epoch(model: torch.nn.Module,
 
     dataset_state = {}
 
+    # If they use FSDP (zero-3), we assume they are rich in bandwidth but low in memory.
+    sync_even_if_not_update = (args.data_parallel == "fsdp")
+
     if log_writer is not None:
         print('log_dir: {}'.format(log_writer.log_dir))
     for data_iter_step, (examples, labels, example_mask, item_states) in enumerate(
@@ -58,6 +61,7 @@ def train_one_epoch(model: torch.nn.Module,
             parameters=model.parameters(),
             update_grad=update_grad,
             clip_grad=None if args.clip_grad <= 0 else args.clip_grad,
+            no_sync_if_not_update=not sync_even_if_not_update,
         )
 
         if update_grad:
