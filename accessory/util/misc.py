@@ -1,10 +1,12 @@
 import builtins
 import datetime
 import os
+import random
 import time
 from collections import defaultdict, deque
 from pathlib import Path
 import subprocess
+from types import SimpleNamespace
 
 import torch
 import torch.distributed as dist
@@ -211,8 +213,8 @@ def save_on_master(*args, **kwargs):
     if is_main_process():
         torch.save(*args, **kwargs)
 
-def init_distributed_mode(args):
-    if args.dist_on_itp:
+def init_distributed_mode(args=SimpleNamespace()):
+    if getattr(args, 'dist_on_itp', False):
         args.rank = int(os.environ['OMPI_COMM_WORLD_RANK'])
         args.world_size = int(os.environ['OMPI_COMM_WORLD_SIZE'])
         args.gpu = int(os.environ['OMPI_COMM_WORLD_LOCAL_RANK'])
@@ -229,7 +231,7 @@ def init_distributed_mode(args):
         args.local_rank = args.gpu
         args.dist_url = 'env://'
     elif 'SLURM_PROCID' in os.environ:
-        os.environ['MASTER_PORT'] = '8964'
+        os.environ['MASTER_PORT'] = str(random.choice(list(range(20000, 30000))))
         while 'MASTER_ADDR' not in os.environ or len(os.environ['MASTER_ADDR'].strip()) == 0:
             os.environ['MASTER_ADDR'] = subprocess.check_output('sinfo -Nh -n %s | head -n 1 | awk \'{print $1}\'' % os.environ['SLURM_NODELIST'], shell=True, ).decode().strip()
             time.sleep(1)
@@ -243,10 +245,15 @@ def init_distributed_mode(args):
         os.environ['WORLD_SIZE'] = str(args.world_size)
         os.environ['RANK'] = str(args.rank)
     else:
-        print('Not using distributed mode')
-        setup_for_distributed(is_master=True)  # hack
-        args.distributed = False
-        return
+        os.environ['MASTER_ADDR'] = "127.0.0.1"
+        os.environ['MASTER_PORT'] = str(random.choice(list(range(20000, 30000))))
+        os.environ['RANK'] = '0'
+        os.environ['LOCAL_RANK'] = '0'
+        os.environ['WORLD_SIZE'] = '1'
+        args.rank = 0
+        args.gpu = args.local_rank = 0
+        args.world_size = 1
+        args.dist_url = 'env://'
 
     args.distributed = True
 

@@ -7,7 +7,8 @@ from fairscale.nn.model_parallel import initialize as fs_init
 
 from .tokenizer import Tokenizer
 from . import LLM
-from util import misc
+from util import misc, tensor_parallel
+from util.tensor_type import default_tensor_type
 
 import torch.distributed as dist
 
@@ -59,6 +60,22 @@ class MetaModel(nn.Module):
                 param_count_local += param.numel()
         print(f"Trainable parameter count : {param_count_local} (local rank), {param_count_all} (all).")
 
+    @ staticmethod
+    def from_pretrained(pretrined_path:List[str],
+                        llama_type: str, llama_config: List[str], tokenizer_path: str,
+                        with_visual: bool = False, max_seq_len: int = 2048,
+                        dtype=torch.bfloat16, device="cuda"):
+        if not dist.is_initialized():
+            print("Accessory models require distributed mode, which is not yet initialized. Initialize now")
+            misc.init_distributed_mode()
+        fs_init.initialize_model_parallel(1) # todo now from_pretrained only supports mp=1
+        with default_tensor_type(dtype=dtype, device=device):
+            model = MetaModel(llama_type, llama_config, tokenizer_path, with_visual, max_seq_len)
+        print(f"Loading pretrained weights from {pretrined_path} ...")
+        load_result = tensor_parallel.load_tensor_parallel_model_list(model, pretrined_path)
+        assert load_result == {'missing_keys': [], 'unexpected_keys': []}, "checkpoint and model mismatch"
+        model.eval()
+        return model
 
     def get_trainable_params(self):
         llma_trainable = self.llma.get_trainable_params()
