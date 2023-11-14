@@ -45,8 +45,8 @@ class ModelArgs:
 
     rope_scaling: Optional[float] = None
 
-    prefix_layers: Optional[int] = None # prefix, set to n_layers by default
-    prefix_len: int = 30
+    prefix_layers: Optional[int] = None # number of layers to add prefix, set to n_layers if None is given
+    prefix_len: int = 10
 
     use_prefix_new_gate: bool = False
 
@@ -57,7 +57,9 @@ class ModelArgs:
 
     lora_rank: int = -1 # lora
 
-    bias_tuning: bool = False  # bias
+    bias_tuning: bool = True  # bias
+
+    trainable_mode: str = "sg"  # options: ["sg", "mm_stage1", "mm_stage2"]
 
 
 class Attention(nn.Module):
@@ -368,10 +370,22 @@ class Transformer(nn.Module):
     def get_trainable_params(self):
         trainable = {}
         for name, para in self.named_parameters():
-            exclude_prefix = ['clip.', 'clip_proj', 'visual_']
+            if self.params.trainable_mode == "mm_stage2": # multi-modal stage2
+                exclude_prefix = ['clip.', 'clip_proj', 'visual_']
+                trainable_key_words = ['norm', 'bias', 'lora']
+            elif self.params.trainable_mode == "mm_stage1": # multi-modal stage1
+                exclude_prefix = ['clip.']
+                # according to the paper, lora and bias do not exist in this stage
+                # but if you add them in this stage, they will also be trained
+                trainable_key_words = ['clip_proj', 'visual_', 'norm', 'bias', 'prefix', 'lora']
+            elif self.params.trainable_mode == "sg":  # single-modal
+                # clip_proj and visual_ should not exist
+                exclude_prefix = ['clip.', 'clip_proj', 'visual_']
+                trainable_key_words = ['norm', 'bias', 'prefix', 'lora']
+            else:
+                raise ValueError(f"unknown trainable_mode: {self.params.trainable_mode}")
             if any([name.startswith(_) for _ in exclude_prefix]): # only tune those within real llama
                 continue
-            trainable_key_words = ['norm', 'bias', 'lora']
             if any([_ in name for _ in trainable_key_words]):
                 trainable[name] = para
 
