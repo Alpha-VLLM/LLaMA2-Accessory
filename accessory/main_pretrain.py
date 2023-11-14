@@ -43,6 +43,7 @@ from model.meta import MetaModel
 from engine_pretrain import train_one_epoch, val_one_epoch
 from torch.utils.data import Dataset
 from data import falcon, falcon_packed
+from util.tensor_parallel import load_tensor_parallel_model
 
 
 def get_args_parser():
@@ -162,7 +163,7 @@ def main(args):
     misc.print_param_status(model)
     if args.pretrained_path:
         print(f"load pretrained from {args.pretrained_path}")
-        misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
+        load_tensor_parallel_model(model, args.pretrained_path)
     print("Unwrapped Model = %s" % str(model))
 
     # resume stage1
