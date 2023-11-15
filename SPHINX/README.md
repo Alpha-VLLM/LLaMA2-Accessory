@@ -15,7 +15,7 @@ Try out our [web demo 🚀](http://imagebind-llm.opengvlab.com/) here!
 
 We present $\color{goldenrod}{SPHINX}$, a versatile multi-modal large language model (MLLM) with a mixer of training tasks, data domains, and visual embeddings. 
 
-- **Task Mix.** For all-purpose capabilities, we mix a variety of vision-language tasks for mutual improvement: VQA, REC, REG, OCR, etc.
+- **Task Mix.** For all-purpose capabilities, we mix a variety of vision-language tasks for mutual improvement: VQA, REC, REG, OCR, DET, POSE, REL DET, T2I, etc.
 
 - **Embedding Mix.** We capture robust visual representations by fusing distinct visual architectures, pre-training, and granularity.
 
@@ -24,6 +24,10 @@ We present $\color{goldenrod}{SPHINX}$, a versatile multi-modal large language m
 <p align="center">                                                                                                                                          <img src="figs/pipeline.png"/ width="90%"> <br>
 </p>
 
+On top of SPHINX, we propose to further mix visual scales and sub-images for better capture fine-grained semantics on high-resolution images.
+<p align="center">                                                                                                                                          
+  <img src="figs/pipeline2.png"/ width="90%"> <br>
+</p>
 
 ## Inference
 ### Installation
