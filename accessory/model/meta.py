@@ -22,7 +22,7 @@ class MetaModel(nn.Module):
     ) -> None:
         super().__init__()
 
-        self.criterion = torch.nn.CrossEntropyLoss(ignore_index=0)
+        self.llama_type = llama_type
 
         ModelArgs = LLM.__dict__[llama_type].ModelArgs
         Transformer = LLM.__dict__[llama_type].Transformer
@@ -31,16 +31,20 @@ class MetaModel(nn.Module):
         for _ in llama_config:
             with open(_, "r") as f:
                 params.update(json.loads(f.read()))
-        model_args: ModelArgs = ModelArgs(
+        llama_args: ModelArgs = ModelArgs(
             max_seq_len=max_seq_len, max_batch_size=32, **params
         )
+
         self.tokenizer = Tokenizer(model_path=tokenizer_path)
-        model_args.vocab_size = self.tokenizer.n_words
+        llama_args.vocab_size = self.tokenizer.n_words
 
-        print("Model Args:\n", model_args)
+        print("Model Args:\n", llama_args)
+        self.llama_args = llama_args
 
-        model = Transformer(model_args, with_visual=with_visual)
+        model = Transformer(llama_args, with_visual=with_visual)
         self.llma = model
+
+        self.criterion = torch.nn.CrossEntropyLoss(ignore_index=0)
 
         self._set_default_trainability()
 
@@ -60,6 +64,7 @@ class MetaModel(nn.Module):
                 param_count_local += param.numel()
         print(f"Trainable parameter count : {param_count_local} (local rank), {param_count_all} (all).")
 
+
     @ staticmethod
     def from_pretrained(pretrined_path:List[str],
                         llama_type: str, llama_config: List[str], tokenizer_path: str,
@@ -76,6 +81,7 @@ class MetaModel(nn.Module):
         assert load_result == {'missing_keys': [], 'unexpected_keys': []}, "checkpoint and model mismatch"
         model.eval()
         return model
+
 
     def get_trainable_params(self):
         llma_trainable = self.llma.get_trainable_params()

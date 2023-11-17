@@ -61,7 +61,7 @@ def main() -> None:
     parser.add_argument("--prompt", type=str, required=True)
 
     # SPHINX model configuration
-    parser.add_argument("--sphinx_type", type=str, choices=["SPHINX", "Long-SPHINX"])
+    parser.add_argument("--sphinx_type", type=str, choices=["SPHINX", "SPHINX-1k"])
     parser.add_argument("--tokenizer_path", type=str)
     parser.add_argument("--pretrained_path", type=str)
     parser.add_argument("--model_parallel_size", type=int, choices=[1,2])
@@ -73,8 +73,8 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    if args.sphinx_type == "Long-SPHINX":
-        args.llama_type = "llama_ens5"  # Long-SPHINX
+    if args.sphinx_type == "SPHINX-1k":
+        args.llama_type = "llama_ens5"  # SPHINX-1k
     elif args.sphinx_type == "SPHINX":
         args.llama_type = "llama_ens"
 
@@ -92,7 +92,7 @@ def main() -> None:
     assert load_result == {'missing_keys': [], 'unexpected_keys': []}, "checkpoint and model mismatch"
     model.eval()
 
-    dataset = Dataset(getattr(model.llma, 'image_size', 224), args.input_path)  # 448 for Long-SPHINX, 224 for SPHINX
+    dataset = Dataset(getattr(model.llma, 'image_size', 224), args.input_path)  # 448 for SPHINX-1k, 224 for SPHINX
     dataloader = torch.utils.data.DataLoader(
         dataset, batch_size=10, shuffle=False, num_workers=4, pin_memory=True,
         sampler=get_local_indices(

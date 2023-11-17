@@ -23,7 +23,7 @@ from PIL import Image
 # *********************** Begin Configuration ***********************
 # todo Please modify the following variables to fit your environment and needs
 
-SPHINX_TYPE = "Long-SPHINX"  # "SPHINX" or "Long-SPHINX"
+SPHINX_TYPE = "SPHINX-1k"  # "SPHINX" or "SPHINX-1k"
 TOKENIZER_PATH = "/PATH/TO/tokenizer.model"  # path to llama tokenizer
 PRETRAINED_PATH = "/PATH/TO/PRETRAINED"
 
@@ -35,8 +35,8 @@ MODEL_PARALLEL_SIZE = 2  # equal to the number of GPUs to use for inference, cur
 # ************************ End Configuration ************************
 
 
-if SPHINX_TYPE == "Long-SPHINX":
-    LLAMA_TYPE = "llama_ens5" # Long-SPHINX
+if SPHINX_TYPE == "SPHINX-1k":
+    LLAMA_TYPE = "llama_ens5" # SPHINX-1k
 elif SPHINX_TYPE == "SPHINX":
     LLAMA_TYPE = "llama_ens"
 else:
@@ -52,7 +52,7 @@ def main(world_size=1, rank=0) -> None:
         backend="nccl", rank=rank, world_size=world_size,
         init_method=f"tcp://127.0.0.1:23560",
     )
-    fs_init.initialize_model_parallel(world_size)
+    fs_init.initialize_model_parallel(model_parallel_size_=world_size)
     torch.cuda.set_device(rank)
 
     torch.manual_seed(1)
@@ -85,7 +85,7 @@ def main(world_size=1, rank=0) -> None:
     if IMAGE_PATH is not None:
         image = Image.open(IMAGE_PATH)
         image = image.convert("RGB")
-        target_size = getattr(model.llma, 'image_size', 224)  # 448 for Long-SPHINX, 224 for SPHINX
+        target_size = getattr(model.llma, 'image_size', 224)  # 448 for SPHINX-1k, 224 for SPHINX
         image = get_transform("padded_resize", target_size)(image).unsqueeze(0).cuda().half()
     else:
         image = None  # SPHINX also supports text-only dialog

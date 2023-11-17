@@ -8,6 +8,7 @@ Try out our [web demo 🚀](http://imagebind-llm.opengvlab.com/) here!
 </p>
 
 ## News
+* **[2023-11-17]** We release SPHINX-V2, featuring the same architecture but with enhanced and broader capabilities! 🔥🔥🔥
 * **[2023-11-09]** We release the [technical report](https://github.com/Alpha-VLLM/LLaMA2-Accessory/blob/main/SPHINX/SPHINX_paper.pdf) of SPHINX 🔥.
 * **[2023-10-17]** We release the demo, code, and model of SPHINX 🎉.
 
@@ -37,9 +38,21 @@ pip install git+https://github.com/facebookresearch/segment-anything.git
 ```
 
 ### Weights
-The checkpoints for SPHINX and Long-SPHINX (a multi-view augmented version) are released on [HuggingFace🤗](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX). Please download them to your own machine. The file structure should appear as follows:
+
+We release the following checkpoints:
+
+| Name         | Architecture                                      | Checkpoint                                                   |
+| ------------ | ------------------------------------------------- | ------------------------------------------------------------ |
+| SPHINX       | [llama_ens](../accessory/model/LLM/llama_ens.py)  | [here](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX) |
+| SPHINX-1K    | [llama_ens5](../accessory/model/LLM/llama_ens.py) | [here](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-1k) |
+| SPHINX-v2-1k | [llama_ens5](../accessory/model/LLM/llama_ens.py) | [here](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-v2-1k) |
+
+*Note that SPHINX-1K was previously called Long-SPHINX*
+
+Please download them to your own machine. The file structure should appear as follows:
+
 ```
-path/to/sphinx
+path/to/checkpoint
 ├── consolidated.00-of-02.model.pth
 └── consolidated.01-of-02.model.pth
 ```
@@ -64,7 +77,7 @@ Execute the following command for demo hosting:
 cd LLaMA2-Accessory/accessory
 python demos/multi_turn_mm_box.py --n_gpus=2 \
 --tokenizer_path=/path/to/tokenizer.model --llama_type=llama_ens \
---pretrained_path /path/to/sphinx/
+--pretrained_path /path/to/checkpoint/
 ```
 Explanation of each argument:
 
@@ -73,13 +86,13 @@ Explanation of each argument:
 + `--llama_type`: The model architecture of SPHINX is defined in [accessory/model/LLM/llama_ens.py](../accessory/model/LLM/llama_ens.py),  and specifying `--llama_type=llama_ens` tells the demo program to use this architecture.
 + `--pretrained_path`: The path to pre-trained checkpoint.
 
-#### Long-SPHINX
+#### SPHINX-1k & SPHINX-v2-1k
 Execute the following command for demo hosting:
 ``` bash
 cd LLaMA2-Accessory/accessory
 python demos/multi_turn_mm_box.py --n_gpus=2 \
 --tokenizer_path=/path/to/tokenizer.model --llama_type=llama_ens5 \
---pretrained_path /path/to/long-sphinx/
+--pretrained_path /path/to/checkpoint/
 ```
 Explanation:
-+ `--llama_type`: The model architecture of Long-SPHINX is defined in [accessory/model/LLM/llama_ens5.py](../accessory/model/LLM/llama_ens5.py), and specifying `--llama_type=llama_ens5` tells the demo program to use this architecture.
++ `--llama_type`: The model architecture of SPHINX-1k is defined in [accessory/model/LLM/llama_ens5.py](../accessory/model/LLM/llama_ens5.py), and specifying `--llama_type=llama_ens5` tells the demo program to use this architecture.
