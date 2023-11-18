@@ -1,13 +1,13 @@
 import sys
 import os
-sys.path.append(os.path.abspath(__file__).rsplit('/', 2)[0])
+sys.path.append(os.path.abspath(__file__).rsplit('/', 3)[0])
 
 import glob
 import os
 import pandas as pd
 import tqdm
 from multiprocessing import Pool
-from model.tokenizer import Tokenizer
+from accessory.model.tokenizer import Tokenizer
 import pickle
 
 

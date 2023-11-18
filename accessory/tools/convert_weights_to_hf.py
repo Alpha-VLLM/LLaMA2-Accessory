@@ -55,15 +55,17 @@ Note:
     to the latest version of ``transformers`` (e.g., >= 4.32.0) should get rid
     of the warning.
 """
+import sys
+import os
+sys.path.append(os.path.abspath(__file__).rsplit('/', 3)[0])
 
 import argparse
 import json
-import os
 from typing import Any, Dict, List
 
 import torch
 
-from util.tensor_parallel import (
+from accessory.util.tensor_parallel import (
     infer_checkpoint_format_and_mp_size,
     load_tensor_parallel_shard_state_dict,
     ShardedTensorLoader,

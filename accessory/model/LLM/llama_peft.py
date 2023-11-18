@@ -14,13 +14,13 @@ from fairscale.nn.model_parallel.layers import (
     ColumnParallelLinear
 )
 from ..peft import LoraColumnParallelLinear, LoraRowParallelLinear
-from util.tensor_type import default_tensor_type
+from accessory.util.tensor_type import default_tensor_type
 
 from ..components import RMSNorm
 import open_clip
 
-import configs.global_configs
-if configs.global_configs.USE_FLASH_ATTENTION:
+from accessory.configs import global_configs
+if global_configs.USE_FLASH_ATTENTION:
     from flash_attn import flash_attn_func
 
 default_linear_init = functools.partial(nn.init.kaiming_uniform_, a=math.sqrt(5))
@@ -95,7 +95,7 @@ class Attention(nn.Module):
 
         self.args = args
 
-        self.flash = configs.global_configs.USE_FLASH_ATTENTION
+        self.flash = global_configs.USE_FLASH_ATTENTION
         self.k_cache, self.v_cache = None, None
 
     def forward(

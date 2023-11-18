@@ -1,7 +1,5 @@
 from typing import Optional, Tuple, Union
 from dataclasses import dataclass
-import math
-import functools
 
 import torch.nn as nn
 import torch
@@ -16,8 +14,8 @@ from fairscale.nn.model_parallel.layers import (
     ColumnParallelLinear
 )
 
-import configs.global_configs
-if configs.global_configs.USE_FLASH_ATTENTION:
+from accessory.configs import global_configs
+if global_configs.USE_FLASH_ATTENTION:
     from flash_attn import flash_attn_func
 
 from .llama import precompute_freqs_cis, reshape_for_broadcast, repeat_kv
@@ -122,7 +120,7 @@ class FalconAttention(nn.Module):
 
         self.args = args
 
-        self.flash = configs.global_configs.USE_FLASH_ATTENTION
+        self.flash = global_configs.USE_FLASH_ATTENTION
         self.k_cache, self.v_cache = None, None
 
     def forward(

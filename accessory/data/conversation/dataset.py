@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 from PIL import Image
 from ..data_reader import read_img_general
 import json
-from model.tokenizer import Tokenizer
+from accessory.model.tokenizer import Tokenizer
 import os
 
 from . import lib as conversation_lib

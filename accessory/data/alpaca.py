@@ -6,7 +6,7 @@ import yaml
 from PIL import Image
 import json
 import pandas as pd
-from model.tokenizer import Tokenizer
+from accessory.model.tokenizer import Tokenizer
 import copy
 import numpy as np
 import os

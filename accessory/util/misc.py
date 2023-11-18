@@ -231,7 +231,7 @@ def init_distributed_mode(args=SimpleNamespace()):
         args.local_rank = args.gpu
         args.dist_url = 'env://'
     elif 'SLURM_PROCID' in os.environ:
-        os.environ['MASTER_PORT'] = str(random.choice(list(range(20000, 30000))))
+        os.environ['MASTER_PORT'] = '8964'
         while 'MASTER_ADDR' not in os.environ or len(os.environ['MASTER_ADDR'].strip()) == 0:
             os.environ['MASTER_ADDR'] = subprocess.check_output('sinfo -Nh -n %s | head -n 1 | awk \'{print $1}\'' % os.environ['SLURM_NODELIST'], shell=True, ).decode().strip()
             time.sleep(1)
@@ -246,7 +246,7 @@ def init_distributed_mode(args=SimpleNamespace()):
         os.environ['RANK'] = str(args.rank)
     else:
         os.environ['MASTER_ADDR'] = "127.0.0.1"
-        os.environ['MASTER_PORT'] = str(random.choice(list(range(20000, 30000))))
+        os.environ['MASTER_PORT'] = '8964'
         os.environ['RANK'] = '0'
         os.environ['LOCAL_RANK'] = '0'
         os.environ['WORLD_SIZE'] = '1'

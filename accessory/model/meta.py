@@ -7,8 +7,8 @@ from fairscale.nn.model_parallel import initialize as fs_init
 
 from .tokenizer import Tokenizer
 from . import LLM
-from util import misc, tensor_parallel
-from util.tensor_type import default_tensor_type
+from accessory.util import misc, tensor_parallel
+from accessory.util.tensor_type import default_tensor_type
 
 import torch.distributed as dist
 

@@ -1,6 +1,6 @@
 import sys
 import os
-sys.path.append(os.path.abspath(__file__).rsplit('/', 2)[0])
+sys.path.append(os.path.abspath(__file__).rsplit('/', 3)[0])
 
 import argparse
 import multiprocessing as mp
@@ -14,13 +14,13 @@ from fairscale.nn.model_parallel import initialize as fs_init
 
 import gradio as gr
 
-from util.misc import setup_for_distributed
-from util.tensor_parallel import load_tensor_parallel_model_list
-from util.tensor_type import default_tensor_type
-from model.meta import MetaModel
-from data.conversation.lib import conv_templates, SeparatorStyle
+from accessory.util.misc import setup_for_distributed
+from accessory.util.tensor_parallel import load_tensor_parallel_model_list
+from accessory.util.tensor_type import default_tensor_type
+from accessory.model.meta import MetaModel
+from accessory.data.conversation.lib import conv_templates, SeparatorStyle
 from PIL import Image
-from data.transform import get_transform
+from accessory.data.transform import get_transform
 
 
 class Ready: pass
@@ -71,7 +71,7 @@ def model_worker(
     load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
     print("load result:\n", load_result)
     if args.quant:
-        from util.quant import quantize
+        from accessory.util.quant import quantize
         print("Quantizing model to 4bit!")
         from transformers.utils.quantization_config import BitsAndBytesConfig
         quantization_config = BitsAndBytesConfig.from_dict(

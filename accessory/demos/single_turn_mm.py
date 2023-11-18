@@ -1,8 +1,8 @@
 import sys
 import os
-sys.path.append(os.path.abspath(__file__).rsplit('/', 2)[0])
+sys.path.append(os.path.abspath(__file__).rsplit('/', 3)[0])
 
-from model.meta import MetaModel
+from accessory.model.meta import MetaModel
 
 import argparse
 import torch
@@ -11,13 +11,13 @@ import gradio as gr
 
 from PIL import Image
 
-from util import misc
+from accessory.util import misc
 from fairscale.nn.model_parallel import initialize as fs_init
 
-from data.alpaca import format_prompt
-from data.transform import get_transform
-from util.tensor_parallel import load_tensor_parallel_model_list
-from util.tensor_type import default_tensor_type
+from accessory.data.alpaca import format_prompt
+from accessory.data.transform import get_transform
+from accessory.util.tensor_parallel import load_tensor_parallel_model_list
+from accessory.util.tensor_type import default_tensor_type
 
 
 def get_args_parser():
@@ -70,7 +70,7 @@ print("load result: ", load_result)
 
 if args.quant:
     print("Quantizing model to 4bit!")
-    from util.quant import quantize
+    from accessory.util.quant import quantize
     from transformers.utils.quantization_config import BitsAndBytesConfig
     quantization_config = BitsAndBytesConfig.from_dict(
         config_dict={
