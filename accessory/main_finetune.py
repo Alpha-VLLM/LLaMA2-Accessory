@@ -106,6 +106,8 @@ def get_args_parser():
                         help='path where to tensorboard log')
     parser.add_argument('--save_interval', default=1, type=int,
                         help='number of epochs between model saving')
+    parser.add_argument('--save_iteration_interval', default=5000, type=int,
+                        help='number of iterations between within-epoch model saving')
     parser.add_argument('--only_save_trainable', default=False, action="store_true",
                         help='only save trainable model parameters')
     parser.add_argument('--device', default='cuda',
@@ -114,19 +116,14 @@ def get_args_parser():
     parser.add_argument('--resume', default='',
                         help='resume from checkpoint')
 
-    parser.add_argument('--num_workers', default=5, type=int)
+    parser.add_argument('--num_workers', default=2, type=int)
     parser.add_argument('--pin_mem', action='store_true',
                         help='Pin CPU memory in DataLoader for more efficient (sometimes) transfer to GPU.')
     parser.add_argument('--no_pin_mem', action='store_false', dest='pin_mem')
     parser.set_defaults(pin_mem=True)
 
-    # distributed training parameters
-    parser.add_argument('--world_size', default=1, type=int,
-                        help='number of distributed processes')
-    parser.add_argument('--local_rank', default=-1, type=int)
+    # distributed training setting
     parser.add_argument('--dist_on_itp', action='store_true')
-    parser.add_argument('--dist_url', default='env://',
-                        help='url used to set up distributed training')
 
     parser.add_argument('--model_parallel_size', type=int, default=1)
     parser.add_argument('--data_parallel', type=str, choices=['sdp', 'fsdp'], default='sdp')
@@ -277,7 +274,8 @@ def main(args):
         DatasetClass = FinetuneDialogDataset
     else:
         DatasetClass = FinetuneDataset
-    dataset_train = DatasetClass(args.data_config, get_transform(args.image_transform),
+    dataset_train = DatasetClass(args.data_config,
+                                 transform=get_transform(args.image_transform, getattr(model.llma, 'image_size', 224)),
                                  max_words=args.max_words, image_words=model.get_image_words(),
                                  tokenizer_path=args.tokenizer_path)
     print(dataset_train)

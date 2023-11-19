@@ -1,21 +1,12 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
-
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-# --------------------------------------------------------
-# References:
-# DeiT: https://github.com/facebookresearch/deit
-# BEiT: https://github.com/microsoft/unilm/tree/master/beit
-# --------------------------------------------------------
-
 import builtins
 import datetime
 import os
+import random
 import time
 from collections import defaultdict, deque
 from pathlib import Path
 import subprocess
+from types import SimpleNamespace
 
 import torch
 import torch.distributed as dist
@@ -222,22 +213,25 @@ def save_on_master(*args, **kwargs):
     if is_main_process():
         torch.save(*args, **kwargs)
 
-def init_distributed_mode(args):
-    if args.dist_on_itp:
+def init_distributed_mode(args=SimpleNamespace()):
+    if getattr(args, 'dist_on_itp', False):
         args.rank = int(os.environ['OMPI_COMM_WORLD_RANK'])
         args.world_size = int(os.environ['OMPI_COMM_WORLD_SIZE'])
         args.gpu = int(os.environ['OMPI_COMM_WORLD_LOCAL_RANK'])
+        args.local_rank = args.gpu
         args.dist_url = "tcp://%s:%s" % (os.environ['MASTER_ADDR'], os.environ['MASTER_PORT'])
         os.environ['LOCAL_RANK'] = str(args.gpu)
         os.environ['RANK'] = str(args.rank)
         os.environ['WORLD_SIZE'] = str(args.world_size)
         # ["RANK", "WORLD_SIZE", "MASTER_ADDR", "MASTER_PORT", "LOCAL_RANK"]
     elif 'RANK' in os.environ and 'WORLD_SIZE' in os.environ:
-        args.rank = int(os.environ["RANK"])
         args.world_size = int(os.environ['WORLD_SIZE'])
+        args.rank = int(os.environ["RANK"])
         args.gpu = int(os.environ['LOCAL_RANK'])
+        args.local_rank = args.gpu
+        args.dist_url = 'env://'
     elif 'SLURM_PROCID' in os.environ:
-        os.environ['MASTER_PORT'] = '8964'
+        os.environ['MASTER_PORT'] = str(random.choice(list(range(20000, 30000))))
         while 'MASTER_ADDR' not in os.environ or len(os.environ['MASTER_ADDR'].strip()) == 0:
             os.environ['MASTER_ADDR'] = subprocess.check_output('sinfo -Nh -n %s | head -n 1 | awk \'{print $1}\'' % os.environ['SLURM_NODELIST'], shell=True, ).decode().strip()
             time.sleep(1)
@@ -246,14 +240,20 @@ def init_distributed_mode(args):
         args.rank = int(os.environ['SLURM_PROCID'])
         args.gpu = args.rank % torch.cuda.device_count()
         args.local_rank = args.gpu
+        args.dist_url = 'env://'
         os.environ['LOCAL_RANK'] = str(args.gpu)
         os.environ['WORLD_SIZE'] = str(args.world_size)
         os.environ['RANK'] = str(args.rank)
     else:
-        print('Not using distributed mode')
-        setup_for_distributed(is_master=True)  # hack
-        args.distributed = False
-        return
+        os.environ['MASTER_ADDR'] = "127.0.0.1"
+        os.environ['MASTER_PORT'] = str(random.choice(list(range(20000, 30000))))
+        os.environ['RANK'] = '0'
+        os.environ['LOCAL_RANK'] = '0'
+        os.environ['WORLD_SIZE'] = '1'
+        args.rank = 0
+        args.gpu = args.local_rank = 0
+        args.world_size = 1
+        args.dist_url = 'env://'
 
     args.distributed = True
 
@@ -485,7 +485,7 @@ def resume_stage2(args, model, optimizer, loss_scaler, dataset_train):
                 int(other_state_dict['epoch']) if other_state_dict.get('epoch', None) is not None else None,
                 int(other_state_dict['iter']) + 1 if other_state_dict.get('iter', None) is not None else None
             ]
-            if _epoch_iter[1] is None and _epoch_iter[0] is not None:
+            if _epoch_iter[1] is None and _epoch_iter[0] is not None:  # the epoch has finished
                 _epoch_iter[0] += 1
 
             print(f"load other from {consilidated_other_checkpoint_path}")

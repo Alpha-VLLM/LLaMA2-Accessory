@@ -36,7 +36,7 @@ while true; do
       break
       ;;
     3|4|5)  # Updated case for multi-modal options
-      OPTIONS=("llama_qformerv2" "llama_qformerv2_peft" "llama_ens")
+      OPTIONS=("llama_qformerv2" "llama_qformerv2_peft" "llama_ens" "llama_ens5" "llama_ens10" "llama_ens5p2" "llama_ens_peft")
       break
       ;;
     * ) echo -e "${RED}Invalid option. Please re-enter.${NC}";;

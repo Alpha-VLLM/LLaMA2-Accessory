@@ -1,25 +1,30 @@
+import random
 import warnings
 
 import torch
 import yaml
 from torch.utils.data import Dataset
 from PIL import Image
+from ..data_reader import read_img_general
 import json
 from model.tokenizer import Tokenizer
-from ..transform import T_random_resized_crop
 import os
 
 from . import lib as conversation_lib
 
+import traceback
+
 IGNORE_INDEX = -100
 
 DEFAULT_IMAGE_TOKEN = "<image>"
-try:
-    from torchvision.transforms import InterpolationMode
 
-    BICUBIC = InterpolationMode.BICUBIC
-except ImportError:
-    BICUBIC = Image.BICUBIC
+
+class LabelAllZeroError(Exception):
+    def __init__(self, message=None):
+        self.message = message
+
+    def __str__(self):
+        return f'LabelAllZeroError: {self.message}'
 
 
 class ConversationGenerator:
@@ -85,7 +90,7 @@ class ConversationGenerator:
 
 
 class FinetuneDialogDataset(Dataset):
-    def __init__(self, config_path, transform=T_random_resized_crop, max_words=30, image_words=257, tokenizer_path=None):
+    def __init__(self, config_path, transform, max_words=30, image_words=257, tokenizer_path=None):
         print(f"read dataset config from {config_path}")
         with open(config_path, 'r') as f:
             self.config = yaml.load(f, Loader=yaml.FullLoader)
@@ -143,11 +148,11 @@ class FinetuneDialogDataset(Dataset):
     def __len__(self):
         return len(self.ann)
 
-    def __getitem__(self, index):
+    def get_item_func(self, index):
         data_item = self.ann[index]
         if 'image' in data_item.keys():
             filename = data_item['image']
-            image = Image.open(filename).convert('RGB')
+            image = read_img_general(filename)
             image = self.transform(image)
         else:
             image = None
@@ -194,11 +199,31 @@ class FinetuneDialogDataset(Dataset):
         input2[~input2_mask] = 0
         labels[~label_mask] = 0
         input2_mask = input2_mask.float()
-        label_mask = label_mask.float()
+
+        if torch.count_nonzero(labels) == 0:
+            raise LabelAllZeroError()
+
         if image is None:
             return input2, labels, input2_mask
         else:
             return input2, labels, input2_mask, image
+
+    def __getitem__(self, index):
+        try:
+            return self.get_item_func(index)
+        except Exception as e:
+            if not isinstance(e, LabelAllZeroError):
+                print(f"Item {index} errored, annotation:\n"
+                      f"{self.ann[index]}\n"
+                      f"Error:\n"
+                      f"{traceback.format_exc()}", force=True)
+            for group_name, indices_this_group in self.group_indices.items():
+                if indices_this_group[0] <= index <= indices_this_group[-1]:
+                    if index == indices_this_group[0]:
+                        new_index = indices_this_group[-1]
+                    else:
+                        new_index = index - 1
+                    return self[new_index]
 
     def groups(self):
         return list(self.group_indices.values())

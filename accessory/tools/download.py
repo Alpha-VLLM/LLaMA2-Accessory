@@ -9,7 +9,7 @@ model_list = {
         'sg': ['InternLM','Falcon','Falcon_180b']
     },
     'finetune': {
-        'mm': ['alpacaLlava_llamaQformerv2', 'alpacaLlava_llamaQformerv2_13b', 'alpacaLlava_llamaQformerv2Peft_13b', 'caption_llamaQformerv2', 'caption_llamaQformerv2_13b', 'sphinx-sft'],
+        'mm': ['alpacaLlava_llamaQformerv2', 'alpacaLlava_llamaQformerv2_13b', 'alpacaLlava_llamaQformerv2Peft_13b', 'caption_llamaQformerv2', 'caption_llamaQformerv2_13b', 'SPHINX/SPHINX-1k','SPHINX/SPHINX'],
         'sg': ['alpaca', 'alpaca_internLM_en', 'alpaca_internLM_zh', 'alpaca_llamaPeft_normBias', 'dialog_flan', 'dialog_lima', 'dialog_moss', 'dialog_platypus', 'dialog_sharegpt', 'dialog_sharegpt_70b', 'dialog_ultra', 'dialog_wizardcode', 'dialog_wizardcode_codellama', 'dialog_wizardcode_loadcode220k', 'dialog_wizardLM', 'gorilla']
     }
 }

@@ -240,7 +240,7 @@ def write_model_weights(
         json.dump(model_index, f, indent=2)
 
 
-def write_tokenizer(tokenizer_path: str, dest_dir: str) -> None:
+def write_tokenizer(tokenizer_path: str, dest_dir: str) -> Any:
     # From https://github.com/huggingface/transformers/blob/a6e6b1c622d8d08e2510a82cb6266d7b654f1cbf/src/transformers/models/llama/convert_llama_weights_to_hf.py  # noqa: E501
     try:
         from transformers import LlamaTokenizerFast
@@ -255,10 +255,11 @@ def write_tokenizer(tokenizer_path: str, dest_dir: str) -> None:
     tokenizer_class = LlamaTokenizerFast or LlamaTokenizer
     tokenizer = tokenizer_class(tokenizer_path)
     tokenizer.save_pretrained(dest_dir)
+    return tokenizer
 
 
 def write_configs(
-    params: Dict[str, Any], dtype: torch.dtype, dest_dir: str
+    params: Dict[str, Any], dtype: torch.dtype, dest_dir: str, vocab_size: int
 ) -> None:
     def calculate_hidden_dim():
         hidden_dim = params["dim"] * 4
@@ -288,7 +289,8 @@ def write_configs(
         "num_key_value_heads": params.get("n_kv_heads", params["n_heads"]),
         "pad_token_id": 0,
         "pretraining_tp": 1,
-        "rms_norm_eps": 1e-05,
+        "rms_norm_eps": params.get("norm_eps", 1e-5),
+        "rope_theta": params.get("rope_theta", 10000),
         "rope_scaling": None if "rope_scaling" not in params else {
             "type": "linear",
             "factor": params["rope_scaling"],
@@ -301,7 +303,7 @@ def write_configs(
         }[dtype],
         "transformers_version": transformers.__version__,
         "use_cache": True,
-        "vocab_size": 32000
+        "vocab_size": vocab_size
     }
     with open(os.path.join(dest_dir, "config.json"), "w") as f:
         json.dump(config, f, indent=2)
@@ -325,9 +327,9 @@ def write_hf_ckpt(
     print("Writing model weights ...")
     write_model_weights(hf_state_dict, dest_dir)
     print("Writing tokenizer ...")
-    write_tokenizer(tokenizer_path, dest_dir)
+    tokenizer = write_tokenizer(tokenizer_path, dest_dir)
     print("Writing configs ...")
-    write_configs(params, torch_dtype, dest_dir)
+    write_configs(params, torch_dtype, dest_dir, tokenizer.vocab_size)
 
 
 def main() -> None:
