@@ -1,4 +1,5 @@
 from typing import Optional, Tuple, Union
+from importlib import resources as impresources
 from dataclasses import dataclass
 import math
 import functools
@@ -21,7 +22,7 @@ from ..components import RMSNorm
 from transformers import Blip2Processor, Blip2Model, Blip2Config
 import open_clip
 
-
+import accessory
 from accessory.configs import global_configs
 if global_configs.USE_FLASH_ATTENTION:
     from flash_attn import flash_attn_func
@@ -299,7 +300,8 @@ class Transformer(nn.Module):
                     "Salesforce/blip2-opt-2.7b", torch_dtype=self.norm.weight.dtype
                 )
             else:
-                self.qformer = Blip2Model(Blip2Config.from_pretrained("Salesforce/blip2-opt-2.7b"))
+                self.qformer = Blip2Model(Blip2Config.from_pretrained(
+                    str(impresources.files(accessory)/'resources/hf/Salesforce/blip2-opt-2.7b/config.json')))
             self.qformer.language_projection = None
             self.qformer.language_model = None
             self.qformer.to(self.norm.weight)
