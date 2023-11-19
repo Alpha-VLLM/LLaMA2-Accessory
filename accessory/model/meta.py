@@ -27,19 +27,18 @@ class MetaModel(nn.Module):
         ModelArgs = LLM.__dict__[llama_type].ModelArgs
         Transformer = LLM.__dict__[llama_type].Transformer
 
-        params = {}
+        llama_args = {}
         for _ in llama_config:
             with open(_, "r") as f:
-                params.update(json.loads(f.read()))
+                llama_args.update(json.loads(f.read()))
         llama_args: ModelArgs = ModelArgs(
-            max_seq_len=max_seq_len, max_batch_size=32, **params
+            max_seq_len=max_seq_len, max_batch_size=32, **llama_args
         )
 
         self.tokenizer = Tokenizer(model_path=tokenizer_path)
         llama_args.vocab_size = self.tokenizer.n_words
 
         print("Model Args:\n", llama_args)
-        self.llama_args = llama_args
 
         model = Transformer(llama_args, with_visual=with_visual)
         self.llma = model
@@ -134,8 +133,8 @@ class MetaModel(nn.Module):
         return_logits: bool = False
     ) -> List[str]:
         bsz = len(prompts)
-        params = self.llma.params
-        assert bsz <= params.max_batch_size, (bsz, params.max_batch_size)
+        args = self.llma.args
+        assert bsz <= args.max_batch_size, (bsz, args.max_batch_size)
 
         prompt_tokens = [self.tokenizer.encode(
             x, bos=True, eos=False) for x in prompts]
@@ -143,7 +142,7 @@ class MetaModel(nn.Module):
         min_prompt_size = min([len(t) for t in prompt_tokens])
         max_prompt_size = max([len(t) for t in prompt_tokens])
 
-        max_seq_len = params.max_seq_len
+        max_seq_len = args.max_seq_len
         if images is not None:
             max_seq_len -= self.llma.image_words
 
@@ -200,11 +199,11 @@ class MetaModel(nn.Module):
         temperature: float = 0.8,
         top_p: float = 0.95,
     ):
-        params = self.llma.params
+        args = self.llma.args
 
         prompt_tokens = self.tokenizer.encode(prompt, bos=True, eos=False)
         # truncate from the left. leave some space for generation.
-        max_seq_len = params.max_seq_len
+        max_seq_len = args.max_seq_len
         if images is not None:
             max_seq_len -= self.llma.image_words
 

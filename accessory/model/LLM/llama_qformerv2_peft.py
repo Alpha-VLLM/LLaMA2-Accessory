@@ -258,27 +258,27 @@ class TransformerBlock(nn.Module):
 
 class Transformer(nn.Module):
     is_peft = True
-    def __init__(self, params: ModelArgs, with_visual=False):
+    def __init__(self, args: ModelArgs, with_visual=False):
         super().__init__()
-        self.params = params
-        self.vocab_size = params.vocab_size
-        self.n_layers = params.n_layers
+        self.args = args
+        self.vocab_size = args.vocab_size
+        self.n_layers = args.n_layers
         self.tok_embeddings = ParallelEmbedding(
-            params.vocab_size, params.dim, init_method=default_linear_init
+            args.vocab_size, args.dim, init_method=default_linear_init
         )
 
         self.layers = torch.nn.ModuleList()
-        for layer_id in range(params.n_layers):
-            self.layers.append(TransformerBlock(layer_id, params))
+        for layer_id in range(args.n_layers):
+            self.layers.append(TransformerBlock(layer_id, args))
 
-        self.norm = RMSNorm(params.dim, eps=params.norm_eps)
+        self.norm = RMSNorm(args.dim, eps=args.norm_eps)
         self.output = ColumnParallelLinear(
-            params.dim, params.vocab_size, bias=False, init_method=default_linear_init
+            args.dim, args.vocab_size, bias=False, init_method=default_linear_init
         )
 
         self.freqs_cis = precompute_freqs_cis(
-            self.params.dim // self.params.n_heads, self.params.max_seq_len * 2,
-            theta=self.params.rope_theta, scaling=self.params.rope_scaling
+            self.args.dim // self.args.n_heads, self.args.max_seq_len * 2,
+            theta=self.args.rope_theta, scaling=self.args.rope_scaling
         )
 
         self.image_words = 0
@@ -291,13 +291,13 @@ class Transformer(nn.Module):
             self.qformer.language_model = None
 
             self.qformer_proj = nn.Sequential(
-                nn.Linear(768, params.dim),
-                nn.LayerNorm(params.dim)
+                nn.Linear(768, args.dim),
+                nn.LayerNorm(args.dim)
             )
             self.image_words = 32
             # add image tags
-            self.start_img = nn.Parameter(torch.rand(1, 1, params.dim))
-            self.end_img = nn.Parameter(torch.rand(1, 1, params.dim))
+            self.start_img = nn.Parameter(torch.rand(1, 1, args.dim))
+            self.end_img = nn.Parameter(torch.rand(1, 1, args.dim))
 
 
     def get_trainable_params(self):
@@ -378,7 +378,7 @@ class Transformer(nn.Module):
 
     def _allocate_kv_cache(self, max_batch_size: int) -> None:
         for layer in self.layers:
-            layer.attention.allocate_kv_cache(max_batch_size, self.params.max_seq_len)
+            layer.attention.allocate_kv_cache(max_batch_size, self.args.max_seq_len)
 
     def _destroy_kv_cache(self) -> None:
         for layer in self.layers:

@@ -281,36 +281,36 @@ class PackedFlashBaseLayer1D(nn.Module):
 
 
 class Transformer(nn.Module):
-    def __init__(self, params: ModelArgs, with_visual=False):
+    def __init__(self, args: ModelArgs, with_visual=False):
         super().__init__()
         if with_visual:
             raise NotImplementedError
 
-        self.params = params
-        self.vocab_size = params.vocab_size
+        self.args = args
+        self.vocab_size = args.vocab_size
 
-        self.embedding = ParallelEmbedding(params.vocab_size, params.hidden_size)
+        self.embedding = ParallelEmbedding(args.vocab_size, args.hidden_size)
 
         self.layers = nn.ModuleList(
             [
-                PackedFlashBaseLayer1D(lid, params)
-                for lid in range(params.num_layers)
+                PackedFlashBaseLayer1D(lid, args)
+                for lid in range(args.num_layers)
             ]
         )
 
-        if params.norm_type == "rmsnorm":
-            self.norm = RMSNorm(params.hidden_size, eps=params.layer_norm_epsilon)
+        if args.norm_type == "rmsnorm":
+            self.norm = RMSNorm(args.hidden_size, eps=args.layer_norm_epsilon)
         else:
-            self.norm = nn.LayerNorm(params.hidden_size, eps=params.layer_norm_epsilon)
+            self.norm = nn.LayerNorm(args.hidden_size, eps=args.layer_norm_epsilon)
         self.head = ColumnParallelLinear(
-            params.hidden_size, params.vocab_size, bias=False
+            args.hidden_size, args.vocab_size, bias=False
         )
         for _, param in self.head.named_parameters():
             normal_(param, std=0.0052)
 
         self.freqs_cis = precompute_freqs_cis(
-            self.params.hidden_size // self.params.num_attention_heads, self.params.max_seq_len * 2,
-            theta=self.params.rope_theta, scaling=self.params.rope_scaling
+            self.args.hidden_size // self.args.num_attention_heads, self.args.max_seq_len * 2,
+            theta=self.args.rope_theta, scaling=self.args.rope_scaling
         )
 
         self.image_words = 0
@@ -380,7 +380,7 @@ class Transformer(nn.Module):
 
     def _allocate_kv_cache(self, max_batch_size: int) -> None:
         for layer in self.layers:
-            layer.mixer.allocate_kv_cache(max_batch_size, self.params.max_seq_len)
+            layer.mixer.allocate_kv_cache(max_batch_size, self.args.max_seq_len)
 
     def _destroy_kv_cache(self) -> None:
         for layer in self.layers:
