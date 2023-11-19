@@ -1,5 +1,8 @@
 import warnings
 from typing import List, Dict, Optional, Iterator, Tuple
+from pathlib import Path
+from time import sleep
+import h5py
 import random
 import torch
 import yaml
@@ -15,69 +18,118 @@ from .system_prompt import format_prompt
 
 
 class FinetuneDataset(Dataset):
-    def __init__(self, config_path, transform, max_words=30, image_words=257, tokenizer_path=None):
+    def __init__(self, config_path, transform, max_words=30, image_words=257, tokenizer_path=None,
+                 cache_on_disk=False, rank=0):
+
         print(f"read dataset config from {config_path}")
         with open(config_path, 'r') as f:
             self.config = yaml.load(f, Loader=yaml.FullLoader)
         print("DATASET CONFIG:")
         print(self.config)
-        group_ann = {}
-        for meta in self.config['META']:
-            meta_path, meta_type = meta['path'], meta['type']
-            meta_ext = os.path.splitext(meta_path)[-1]
-            #   read data meta file
-            #   meta_l should finally be a list of data items, and each data item should be a dict
-            if meta_ext == ".json":
-                with open(meta_path) as f:
-                    meta_l = json.load(f)
-            elif meta_ext == ".jsonl":
-                meta_l = []
-                with open(meta_path) as f:
-                    for i, line in enumerate(f):
-                        try:
-                            meta_l.append(json.loads(line))
-                        except json.decoder.JSONDecodeError as e:
-                            print(f"Error decoding the following jsonl line ({i}):\n{line.rstrip()}", force=True)
-                            raise e
-            elif meta_ext == ".csv":
-                with open(meta_path) as f:
-                    chunk = pd.read_csv(meta_path, sep='\t', engine="pyarrow")
-                    meta_l = chunk.to_dict(orient="record")
-            else:
-                raise NotImplementedError(
-                    f"Unknown meta file extension: \"{meta_ext}\". "
-                    f"Currently, .json, .jsonl, and .csv files are supported. "
-                    "If you are using a supported format, please set the file extension so that the proper parsing "
-                    "routine can be called."
+
+
+        self.cache_on_disk = cache_on_disk
+        if cache_on_disk:
+            # save data items on disk to avoid duplicating annotations in each rank,
+            # which could cause a hugh waste of CPU memory
+            config_identifier = config_path
+            disallowed_chars = ['/', '\\', '.', '?', '!']
+            for _ in disallowed_chars:
+                config_identifier = config_identifier.replace(_, '-')
+            self.cache_dir = f"./accessory_data_cache/{config_identifier}"
+            if rank == 0:
+                Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
+        else:
+            self.cache_dir = None
+
+
+        if not cache_on_disk or rank == 0:
+
+            group_ann = {}
+            for meta in self.config['META']:
+                meta_path, meta_type = meta['path'], meta['type']
+                meta_ext = os.path.splitext(meta_path)[-1]
+                #   read data meta file
+                #   meta_l should finally be a list of data items, and each data item should be a dict
+                if meta_ext == ".json":
+                    with open(meta_path) as f:
+                        meta_l = json.load(f)
+                elif meta_ext == ".jsonl":
+                    meta_l = []
+                    with open(meta_path) as f:
+                        for i, line in enumerate(f):
+                            try:
+                                meta_l.append(json.loads(line))
+                            except json.decoder.JSONDecodeError as e:
+                                print(f"Error decoding the following jsonl line ({i}):\n{line.rstrip()}", force=True)
+                                raise e
+                elif meta_ext == ".csv":
+                    with open(meta_path) as f:
+                        chunk = pd.read_csv(meta_path, sep='\t', engine="pyarrow")
+                        meta_l = chunk.to_dict(orient="record")
+                else:
+                    raise NotImplementedError(
+                        f"Unknown meta file extension: \"{meta_ext}\". "
+                        f"Currently, .json, .jsonl, and .csv files are supported. "
+                        "If you are using a supported format, please set the file extension so that the proper parsing "
+                        "routine can be called."
+                    )
+
+                if meta.get("preprocess", None) is not None:
+                    meta_l = MetaPreprocessor().preprocess(meta_l, meta['preprocess'])
+
+                prompt_type = meta.get('prompt_type', 'alpaca')
+                print(f"system prompt: {prompt_type}")
+                for _ in meta_l:
+                    _['sys_prompt'] = prompt_type
+
+                if meta_type not in group_ann:
+                    group_ann[meta_type] = []
+                print(f"{meta_path}, type{meta_type}: len {len(meta_l)}")
+                group_ann[meta_type] += meta_l
+
+            # sort group_ann for higher efficiency (items in one global batch with similar length)
+            for meta_type, meta_l in group_ann.items():
+                meta_l.sort(
+                    key=lambda data_item: len(format_prompt(data_item, data_item["sys_prompt"]) + data_item['output'])
                 )
 
-            if meta.get("preprocess", None) is not None:
-                meta_l = MetaPreprocessor().preprocess(meta_l, meta['preprocess'])
+            ann = sum(list(group_ann.values()), start=[])
+            group_indice_range = {}
+            start_pos = 0
+            for meta_type, meta_l in group_ann.items():
+                group_indice_range[meta_type] = [start_pos, start_pos + len(meta_l)]
+                start_pos = start_pos + len(meta_l)
 
-            prompt_type = meta.get('prompt_type', 'alpaca')
-            print(f"system prompt: {prompt_type}")
-            for _ in meta_l:
-                _['sys_prompt'] = prompt_type
+            if not cache_on_disk:
+                self.ann = ann
+                self.group_indices = {key: list(range(val[0], val[1])) for key, val in group_indice_range.items()}
+            else:
+                # when cache on disk, rank0 saves items to an h5 file
+                if (Path(self.cache_dir)/'data.h5').exists() and (Path(self.cache_dir)/'ready').exists():
+                    print(f"use existing h5 data cache: {Path(self.cache_dir)}")
+                else:
+                    serialized_ann = [json.dumps(_) for _ in ann]
+                    print(f"start to build data cache to: {Path(self.cache_dir)}")
+                    with h5py.File(Path(self.cache_dir)/'data.h5', 'w') as file:
+                        dt = h5py.vlen_dtype(str)
+                        h5_ann = file.create_dataset("ann", (len(serialized_ann),), dtype=dt)
+                        h5_ann[:] = serialized_ann
+                        file.create_dataset("group_indice_range", data=json.dumps(group_indice_range))
+                    with open(Path(self.cache_dir)/'ready', 'w') as f:
+                        f.write("ready")
+                    print(f"data cache built")
 
-            if meta_type not in group_ann:
-                group_ann[meta_type] = []
-            print(f"{meta_path}, type{meta_type}: len {len(meta_l)}")
-            group_ann[meta_type] += meta_l
+        if self.cache_on_disk:
+            while not (Path(self.cache_dir)/'ready').exists():
+                # cache has not yet been completed by rank 0
+                assert rank != 0
+                sleep(1)
+            cache_file = h5py.File(Path(self.cache_dir) / 'data.h5', 'r')
+            self.ann = cache_file['ann']
+            group_indice_range = json.loads(cache_file['group_indice_range'].asstr()[()])
+            self.group_indices = {key: list(range(val[0], val[1])) for key, val in group_indice_range.items()}
 
-        # sort group_ann for higher efficiency (items in one global batch with similar length)
-        for meta_type, meta_l in group_ann.items():
-            meta_l.sort(
-                key=lambda data_item: len(format_prompt(data_item, data_item["sys_prompt"]) + data_item['output'])
-            )
-
-        self.group_ann = group_ann
-        self.ann = sum(list(self.group_ann.values()), start=[])
-
-        self.group_indices = {}
-        start_pos = 0
-        for meta_type, meta_l in self.group_ann.items():
-            self.group_indices[meta_type] = list(range(start_pos, start_pos + len(meta_l)))
-            start_pos = start_pos + len(meta_l)
 
         print(f"total length: {len(self)}")
         self.transform = transform
@@ -89,7 +141,10 @@ class FinetuneDataset(Dataset):
         return len(self.ann)
 
     def __getitem__(self, index):
-        data_item: dict = self.ann[index]
+        data_item = self.ann[index]
+        if self.cache_on_disk:
+            data_item = json.loads(data_item)
+
         image = data_item.get("image", None)
         if image is not None:
             image = Image.open(image).convert('RGB')

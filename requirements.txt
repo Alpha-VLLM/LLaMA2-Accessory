@@ -18,3 +18,4 @@ bitsandbytes
 httpx[socks]
 einops
 regex
+h5py
