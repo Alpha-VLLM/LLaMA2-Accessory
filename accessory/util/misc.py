@@ -7,6 +7,7 @@ from collections import defaultdict, deque
 from pathlib import Path
 import subprocess
 from types import SimpleNamespace
+import json
 
 import torch
 import torch.distributed as dist
@@ -21,6 +22,8 @@ from torch.distributed.fsdp import (
 from fairscale.nn.model_parallel import initialize as fs_init
 
 from .clip_grad import clip_grad_norm
+
+from accessory.model.meta import MetaModel
 
 class SmoothedValue(object):
     """Track a series of values and provide access to smoothed values over a
@@ -331,7 +334,8 @@ class NativeScalerWithGradNormCount:
 
 
 
-def save_checkpoint(output_dir, args, model, optimizer, loss_scaler, dataset_state, epoch=None, iteration=None):
+def save_checkpoint(output_dir, args, model: MetaModel, optimizer,
+                    loss_scaler, dataset_state, epoch=None, iteration=None):
     save_name = f"epoch{epoch}"
     if iteration is not None:
         save_name += f"-iter{iteration}"
@@ -365,12 +369,26 @@ def save_checkpoint(output_dir, args, model, optimizer, loss_scaler, dataset_sta
                     "model": {key: val.to(save_dtype) for key, val in model.state_dict().items()},
                 }
 
-            save_path = os.path.join(
+            model_save_path = os.path.join(
                 save_dir,
                 f"consolidated.{mp_rank:02d}-of-{mp_world_size:02d}.model.pth",
             )
             if fs_init.get_data_parallel_rank() == 0:
-                torch.save(consolidated_model_state_dict, save_path)
+                torch.save(consolidated_model_state_dict, model_save_path)
+
+            # Tokenizer
+            if dist.get_rank() == 0:
+                model.tokenizer.save(save_dir)
+
+            # Model Args
+            if dist.get_rank() == 0:
+                model_args_save_path = os.path.join(
+                    save_dir,
+                    f"llm_config.json",
+                )
+                with open(model_args_save_path, 'w') as f:
+                    json.dump(dict(model.llma.args), f, indent=2)
+
         _save_model()
         print("model saved")
 
