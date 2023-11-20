@@ -102,6 +102,7 @@ class FinetuneDialogDataset(Dataset):
         print("DATASET CONFIG:")
         print(self.config)
 
+
         self.cache_on_disk = cache_on_disk
         if cache_on_disk:
             # save data items on disk to avoid duplicating annotations in each rank,
@@ -115,10 +116,32 @@ class FinetuneDialogDataset(Dataset):
                 Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
         else:
             self.cache_dir = None
-            
 
-        if not cache_on_disk or rank == 0:
 
+        # determine if the dataset need to collect annotations from meta files in self.config
+        # the collection is needed when:
+        # -
+        #   cache_on_disk is False, so every rank collects and stores the annotations independently, OR
+        # -
+        #   cache_on_disk is true & rank == 0 & no off-the-shelf annotation cache, e.g. those created by
+        #   prior experiments and runs, exists.
+        if not cache_on_disk:
+            need_collect_anno = True
+        else:
+            if rank != 0 :
+                need_collect_anno = False
+            else:
+                if (Path(self.cache_dir)/'data.h5').exists() and (Path(self.cache_dir)/'ready').exists():
+                    need_collect_anno = False  # off-the-shelf annotation cache exists
+                    print(f"Use existing h5 data cache: {Path(self.cache_dir)}\n"
+                          f"Note: if the actual data defined by {config_path} has changed since your last run, "
+                          f"please delete the cache manually and re-run this expeirment, or the data actually used "
+                          f"will not be updated")
+                else:
+                    need_collect_anno = True
+
+
+        if need_collect_anno:
             group_ann = {}
             for meta in self.config['META']:
                 meta_path, meta_type = meta['path'], meta['type']
@@ -163,19 +186,16 @@ class FinetuneDialogDataset(Dataset):
                 self.group_indices = {key: list(range(val[0], val[1])) for key, val in group_indice_range.items()}
             else:
                 # when cache on disk, rank0 saves items to an h5 file
-                if (Path(self.cache_dir)/'data.h5').exists() and (Path(self.cache_dir)/'ready').exists():
-                    print(f"use existing h5 data cache: {Path(self.cache_dir)}")
-                else:
-                    serialized_ann = [json.dumps(_) for _ in ann]
-                    print(f"start to build data cache to: {Path(self.cache_dir)}")
-                    with h5py.File(Path(self.cache_dir)/'data.h5', 'w') as file:
-                        dt = h5py.vlen_dtype(str)
-                        h5_ann = file.create_dataset("ann", (len(serialized_ann),), dtype=dt)
-                        h5_ann[:] = serialized_ann
-                        file.create_dataset("group_indice_range", data=json.dumps(group_indice_range))
-                    with open(Path(self.cache_dir)/'ready', 'w') as f:
-                        f.write("ready")
-                    print(f"data cache built")
+                serialized_ann = [json.dumps(_) for _ in ann]
+                print(f"start to build data cache to: {Path(self.cache_dir)}")
+                with h5py.File(Path(self.cache_dir)/'data.h5', 'w') as file:
+                    dt = h5py.vlen_dtype(str)
+                    h5_ann = file.create_dataset("ann", (len(serialized_ann),), dtype=dt)
+                    h5_ann[:] = serialized_ann
+                    file.create_dataset("group_indice_range", data=json.dumps(group_indice_range))
+                with open(Path(self.cache_dir)/'ready', 'w') as f:
+                    f.write("ready")
+                print(f"data cache built")
 
         if self.cache_on_disk:
             while not (Path(self.cache_dir)/'ready').exists():
