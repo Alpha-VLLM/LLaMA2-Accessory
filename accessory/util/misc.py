@@ -1,6 +1,7 @@
 import builtins
 import datetime
 import os
+import dataclasses
 import random
 import time
 from collections import defaultdict, deque
@@ -387,7 +388,7 @@ def save_checkpoint(output_dir, args, model: MetaModel, optimizer,
                     f"llm_config.json",
                 )
                 with open(model_args_save_path, 'w') as f:
-                    json.dump(dict(model.llma.args), f, indent=2)
+                    json.dump(dataclasses.asdict(model.llma.args), f, indent=2)
 
         _save_model()
         print("model saved")
