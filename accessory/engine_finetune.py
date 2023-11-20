@@ -1,14 +1,11 @@
 import math
 import sys
-import os
-from typing import Iterable
 import contextlib
 
 import torch
 
-import util.misc as misc
-import util.lr_sched as lr_sched
-from fairscale.nn.model_parallel import initialize as fs_init
+import accessory.util.misc as misc
+import accessory.util.lr_sched as lr_sched
 
 def train_one_epoch(model: torch.nn.Module,
                     data_loader, optimizer: torch.optim.Optimizer,

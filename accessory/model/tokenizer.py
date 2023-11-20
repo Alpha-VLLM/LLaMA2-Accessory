@@ -3,6 +3,7 @@ from transformers import AutoTokenizer
 from logging import getLogger
 from typing import List
 import os
+from pathlib import Path
 
 
 logger = getLogger()
@@ -59,3 +60,11 @@ class Tokenizer:
 
     def decode(self, t: List[int]) -> str:
         return self.tokenizer.decode(t)
+
+    def save(self, save_dir: str):
+        if self.tokenizer_type == "transformers":
+            self.tokenizer.save_pretrained(save_dir)
+        else:
+            with open(Path(save_dir)/"tokenizer.model", 'wb') as f:
+                f.write(self.tokenizer.serialized_model_proto())
+

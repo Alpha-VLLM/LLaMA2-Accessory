@@ -1,7 +1,7 @@
 import copy
 import sys
 import os
-sys.path.append(os.path.abspath(__file__).rsplit('/', 2)[0])
+sys.path.append(os.path.abspath(__file__).rsplit('/', 3)[0])
 
 import argparse
 import multiprocessing as mp
@@ -15,18 +15,19 @@ from fairscale.nn.model_parallel import initialize as fs_init
 
 import gradio as gr
 
-from util.misc import setup_for_distributed
-from util.tensor_parallel import load_tensor_parallel_model_list
-from util.tensor_type import default_tensor_type
-from model.meta import MetaModel
-from data.conversation.lib import conv_templates, SeparatorStyle
-from PIL import Image, ImageDraw, ImageFont, ImageOps
-from data.transform import get_transform, PadToSquare
+from accessory.util.misc import setup_for_distributed
+from accessory.util.tensor_parallel import load_tensor_parallel_model_list
+from accessory.util.tensor_type import default_tensor_type
+from accessory.model.meta import MetaModel
+from accessory.data.conversation.lib import conv_templates, SeparatorStyle
+from PIL import Image, ImageDraw
+from accessory.data.transform import get_transform
 from segment_anything import sam_model_registry, SamPredictor
 
 import regex as re
 
 class Ready: pass
+class ModelFailure: pass
 
 def model_worker(
     rank: int, args: argparse.Namespace, barrier: mp.Barrier,
@@ -74,7 +75,7 @@ def model_worker(
     load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
     print("load result:\n", load_result)
     if args.quant:
-        from util.quant import quantize
+        from accessory.util.quant import quantize
         print("Quantizing model to 4bit!")
         from transformers.utils.quantization_config import BitsAndBytesConfig
         quantization_config = BitsAndBytesConfig.from_dict(
@@ -95,50 +96,53 @@ def model_worker(
     while True:
         if response_queue is not None:
             response_queue.put(Ready())
-        image, chatbot, max_gen_len, temperature, top_p, img_transform = request_queue.get()
-        if image is not None:
-            image = image.convert("RGB")
-            transform = get_transform(img_transform, getattr(model.llma, 'image_size', 224))
-            image = transform(image).unsqueeze(0).cuda().to(target_dtype)
-        else:
-            image = None
-        conv = conv_templates["v1"].copy()
-        for user, bot in chatbot:
-            conv.append_message(conv.roles[0], user)
-            conv.append_message(conv.roles[1], bot)
+        try:
+            image, chatbot, max_gen_len, temperature, top_p, img_transform = request_queue.get()
+            if image is not None:
+                image = image.convert("RGB")
+                transform = get_transform(img_transform, getattr(model.llma, 'image_size', 224))
+                image = transform(image).unsqueeze(0).cuda().to(target_dtype)
+            else:
+                image = None
+            conv = conv_templates["v1"].copy()
+            for user, bot in chatbot:
+                conv.append_message(conv.roles[0], user)
+                conv.append_message(conv.roles[1], bot)
 
-        with torch.cuda.amp.autocast(dtype=target_dtype):
-            print(conv.get_prompt())
-            for stream_response in model.stream_generate(
-                conv.get_prompt(), image,
-                max_gen_len, temperature, top_p
-            ):
-                conv_sep = (
-                    conv.sep
-                    if conv.sep_style == SeparatorStyle.SINGLE
-                    else conv.sep2
-                )
-                end_pos = stream_response["text"].find(conv_sep)
-                if end_pos != -1:
-                    stream_response["text"] = (
-                        stream_response['text'][:end_pos].rstrip() + "\n"
+            with torch.cuda.amp.autocast(dtype=target_dtype):
+                print(conv.get_prompt())
+                for stream_response in model.stream_generate(
+                    conv.get_prompt(), image,
+                    max_gen_len, temperature, top_p
+                ):
+                    conv_sep = (
+                        conv.sep
+                        if conv.sep_style == SeparatorStyle.SINGLE
+                        else conv.sep2
                     )
-                    stream_response["end_of_content"] = True
+                    end_pos = stream_response["text"].find(conv_sep)
+                    if end_pos != -1:
+                        stream_response["text"] = (
+                            stream_response['text'][:end_pos].rstrip() + "\n"
+                        )
+                        stream_response["end_of_content"] = True
 
-                # keep a few characters if not end_of_content to avoid sending
-                # part of conv_sep before all of it is generated.
-                if not stream_response["end_of_content"]:
-                    if len(stream_response["text"]) < len(conv_sep):
-                        continue
-                    stream_response["text"] = (
-                        stream_response["text"][:-len(conv_sep)]
-                    )
+                    # keep a few characters if not end_of_content to avoid sending
+                    # part of conv_sep before all of it is generated.
+                    if not stream_response["end_of_content"]:
+                        if len(stream_response["text"]) < len(conv_sep):
+                            continue
+                        stream_response["text"] = (
+                            stream_response["text"][:-len(conv_sep)]
+                        )
 
-                if response_queue is not None:
-                    response_queue.put(stream_response)
+                    if response_queue is not None:
+                        response_queue.put(stream_response)
 
-                if stream_response["end_of_content"]:
-                    break
+                    if stream_response["end_of_content"]:
+                        break
+        except Exception:
+            response_queue.put(ModelFailure())
 
 def extract_and_color(input_string):
     """
@@ -323,6 +327,8 @@ def gradio_worker(
             queue.put((img, chatbot, max_gen_len, gen_t, top_p, img_transform))
         while True:
             content_piece = response_queue.get()
+            if isinstance(content_piece, ModelFailure):
+                raise RuntimeError
             chatbot_display[-1][1] = content_piece['text'].replace("<", "&lt;").replace(">", "&gt;")
             if content_piece["end_of_content"]:
                 chatbot[-1][1] = content_piece['text']
@@ -355,7 +361,7 @@ def gradio_worker(
                     "**Detailed Caption:** Generate a detailed description about the image.\n\n"
                     "**Short Caption:** Provide a one-sentence caption for the provided image.\n\n"
                     "**Referring Expression Comprehension (REC):** Please provide the bounding box coordinate of the region this sentence describes: blue backpack.\n\n"
-                    "**Relationship Grounding:** Please provide the bounding box coordinate of the region this sentence describes: people on car.\n\n"
+                    "**Relationship Grounding:** Please provide the bounding box coordinate of the region this sentence describes : people on car.\n\n"
                     "**Grounding Caption:** Describe the image concisely. Include the bounding box for each mentioned object.\n\n"
                     "**Object Detection:** Detect all people shown in the image.\n\n"
                     "**Human Keypoint Detection:** Detect the key points of the person in the region [x1, y1, x2, y2].\n\n"

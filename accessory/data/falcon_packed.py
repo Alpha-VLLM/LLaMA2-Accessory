@@ -1,5 +1,4 @@
 import copy
-import io
 import json
 import pickle
 import random
@@ -7,10 +6,9 @@ from threading import Thread
 
 import numpy as np
 from torch.utils.data import IterableDataset, get_worker_info, Dataset
-import pandas as pds
 import torch
 
-from model.tokenizer import Tokenizer
+from accessory.model.tokenizer import Tokenizer
 
 from multiprocessing import Manager
 

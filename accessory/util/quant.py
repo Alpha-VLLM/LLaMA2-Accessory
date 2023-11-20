@@ -1,7 +1,7 @@
 import torch
-from model.peft import LoraColumnParallelLinear, LoraRowParallelLinear
+from accessory.model.peft import LoraColumnParallelLinear, LoraRowParallelLinear
 from fairscale.nn.model_parallel.layers import ColumnParallelLinear,RowParallelLinear
-from model.meta import MetaModel
+from accessory.model.meta import MetaModel
 from transformers.utils.quantization_config import BitsAndBytesConfig
 import bitsandbytes as bnb
 

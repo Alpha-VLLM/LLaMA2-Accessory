@@ -1,16 +1,20 @@
+import sys
+import os
+sys.path.append(os.path.abspath(__file__).rsplit('/', 2)[0])
+
 import argparse
 import datetime
 import json
 import warnings
 
 import numpy as np
-import os
 import time
 from pathlib import Path
 import functools
 from functools import partial
 
 import torch
+from torch.utils.data import Dataset
 import torch.backends.cudnn as cudnn
 from torch.utils.tensorboard import SummaryWriter
 from torch.distributed.fsdp import (
@@ -36,17 +40,15 @@ except ImportError:
     warnings.warn("cannot import FusedAdam from apex, use torch AdamW instead")
     from torch.optim import AdamW
 
-import util.misc as misc
-from util.misc import NativeScalerWithGradNormCount as NativeScaler
-from util.tensor_type import default_tensor_type, promote_trainable_params_to_fp32
-from model.meta import MetaModel
-from engine_finetune import train_one_epoch
-from torch.utils.data import Dataset
-from data.alpaca import FinetuneDataset, FinetuneDistSampler
-from data.conversation.dataset import FinetuneDialogDataset
-from data.transform import get_transform
-
-from util.tensor_parallel import load_tensor_parallel_model
+import accessory.util.misc as misc
+from accessory.util.misc import NativeScalerWithGradNormCount as NativeScaler
+from accessory.util.tensor_type import default_tensor_type, promote_trainable_params_to_fp32
+from accessory.model.meta import MetaModel
+from accessory.engine_finetune import train_one_epoch
+from accessory.data.alpaca import FinetuneDataset, FinetuneDistSampler
+from accessory.data.conversation.dataset import FinetuneDialogDataset
+from accessory.data.transform import get_transform
+from accessory.util.tensor_parallel import load_tensor_parallel_model
 
 
 def get_args_parser():
@@ -99,6 +101,9 @@ def get_args_parser():
                         help='data config path')
     parser.add_argument('--image_transform', default='random_resized_crop', type=str,
                         help='type of image transformation (see accessory/data/transform.py for options)')
+    parser.add_argument('--cache_ann_on_disk', action="store_true",
+                        help='cache the dataset annotations on disk to avoid duplication across ranks. '
+                             'can save CPU memory, especially with large datasets')
 
     parser.add_argument('--output_dir', default='./output_dir',
                         help='path where to save, empty for no saving')
@@ -170,7 +175,7 @@ def main(args):
     print("Start initialization.")
 
     if args.quant:
-        from util.quant import quantize
+        from accessory.util.quant import quantize
         from transformers.utils.quantization_config import BitsAndBytesConfig
         assert args.only_save_trainable, "only_save_trainable must be True when quantization is in the loop."
         for i in range(misc.get_world_size()):
@@ -274,10 +279,10 @@ def main(args):
         DatasetClass = FinetuneDialogDataset
     else:
         DatasetClass = FinetuneDataset
-    dataset_train = DatasetClass(args.data_config,
-                                 transform=get_transform(args.image_transform, getattr(model.llma, 'image_size', 224)),
-                                 max_words=args.max_words, image_words=model.get_image_words(),
-                                 tokenizer_path=args.tokenizer_path)
+    dataset_train = DatasetClass(
+        args.data_config, transform=get_transform(args.image_transform, getattr(model.llma, 'image_size', 224)),
+        max_words=args.max_words, image_words=model.get_image_words(), tokenizer_path=args.tokenizer_path,
+        cache_on_disk=args.cache_ann_on_disk, rank=global_rank)
     print(dataset_train)
 
     if global_rank == 0 and args.log_dir is not None:

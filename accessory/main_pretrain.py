@@ -1,16 +1,19 @@
+import sys
+import os
+sys.path.append(os.path.abspath(__file__).rsplit('/', 2)[0])
+
 import argparse
 import datetime
-import json
 import warnings
 
 import numpy as np
-import os
 import time
 from pathlib import Path
 import functools
 from functools import partial
 
 import torch
+from torch.utils.data import Dataset
 import torch.backends.cudnn as cudnn
 from torch.utils.tensorboard import SummaryWriter
 from torch.distributed.fsdp import (
@@ -36,13 +39,12 @@ except ImportError:
     warnings.warn("cannot import FusedAdam from apex, use torch AdamW instead")
     from torch.optim import AdamW
 
-import util.misc as misc
-from util.misc import NativeScalerWithGradNormCount as NativeScaler
-from util.tensor_type import default_tensor_type, promote_trainable_params_to_fp32
-from model.meta import MetaModel
-from engine_pretrain import train_one_epoch, val_one_epoch
-from torch.utils.data import Dataset
-from data import falcon, falcon_packed
+import accessory.util.misc as misc
+from accessory.util.misc import NativeScalerWithGradNormCount as NativeScaler
+from accessory.util.tensor_type import default_tensor_type, promote_trainable_params_to_fp32
+from accessory.model.meta import MetaModel
+from accessory.engine_pretrain import train_one_epoch, val_one_epoch
+from accessory.data import falcon, falcon_packed
 
 
 def get_args_parser():

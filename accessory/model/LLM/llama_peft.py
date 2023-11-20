@@ -14,13 +14,13 @@ from fairscale.nn.model_parallel.layers import (
     ColumnParallelLinear
 )
 from ..peft import LoraColumnParallelLinear, LoraRowParallelLinear
-from util.tensor_type import default_tensor_type
+from accessory.util.tensor_type import default_tensor_type
 
 from ..components import RMSNorm
 import open_clip
 
-import configs.global_configs
-if configs.global_configs.USE_FLASH_ATTENTION:
+from accessory.configs import global_configs
+if global_configs.USE_FLASH_ATTENTION:
     from flash_attn import flash_attn_func
 
 default_linear_init = functools.partial(nn.init.kaiming_uniform_, a=math.sqrt(5))
@@ -95,7 +95,7 @@ class Attention(nn.Module):
 
         self.args = args
 
-        self.flash = configs.global_configs.USE_FLASH_ATTENTION
+        self.flash = global_configs.USE_FLASH_ATTENTION
         self.k_cache, self.v_cache = None, None
 
     def forward(
@@ -259,27 +259,27 @@ class TransformerBlock(nn.Module):
 
 class Transformer(nn.Module):
     is_peft = True
-    def __init__(self, params: ModelArgs, with_visual=False):
+    def __init__(self, args: ModelArgs, with_visual=False):
         super().__init__()
-        self.params = params
-        self.vocab_size = params.vocab_size
-        self.n_layers = params.n_layers
+        self.args = args
+        self.vocab_size = args.vocab_size
+        self.n_layers = args.n_layers
         self.tok_embeddings = ParallelEmbedding(
-            params.vocab_size, params.dim, init_method=default_linear_init
+            args.vocab_size, args.dim, init_method=default_linear_init
         )
 
         self.layers = torch.nn.ModuleList()
-        for layer_id in range(params.n_layers):
-            self.layers.append(TransformerBlock(layer_id, params))
+        for layer_id in range(args.n_layers):
+            self.layers.append(TransformerBlock(layer_id, args))
 
-        self.norm = RMSNorm(params.dim, eps=params.norm_eps)
+        self.norm = RMSNorm(args.dim, eps=args.norm_eps)
         self.output = ColumnParallelLinear(
-            params.dim, params.vocab_size, bias=False, init_method=default_linear_init
+            args.dim, args.vocab_size, bias=False, init_method=default_linear_init
         )
 
         self.freqs_cis = precompute_freqs_cis(
-            self.params.dim // self.params.n_heads, self.params.max_seq_len * 2,
-            theta=self.params.rope_theta, scaling=self.params.rope_scaling
+            self.args.dim // self.args.n_heads, self.args.max_seq_len * 2,
+            theta=self.args.rope_theta, scaling=self.args.rope_scaling
         )
 
         self.image_words = 0
@@ -292,8 +292,8 @@ class Transformer(nn.Module):
                 param.requires_grad = False
             in_dim = self.clip.visual.proj.shape[1]
             # in_dim = 3
-            self.clip_proj = nn.Linear(in_dim, params.dim)
-            self.clip_proj_norm = nn.LayerNorm(params.dim)
+            self.clip_proj = nn.Linear(in_dim, args.dim)
+            self.clip_proj_norm = nn.LayerNorm(args.dim)
             self.image_words = 257
 
 
@@ -398,7 +398,7 @@ class Transformer(nn.Module):
 
     def _allocate_kv_cache(self, max_batch_size: int) -> None:
         for layer in self.layers:
-            layer.attention.allocate_kv_cache(max_batch_size, self.params.max_seq_len)
+            layer.attention.allocate_kv_cache(max_batch_size, self.args.max_seq_len)
 
     def _destroy_kv_cache(self) -> None:
         for layer in self.layers:

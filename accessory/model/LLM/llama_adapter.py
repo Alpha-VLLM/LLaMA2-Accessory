@@ -18,10 +18,10 @@ from ..peft import LoraColumnParallelLinear, LoraRowParallelLinear
 from ..components import RMSNorm
 import open_clip
 
-import configs.global_configs
-if configs.global_configs.USE_FLASH_ATTENTION:
+from accessory.configs import global_configs
+if global_configs.USE_FLASH_ATTENTION:
     from flash_attn import flash_attn_func
-from util.tensor_type import default_tensor_type
+from accessory.util.tensor_type import default_tensor_type
 
 default_linear_init = functools.partial(nn.init.kaiming_uniform_, a=math.sqrt(5))
 
@@ -107,7 +107,7 @@ class Attention(nn.Module):
 
         self.args = args
 
-        self.flash = configs.global_configs.USE_FLASH_ATTENTION
+        self.flash = global_configs.USE_FLASH_ATTENTION
         self.k_cache, self.v_cache = None, None
 
     def forward(
@@ -299,27 +299,27 @@ class TransformerBlock(nn.Module):
 
 class Transformer(nn.Module):
     is_peft = True
-    def __init__(self, params: ModelArgs, with_visual=False):
+    def __init__(self, args: ModelArgs, with_visual=False):
         super().__init__()
-        self.params = params
-        self.vocab_size = params.vocab_size
-        self.n_layers = params.n_layers
+        self.args = args
+        self.vocab_size = args.vocab_size
+        self.n_layers = args.n_layers
         self.tok_embeddings = ParallelEmbedding(
-            params.vocab_size, params.dim, init_method=default_linear_init
+            args.vocab_size, args.dim, init_method=default_linear_init
         )
 
         self.layers = torch.nn.ModuleList()
-        for layer_id in range(params.n_layers):
-            self.layers.append(TransformerBlock(layer_id, params))
+        for layer_id in range(args.n_layers):
+            self.layers.append(TransformerBlock(layer_id, args))
 
-        self.norm = RMSNorm(params.dim, eps=params.norm_eps)
+        self.norm = RMSNorm(args.dim, eps=args.norm_eps)
         self.output = ColumnParallelLinear(
-            params.dim, params.vocab_size, bias=False, init_method=default_linear_init
+            args.dim, args.vocab_size, bias=False, init_method=default_linear_init
         )
 
         self.freqs_cis = precompute_freqs_cis(
-            self.params.dim // self.params.n_heads, self.params.max_seq_len * 2,
-            theta=self.params.rope_theta, scaling=self.params.rope_scaling
+            self.args.dim // self.args.n_heads, self.args.max_seq_len * 2,
+            theta=self.args.rope_theta, scaling=self.args.rope_scaling
         )
 
         self.image_words = 0
@@ -333,33 +333,33 @@ class Transformer(nn.Module):
                 param.requires_grad = False
             in_dim = self.clip.visual.proj.shape[1]
             # in_dim = 3
-            self.clip_proj = nn.Linear(in_dim, params.v_embed_dim)
-            self.clip_proj_norm = nn.LayerNorm(params.v_embed_dim)
+            self.clip_proj = nn.Linear(in_dim, args.v_embed_dim)
+            self.clip_proj_norm = nn.LayerNorm(args.v_embed_dim)
             self.image_words = 0 # images does not occupy LLM input tokens with llama_adapter
 
-            assert params.prefix_len > 0, "llama_adapter needs prefix if multi modal"
-            self.visual_query = torch.nn.Parameter(torch.zeros(params.prefix_len, params.v_embed_dim))
+            assert args.prefix_len > 0, "llama_adapter needs prefix if multi modal"
+            self.visual_query = torch.nn.Parameter(torch.zeros(args.prefix_len, args.v_embed_dim))
             torch.nn.init.normal_(self.visual_query)
             from timm.models.vision_transformer import Block as ViTBlock
             self.visual_blocks = nn.ModuleList([
-                ViTBlock(params.v_embed_dim, params.v_num_heads, params.v_mlp_ratio, qkv_bias=True)
-                for _ in range(params.v_depth)])
-            self.visual_proj = nn.Linear(params.v_embed_dim, params.dim)
-            self.visual_proj_norm = nn.LayerNorm(params.dim)
+                ViTBlock(args.v_embed_dim, args.v_num_heads, args.v_mlp_ratio, qkv_bias=True)
+                for _ in range(args.v_depth)])
+            self.visual_proj = nn.Linear(args.v_embed_dim, args.dim)
+            self.visual_proj_norm = nn.LayerNorm(args.dim)
 
         # prefix tuning with zero-init attention
-        if params.prefix_len > 0:
-            prefix_layers = params.prefix_layers if params.prefix_layers is not None else params.n_layers
+        if args.prefix_len > 0:
+            prefix_layers = args.prefix_layers if args.prefix_layers is not None else args.n_layers
             self.prefix_layers = prefix_layers
-            print(f"create prefix-tuning model with prefix_len {params.prefix_len} and prefix_layers {prefix_layers}")
+            print(f"create prefix-tuning model with prefix_len {args.prefix_len} and prefix_layers {prefix_layers}")
             n_local_heads = self.layers[0].attention.n_local_heads
             self.prefix_gate = torch.nn.Parameter(torch.zeros(prefix_layers, n_local_heads))
             self.prefix_gate.is_model_parallel = True
-            if params.use_prefix_new_gate:
+            if args.use_prefix_new_gate:
                 self.prefix_new_gate = torch.nn.Parameter(torch.ones(prefix_layers))
             else:
                 self.prefix_new_gate = [None for _ in range(prefix_layers)]
-            self.prefix = torch.nn.Parameter(torch.zeros(prefix_layers, 1, params.prefix_len, params.dim))
+            self.prefix = torch.nn.Parameter(torch.zeros(prefix_layers, 1, args.prefix_len, args.dim))
             torch.nn.init.normal_(self.prefix)
         else:
             self.prefix_layers = 0
@@ -370,20 +370,20 @@ class Transformer(nn.Module):
     def get_trainable_params(self):
         trainable = {}
         for name, para in self.named_parameters():
-            if self.params.trainable_mode == "mm_stage2": # multi-modal stage2
+            if self.args.trainable_mode == "mm_stage2": # multi-modal stage2
                 exclude_prefix = ['clip.', 'clip_proj', 'visual_']
                 trainable_key_words = ['norm', 'bias', 'lora']
-            elif self.params.trainable_mode == "mm_stage1": # multi-modal stage1
+            elif self.args.trainable_mode == "mm_stage1": # multi-modal stage1
                 exclude_prefix = ['clip.']
                 # according to the paper, lora and bias do not exist in this stage
                 # but if you add them in this stage, they will also be trained
                 trainable_key_words = ['clip_proj', 'visual_', 'norm', 'bias', 'prefix', 'lora']
-            elif self.params.trainable_mode == "sg":  # single-modal
+            elif self.args.trainable_mode == "sg":  # single-modal
                 # clip_proj and visual_ should not exist
                 exclude_prefix = ['clip.', 'clip_proj', 'visual_']
                 trainable_key_words = ['norm', 'bias', 'prefix', 'lora']
             else:
-                raise ValueError(f"unknown trainable_mode: {self.params.trainable_mode}")
+                raise ValueError(f"unknown trainable_mode: {self.args.trainable_mode}")
             if any([name.startswith(_) for _ in exclude_prefix]): # only tune those within real llama
                 continue
             if any([_ in name for _ in trainable_key_words]):
@@ -427,7 +427,7 @@ class Transformer(nn.Module):
         for block in self.visual_blocks:
             visual_query = block(visual_query)
 
-        visual_query = visual_query[:, :self.params.prefix_len, :]
+        visual_query = visual_query[:, :self.args.prefix_len, :]
         visual_query = self.visual_proj(visual_query)
         visual_query = self.visual_proj_norm(visual_query)
 
@@ -504,7 +504,7 @@ class Transformer(nn.Module):
 
     def _allocate_kv_cache(self, max_batch_size: int) -> None:
         for layer in self.layers:
-            layer.attention.allocate_kv_cache(max_batch_size, self.params.max_seq_len)
+            layer.attention.allocate_kv_cache(max_batch_size, self.args.max_seq_len)
 
     def _destroy_kv_cache(self) -> None:
         for layer in self.layers:
