@@ -1,6 +1,6 @@
 import sys
 import os
-sys.path.append(os.path.join(os.path.abspath(__file__).rsplit('/', 2)[0], 'accessory'))  # LLaMA2-Accessory/accessory
+sys.path.append(os.path.abspath(__file__).rsplit('/', 2)[0])  # LLaMA2-Accessory/accessory
 
 import numpy as np
 import torch
