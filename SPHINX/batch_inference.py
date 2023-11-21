@@ -70,6 +70,10 @@ def main() -> None:
     parser.add_argument("--max_gen_len", type=int, default=1024)
     parser.add_argument("--temperature", type=float, default=0.1)
     parser.add_argument("--top_p", type=float, default=0.75)
+    parser.add_argument(
+        "--truncate_prompt", action="store_true",
+        help="Truncate the over long prompts from the left side."
+    )
 
     args = parser.parse_args()
 
@@ -127,7 +131,8 @@ def main() -> None:
         
         with torch.cuda.amp.autocast(dtype=torch.bfloat16):
             generated = model.generate([formatted_prompt] * image.size(0), image,
-                                       args.max_gen_len, args.temperature, args.top_p)
+                                       args.max_gen_len, args.temperature, args.top_p,
+                                       truncate_prompt=args.truncate_prompt)
         
         truncated = []
         for cap in generated:

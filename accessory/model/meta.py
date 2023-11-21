@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import json
 from typing import List, Optional
+import warnings
 
 from fairscale.nn.model_parallel import initialize as fs_init
 
@@ -130,7 +131,8 @@ class MetaModel(nn.Module):
         max_gen_len: int,
         temperature: float = 0.8,
         top_p: float = 0.95,
-        return_logits: bool = False
+        return_logits: bool = False,
+        truncate_prompt: bool = False,
     ) -> List[str]:
         bsz = len(prompts)
         args = self.llma.args
@@ -145,12 +147,26 @@ class MetaModel(nn.Module):
         max_seq_len = args.max_seq_len
         if images is not None:
             max_seq_len -= self.llma.image_words
+        assert max_seq_len >= max_gen_len
 
         total_len = min(max_seq_len, max_gen_len + max_prompt_size)
 
         tokens = torch.full((bsz, total_len), 0).cuda().long()
         input_text_mask = torch.full((bsz, total_len), False).cuda()
         for k, t in enumerate(prompt_tokens):
+            if truncate_prompt and len(t) > max_seq_len - max_gen_len:
+                warnings.warn(f"Truncating the prompt at index {k} from "
+                              f"{len(t)} to {max_seq_len - max_gen_len}.")
+                t = t[len(t) - (max_seq_len - max_gen_len):] 
+            elif len(t) > max_seq_len - max_gen_len:
+                warnings.warn(
+                    f"The prompt at index {k} is too long for generation ("
+                    "the max generation length plus the prompt length exceeds "
+                    "the max sequence length supported by the model). Use "
+                    "``truncate_prompt=True`` to truncate the over long "
+                    "prompt from the left."
+                )
+                t = t[:total_len]
             tokens[k, : len(t)] = torch.tensor(t).long()
             input_text_mask[k, : len(t)] = True
         start_pos = min_prompt_size
