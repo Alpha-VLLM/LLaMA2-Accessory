@@ -537,4 +537,13 @@ class Transformer(nn.Module):
         for layer in self.layers:
             layer.attention.destroy_kv_cache()
 
-
+    def get_quant_blocklist(self) -> List[str]:
+        vision_prefixes = [
+            "clip.", "openclip_convnext_xxl.", "dinov2_vitg14.", "qformer.",
+            "visual_proj.", "qformer_proj.",
+        ]
+        blocklist = []
+        for n, m in self.named_modules():
+            if any(n.startswith(x) for x in vision_prefixes):
+                blocklist.append(n)
+        return blocklist

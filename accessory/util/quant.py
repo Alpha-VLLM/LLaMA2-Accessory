@@ -99,8 +99,10 @@ def quantize(
     module_list = [_ for _ in model.named_modules() if isinstance(_[1], 
                                                                   (LoraColumnParallelLinear, LoraRowParallelLinear,
                                                                    ColumnParallelLinear, RowParallelLinear, torch.nn.Linear))]
+    quant_blocklist = model.get_quant_blocklist()
+
     for name, module in tqdm(module_list, desc="Qunatization Process"):
-        if "lora" in name:
+        if "lora" in name or name in quant_blocklist:
             continue
         if isinstance(module, (
                                LoraColumnParallelLinear, 
