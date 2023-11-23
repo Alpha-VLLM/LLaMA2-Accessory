@@ -253,3 +253,8 @@ class MetaModel(nn.Module):
 
     def get_image_words(self):
         return self.llma.image_words
+
+    def get_quant_blocklist(self) -> List[str]:
+        if hasattr(self.llma, "get_quant_blocklist"):
+            return ["llma." + x for x in self.llma.get_quant_blocklist()]
+        return []
