@@ -1,6 +1,7 @@
 import builtins
 import datetime
 import os
+import socket
 import dataclasses
 import random
 import time
@@ -24,16 +25,126 @@ from fairscale.nn.model_parallel import initialize as fs_init
 
 from .clip_grad import clip_grad_norm
 
-from accessory.model.meta import MetaModel
+
+def find_free_port(start_port: int, end_port: int):
+    """
+    Find a free port within the specified range.
+    """
+    for port in range(start_port, end_port):
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.bind(("", port))  # Try to bind to the port
+            s.close()  # Close the socket if successful
+            return port
+        except OSError as e:
+            # print(f"Port {port} is in use, trying next port.")
+            continue
+    raise RuntimeError(f"No free ports found in range {start_port}-{end_port}")
+
+
+def setup_for_distributed(is_master):
+    """
+    This function disables printing when not in master process
+    """
+    builtin_print = builtins.print
+
+    def print(*args, **kwargs):
+        force = kwargs.pop('force', False)
+#        force = force or (get_world_size() > 8)
+        if is_master or force:
+            now = datetime.datetime.now().time()
+            builtin_print('[{}] '.format(now), end='')  # print with time stamp
+            builtin_print(*args, **kwargs)
+
+    builtins.print = print
+
+
+def is_dist_avail_and_initialized():
+    if not dist.is_available():
+        return False
+    if not dist.is_initialized():
+        return False
+    return True
+
+
+def get_world_size():
+    if not is_dist_avail_and_initialized():
+        return 1
+    return dist.get_world_size()
+
+
+def get_rank():
+    if not is_dist_avail_and_initialized():
+        return 0
+    return dist.get_rank()
+
+
+def is_main_process():
+    return get_rank() == 0
+
+
+def init_distributed_mode(args=SimpleNamespace()):
+    if getattr(args, 'dist_on_itp', False):
+        args.rank = int(os.environ['OMPI_COMM_WORLD_RANK'])
+        args.world_size = int(os.environ['OMPI_COMM_WORLD_SIZE'])
+        args.gpu = int(os.environ['OMPI_COMM_WORLD_LOCAL_RANK'])
+        args.local_rank = args.gpu
+        args.dist_url = "tcp://%s:%s" % (os.environ['MASTER_ADDR'], os.environ['MASTER_PORT'])
+        os.environ['LOCAL_RANK'] = str(args.gpu)
+        os.environ['RANK'] = str(args.rank)
+        os.environ['WORLD_SIZE'] = str(args.world_size)
+        # ["RANK", "WORLD_SIZE", "MASTER_ADDR", "MASTER_PORT", "LOCAL_RANK"]
+    elif 'RANK' in os.environ and 'WORLD_SIZE' in os.environ:
+        args.world_size = int(os.environ['WORLD_SIZE'])
+        args.rank = int(os.environ["RANK"])
+        args.gpu = int(os.environ['LOCAL_RANK'])
+        args.local_rank = args.gpu
+        args.dist_url = 'env://'
+    elif 'SLURM_PROCID' in os.environ:
+        os.environ['MASTER_PORT'] = '8964'
+        while 'MASTER_ADDR' not in os.environ or len(os.environ['MASTER_ADDR'].strip()) == 0:
+            os.environ['MASTER_ADDR'] = subprocess.check_output('sinfo -Nh -n %s | head -n 1 | awk \'{print $1}\'' % os.environ['SLURM_NODELIST'], shell=True, ).decode().strip()
+            time.sleep(1)
+        print(os.environ['MASTER_ADDR'])
+        args.world_size = int(os.environ['SLURM_NPROCS'])
+        args.rank = int(os.environ['SLURM_PROCID'])
+        args.gpu = args.rank % torch.cuda.device_count()
+        args.local_rank = args.gpu
+        args.dist_url = 'env://'
+        os.environ['LOCAL_RANK'] = str(args.gpu)
+        os.environ['WORLD_SIZE'] = str(args.world_size)
+        os.environ['RANK'] = str(args.rank)
+    else:
+        os.environ['MASTER_ADDR'] = "127.0.0.1"
+        os.environ['MASTER_PORT'] = str(find_free_port(9000, 10000))
+        os.environ['RANK'] = '0'
+        os.environ['LOCAL_RANK'] = '0'
+        os.environ['WORLD_SIZE'] = '1'
+        args.rank = 0
+        args.gpu = args.local_rank = 0
+        args.world_size = 1
+        args.dist_url = 'env://'
+
+    args.distributed = True
+
+    torch.cuda.set_device(args.gpu)
+    args.dist_backend = 'nccl'
+    print('| distributed init (rank {}): {}, gpu {}'.format(
+        args.rank, args.dist_url, args.gpu), flush=True)
+    torch.distributed.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
+                                         world_size=args.world_size, rank=args.rank)
+    torch.distributed.barrier()
+    setup_for_distributed(args.rank == 0)
+
 
 class SmoothedValue(object):
     """Track a series of values and provide access to smoothed values over a
     window or the global series average.
     """
 
-    def __init__(self, window_size=20, fmt=None):
+    def __init__(self, window_size=1000, fmt=None):
         if fmt is None:
-            fmt = "{median:.4f} ({global_avg:.4f})"
+            fmt = "{median:.4f} ({avg:.4f})"
         self.deque = deque(maxlen=window_size)
         self.total = 0.0
         self.count = 0
@@ -172,140 +283,6 @@ class MetricLogger(object):
             header, total_time_str))
 
 
-def setup_for_distributed(is_master):
-    """
-    This function disables printing when not in master process
-    """
-    builtin_print = builtins.print
-
-    def print(*args, **kwargs):
-        force = kwargs.pop('force', False)
-#        force = force or (get_world_size() > 8)
-        if is_master or force:
-            now = datetime.datetime.now().time()
-            builtin_print('[{}] '.format(now), end='')  # print with time stamp
-            builtin_print(*args, **kwargs)
-
-    builtins.print = print
-
-
-def is_dist_avail_and_initialized():
-    if not dist.is_available():
-        return False
-    if not dist.is_initialized():
-        return False
-    return True
-
-
-def get_world_size():
-    if not is_dist_avail_and_initialized():
-        return 1
-    return dist.get_world_size()
-
-
-def get_rank():
-    if not is_dist_avail_and_initialized():
-        return 0
-    return dist.get_rank()
-
-
-def is_main_process():
-    return get_rank() == 0
-
-
-def save_on_master(*args, **kwargs):
-    if is_main_process():
-        torch.save(*args, **kwargs)
-
-def init_distributed_mode(args=SimpleNamespace()):
-    if getattr(args, 'dist_on_itp', False):
-        args.rank = int(os.environ['OMPI_COMM_WORLD_RANK'])
-        args.world_size = int(os.environ['OMPI_COMM_WORLD_SIZE'])
-        args.gpu = int(os.environ['OMPI_COMM_WORLD_LOCAL_RANK'])
-        args.local_rank = args.gpu
-        args.dist_url = "tcp://%s:%s" % (os.environ['MASTER_ADDR'], os.environ['MASTER_PORT'])
-        os.environ['LOCAL_RANK'] = str(args.gpu)
-        os.environ['RANK'] = str(args.rank)
-        os.environ['WORLD_SIZE'] = str(args.world_size)
-        # ["RANK", "WORLD_SIZE", "MASTER_ADDR", "MASTER_PORT", "LOCAL_RANK"]
-    elif 'RANK' in os.environ and 'WORLD_SIZE' in os.environ:
-        args.world_size = int(os.environ['WORLD_SIZE'])
-        args.rank = int(os.environ["RANK"])
-        args.gpu = int(os.environ['LOCAL_RANK'])
-        args.local_rank = args.gpu
-        args.dist_url = 'env://'
-    elif 'SLURM_PROCID' in os.environ:
-        os.environ['MASTER_PORT'] = '8964'
-        while 'MASTER_ADDR' not in os.environ or len(os.environ['MASTER_ADDR'].strip()) == 0:
-            os.environ['MASTER_ADDR'] = subprocess.check_output('sinfo -Nh -n %s | head -n 1 | awk \'{print $1}\'' % os.environ['SLURM_NODELIST'], shell=True, ).decode().strip()
-            time.sleep(1)
-        print(os.environ['MASTER_ADDR'])
-        args.world_size = int(os.environ['SLURM_NPROCS'])
-        args.rank = int(os.environ['SLURM_PROCID'])
-        args.gpu = args.rank % torch.cuda.device_count()
-        args.local_rank = args.gpu
-        args.dist_url = 'env://'
-        os.environ['LOCAL_RANK'] = str(args.gpu)
-        os.environ['WORLD_SIZE'] = str(args.world_size)
-        os.environ['RANK'] = str(args.rank)
-    else:
-        os.environ['MASTER_ADDR'] = "127.0.0.1"
-        os.environ['MASTER_PORT'] = '8964'
-        os.environ['RANK'] = '0'
-        os.environ['LOCAL_RANK'] = '0'
-        os.environ['WORLD_SIZE'] = '1'
-        args.rank = 0
-        args.gpu = args.local_rank = 0
-        args.world_size = 1
-        args.dist_url = 'env://'
-
-    args.distributed = True
-
-    torch.cuda.set_device(args.gpu)
-    args.dist_backend = 'nccl'
-    print('| distributed init (rank {}): {}, gpu {}'.format(
-        args.rank, args.dist_url, args.gpu), flush=True)
-    torch.distributed.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
-                                         world_size=args.world_size, rank=args.rank)
-    torch.distributed.barrier()
-    setup_for_distributed(args.rank == 0)
-
-
-def init_distributed_mode1(args):
-    if args.dist_on_itp:
-        args.rank = int(os.environ['OMPI_COMM_WORLD_RANK'])
-        args.world_size = int(os.environ['OMPI_COMM_WORLD_SIZE'])
-        args.gpu = int(os.environ['OMPI_COMM_WORLD_LOCAL_RANK'])
-        args.dist_url = "tcp://%s:%s" % (os.environ['MASTER_ADDR'], os.environ['MASTER_PORT'])
-        os.environ['LOCAL_RANK'] = str(args.gpu)
-        os.environ['RANK'] = str(args.rank)
-        os.environ['WORLD_SIZE'] = str(args.world_size)
-        # ["RANK", "WORLD_SIZE", "MASTER_ADDR", "MASTER_PORT", "LOCAL_RANK"]
-    elif 'RANK' in os.environ and 'WORLD_SIZE' in os.environ:
-        args.rank = int(os.environ["RANK"])
-        args.world_size = int(os.environ['WORLD_SIZE'])
-        args.gpu = int(os.environ['LOCAL_RANK'])
-    elif 'SLURM_PROCID' in os.environ:
-        args.rank = int(os.environ['SLURM_PROCID'])
-        args.gpu = args.rank % torch.cuda.device_count()
-    else:
-        print('Not using distributed mode')
-        setup_for_distributed(is_master=True)  # hack
-        args.distributed = False
-        return
-
-    args.distributed = True
-
-    torch.cuda.set_device(args.gpu)
-    args.dist_backend = 'nccl'
-    print('| distributed init (rank {}): {}, gpu {}'.format(
-        args.rank, args.dist_url, args.gpu), flush=True)
-    torch.distributed.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
-                                         world_size=args.world_size, rank=args.rank)
-    torch.distributed.barrier()
-    setup_for_distributed(args.rank == 0)
-
-
 class NativeScalerWithGradNormCount:
     state_dict_key = "amp_scaler"
 
@@ -334,8 +311,7 @@ class NativeScalerWithGradNormCount:
         self._scaler.load_state_dict(state_dict)
 
 
-
-def save_checkpoint(output_dir, args, model: MetaModel, optimizer,
+def save_checkpoint(output_dir, args, model, optimizer,
                     loss_scaler, dataset_state, epoch=None, iteration=None):
     save_name = f"epoch{epoch}"
     if iteration is not None:
@@ -570,7 +546,6 @@ def load_pretrained(load_dir, pretrained_type, model):
         else:
             raise ValueError(f"Unknown pretrained_type: {pretrained_type}")
         print('load pretrained result:\n', load_result)
-
 
 
 def all_reduce_mean(x):
