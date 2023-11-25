@@ -1,6 +1,6 @@
 import sys
 import os
-sys.path.append(os.path.abspath(__file__).rsplit('/', 2)[0])  # LLaMA2-Accessory/accessory
+sys.path.append(os.path.abspath(__file__).rsplit('/', 2)[0])  # LLaMA2-Accessory/
 
 import numpy as np
 import torch
@@ -9,13 +9,13 @@ import multiprocessing as mp
 
 from fairscale.nn.model_parallel import initialize as fs_init
 
-from model.meta import MetaModel
+from accessory.model.meta import MetaModel
 
-from util.misc import setup_for_distributed
-from util.tensor_parallel import load_tensor_parallel_model_list
-from util.tensor_type import default_tensor_type
-from data.transform import get_transform
-from data.conversation.lib import conv_templates, SeparatorStyle
+from accessory.util.misc import setup_for_distributed
+from accessory.util.tensor_parallel import load_tensor_parallel_model_list
+from accessory.util.tensor_type import default_tensor_type
+from accessory.data.transform import get_transform
+from accessory.data.conversation.lib import conv_templates, SeparatorStyle
 from PIL import Image
 
 
