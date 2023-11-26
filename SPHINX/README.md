@@ -33,7 +33,7 @@ On top of SPHINX, we propose to further mix visual scales and sub-images for bet
 ## Inference
 ### Installation
 + SPHINX is built upon LLaMA2-Accessory, please follow the instructions [here](https://llama2-accessory.readthedocs.io/en/latest/install.html) for environment setup.
-+ <span style="color: pink">Important: For flexible instantilization of SPHINX models, please set up the LLaMA2-Accessory repo to your python environment.
++ **Important:** 🔦 For flexible instantilization of SPHINX models, please set up the LLaMA2-Accessory repo to your python environment.
   ``` bash
   # go to the root directory of LLaMA2-Accessory
   cd LLaMA2-Accessory
