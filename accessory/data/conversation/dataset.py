@@ -158,10 +158,11 @@ class FinetuneDialogDataset(Dataset):
         return len(self.ann)
 
     def get_item_func(self, index):
-        data_item = self.ann[index]
+        data_item: Dict = self.ann[index]
+
+        source = data_item["conversations"]
 
         d_media = {}
-
         for media_symbol in self.d_media_symbol_words:
             if media_symbol in data_item:
                 l_media_path = data_item[media_symbol]  # a list of media paths
@@ -172,6 +173,23 @@ class FinetuneDialogDataset(Dataset):
             if not isinstance(l_media_path, list):  # data with only one media, in format {"image": image_name, ...}
                 l_media_path = [l_media_path]
 
+            # **********
+            # Implicit media insertion logic 1
+            # Add the media tokens to the beginning of the first instruction from
+            # human. This logic may be more reasonable. However, it is incompatible
+            # with old-version Accessory models, which are trained with image tokens
+            # inserted directly behind the first token (<bos>). If you opt to use
+            # this intertion logic, please first uncomment the following piece, and
+            # then comment the insertion logic 2 bellow
+            # **********
+            # <logic begin>
+            # media_symbol_count = "".join([_["value"] for _ in source]).count(media_symbol)
+            # if media_symbol_count > 0:
+            #     assert media_symbol_count == len(l_media_path), \
+            #     f"{media_symbol_count} {media_symbol} exists in text, but {len(l_media_path)} actual media are given"
+            # else:
+            #     source[0]['value'] = (media_symbol+" ") * len(l_media_path) + source[0]['value']
+            # <logic end>
             d_media[media_symbol] = []
             for media_path in l_media_path:
                 image = read_img_general(media_path)
@@ -180,7 +198,7 @@ class FinetuneDialogDataset(Dataset):
                 image = self.transform(image)
                 d_media[media_symbol].append(image)
 
-        source = data_item["conversations"]
+
         conversation, to_predict_values = self.conversation_generator.add_speaker_and_signal(source)
         if len(to_predict_values) == 0:
             raise ValueError(f"see dialog data with nothing to predict, data: {data_item}")
@@ -205,6 +223,17 @@ class FinetuneDialogDataset(Dataset):
                 l_media = _d_media[media_symbol]
                 media_token = self.d_media_symbol_token[media_symbol]
                 media_token_count = tokens.count(media_token)
+                # **********
+                # Implicit media insertion logic 2
+                # Legacy versions of LLaMA2-Accessory handled media in a non-interleaved
+                # manner, where image tokens are inserted directly behind the first token,
+                # namely <bos>. To support interleaved media comprehension and generation,
+                # Accessory now supports the explicit specification of media occurance,
+                # which is achieved by adding media symbols, e.g. <image>, within the
+                # conversations. For convenience and backward compatibility, media without
+                # explicit speicification will still be arranged after <bos>.
+                # **********
+                # <logic begin>
                 if media_token_count > 0:
                     # if media symbols already exist in dialog data
                     # the number of symbols should equal to number of media
@@ -212,8 +241,9 @@ class FinetuneDialogDataset(Dataset):
                         f"{media_token_count} {media_symbol} exists in text, but {len(l_media)} actual media are given"
                 else:
                     # add media symbols after BOS token
-                    tokens = tokens[:1] + [media_token] * len(l_media) + tokens[1:]  # todo may need special logics to support multiple media types
+                    tokens = tokens[:1] + [media_token] * len(l_media) + tokens[1:]
                     labels = labels[:1] + [IGNORE_INDEX] * len(l_media) + labels[1:]
+                # <logic end>
 
             # convert media token to reserved placeholders
             new_tokens = []
@@ -254,7 +284,7 @@ class FinetuneDialogDataset(Dataset):
                         new_l_media.append(media)
                 d_media_span[symbol] = new_l_span
                 d_media[symbol] = new_l_media
-            warnings.warn(f'Warning for truncation input!\n{data_item}')
+            # warnings.warn(f'Warning for truncation input!\n{data_item}')
 
         tokenzed_conversation_mask = tokenzed_conversation.ge(0)
         labels_mask = labels.ge(0)
