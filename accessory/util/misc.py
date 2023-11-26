@@ -361,10 +361,19 @@ def save_checkpoint(output_dir, args, model, optimizer,
             if dist.get_rank() == 0:
                 model_args_save_path = os.path.join(
                     save_dir,
-                    f"llm_config.json",
+                    f"config.json",
                 )
                 with open(model_args_save_path, 'w') as f:
                     json.dump(dataclasses.asdict(model.llma.args), f, indent=2)
+
+            # Meta Information
+            if dist.get_rank() == 0:
+                model_meta_save_path = os.path.join(
+                    save_dir,
+                    f"meta.json",
+                )
+                with open(model_meta_save_path, 'w') as f:
+                    json.dump({"llama_type": model.llama_type}, f, indent=2)
 
         _save_model()
         print("model saved")
