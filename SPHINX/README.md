@@ -33,7 +33,7 @@ On top of SPHINX, we propose to further mix visual scales and sub-images for bet
 ## Inference
 ### Installation
 + SPHINX is built upon LLaMA2-Accessory, please follow the instructions [here](https://llama2-accessory.readthedocs.io/en/latest/install.html) for environment setup.
-+ **Important 🔦:** For flexible instantilization of SPHINX models, please set up the LLaMA2-Accessory repo to your python environment.
++ **Important 🔦:** For flexible instantiation of SPHINX models, please set up the LLaMA2-Accessory repo to your python environment.
   ``` bash
   # go to the root directory of LLaMA2-Accessory
   cd LLaMA2-Accessory
@@ -92,7 +92,7 @@ with torch.cuda.amp.autocast(dtype=torch.float16):
 print(response)
 
 # if you wanna continue
-qas[-1] = response
+qas[-1][-1] = response
 qas.append(["Then how does it look like?", None])
 with torch.cuda.amp.autocast(dtype=torch.float16):
     response2 = model.generate_reponse(qas, image, max_gen_len=1024, temperature=0.9, top_p=0.5, seed=0)
