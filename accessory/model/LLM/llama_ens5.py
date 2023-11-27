@@ -506,7 +506,7 @@ class Transformer(nn.Module):
             image_tokens = torch.cat(l_image_tokens, dim=1)
             self.cache_image_words = image_tokens.shape[1]
             assert self.cache_image_words == self.image_words
-            h = torch.cat((h_bos, image_tokens, h_caption), dim=1)
+            h = torch.cat((h_bos, image_tokens, h_caption), dim=1).to(h_bos)
             seqlen = h.shape[1]
             freqs_cis = self.freqs_cis[0: seqlen]
         else:

@@ -482,7 +482,13 @@ class Transformer(nn.Module):
             h_bos, h_caption = h[:, :1], h[:, 1:]
             image_tokens = self.encode_image(image)
             self.cache_image_words = image_tokens.shape[1] + 1 + 1
-            h = torch.cat((h_bos, self.start_img.repeat(_bsz, 1, 1), image_tokens, self.end_img.repeat(_bsz, 1, 1), h_caption), dim=1)
+            h = torch.cat((
+                h_bos,
+                self.start_img.repeat(_bsz, 1, 1),
+                image_tokens,
+                self.end_img.repeat(_bsz, 1, 1),
+                h_caption,
+            ), dim=1).to(h_bos)
             seqlen = h.shape[1]
             freqs_cis = self.freqs_cis[0: seqlen]
         else:
