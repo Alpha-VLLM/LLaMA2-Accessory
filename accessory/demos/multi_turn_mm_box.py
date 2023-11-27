@@ -414,7 +414,10 @@ def gradio_worker(
         undo_button.click(undo, [chatbot, chatbot_display], [chatbot, chatbot_display])
         img_input.change(clear, [], [chatbot, chatbot_display, msg])
     barrier.wait()
-    demo.queue(api_open=True, concurrency_count=1).launch(share=True)
+    demo.queue(api_open=True, concurrency_count=1).launch(
+        share=True,
+        server_name="0.0.0.0" if args.bind_all else "127.0.0.1",
+    )
 
 
 if __name__ == "__main__":
@@ -466,6 +469,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--quant", action="store_true", default=False,
         help="enable quantization"
+    )
+    parser.add_argument(
+        "--bind_all", action="store_true",
+        help="Listen to all addresses on the host."
     )
     args = parser.parse_args()
 

@@ -85,9 +85,18 @@ We provide a comprehensive evaluation of $\color{goldenrod}{SPHINX}$ and showcas
 ## Inference
 ### Installation
 + SPHINX is built upon LLaMA2-Accessory, please follow the instructions [here](https://llama2-accessory.readthedocs.io/en/latest/install.html) for environment setup.
-``` bash
-pip install git+https://github.com/facebookresearch/segment-anything.git
-```
++ **Important 🔦:** For flexible instantiation of SPHINX models, please set up the LLaMA2-Accessory repo to your python environment.
+  ``` bash
+  # go to the root directory of LLaMA2-Accessory
+  cd LLaMA2-Accessory
+  # install LLaMA2-Accessory 
+  pip install -e .
+  ```
+  After this, you will be able to invoke `import accessory` or `import SPHINX` without the restriction of working directory.
++ To enable the segmentation ability shown in our official demo, SAM is also needed:
+    ``` bash
+    pip install git+https://github.com/facebookresearch/segment-anything.git
+    ```
 
 ### Weights
 
@@ -106,16 +115,96 @@ Please download them to your own machine. The file structure should appear as fo
 ```
 path/to/checkpoint
 ├── consolidated.00-of-02.model.pth
-└── consolidated.01-of-02.model.pth
+├── consolidated.01-of-02.model.pth
+├── tokenizer.model
+├── config.json
+└── meta.json
 ```
 
+### Inference
 
-### Simple Inference
-We provide a simple script [inference.py](inference.py) to illustrate how to use SPHINX for inference:
+#### Single-GPU Inference
+```python
+from SPHINX import SPHINXModel
+from PIL import Image
+import torch
+
+# Besides loading the `consolidated.*.pth` model weights, from_pretrained will also try to 
+# use `tokenizer.json', 'meta.json', and 'config.json' under `pretrained_path` to configure
+# the `tokenizer_path`, `llama_type`, and `llama_config` of the model. You may also override
+# the configurations by explitly specifying the arguments
+model = SPHINXModel.from_pretrained(pretrined_path="path/to/checkpoint", with_visual=True)
+
+image = Image.open("examples/1.jpg")
+qas = [["What's in the image?", None]]
+
+with torch.cuda.amp.autocast(dtype=torch.float16):
+    response = model.generate_reponse(qas, image, max_gen_len=1024, temperature=0.9, top_p=0.5, seed=0)
+
+print(response)
+
+# if you wanna continue
+qas[-1][-1] = response
+qas.append(["Then how does it look like?", None])
+with torch.cuda.amp.autocast(dtype=torch.float16):
+    response2 = model.generate_reponse(qas, image, max_gen_len=1024, temperature=0.9, top_p=0.5, seed=0)
+
+print(response2)
+```
+
+#### Multi-GPU inference
+```python
+from SPHINX import SPHINXModel
+from PIL import Image
+import torch
+import torch.distributed as dist
+import multiprocessing as mp
+
+def main(world_size, rank) -> None:
+    dist.init_process_group(
+        backend="nccl", rank=rank, world_size=world_size,
+        init_method=f"tcp://127.0.0.1:23560",
+    )
+    torch.cuda.set_device(rank)
+    
+    # mp_group tells the model which ranks will work together
+    # through model parallel to compose a complete model.
+    # When mp_group is None, a single-rank process group will
+    # be created and used, which means model parallel size = 1 (not enabled)
+    model = SPHINXModel.from_pretrained(
+        pretrined_path="path/to/checkpoint", with_visual=True,
+        mp_group=dist.new_group(ranks=list(range(world_size)))
+    ) 
+    
+    # it's important to make sure that ranks within the same 
+    # model parallel group should always receive the same input simultaneously
+    image = Image.open("examples/1.jpg")
+    qas = [["What's in the image?", None]]
+
+    with torch.cuda.amp.autocast(dtype=torch.float16):
+        response = model.generate_reponse(qas, image, max_gen_len=1024, temperature=0.9, top_p=0.5, seed=0)
+
+
+if __name__ == "__main__":
+    N_GPU = 2
+    if N_GPU == 1:
+        main(world_size=1, rank=0)
+    elif N_GPU == 2:
+        # You can use whatever method, e.g. torchrun, slurm, etc. for distributed launch
+        # Just be sure to initialize torch distributed (by invoking dist.init_process_group)
+        # before creating the SPHINX model if model parallel size > 1 is used
+        mp.set_start_method("spawn")
+        for rank in range(N_GPU):
+            process = mp.Process(target=main, args=(N_GPU, rank))
+            process.start()
+    else:
+        raise ValueError("Currently only 1 or 2 is supported for MODEL_PARALLEL_SIZE")
+```
+If torchrun is preferred, an example is [inference.py](inference.py):
 ```bash
-python inference.py
+torchrun --master_port=1112 --nproc_per_node=2 inference.py
 ```
-Please modify the configuration variables within the script before running it.
+
 
 ### Host Local Demo
 For thoes who want to host a demo like [our official one](http://imagebind-llm.opengvlab.com/) locally, this section provides a step-by-step guide. 

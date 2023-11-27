@@ -1,6 +1,6 @@
 import sys
 import os
-sys.path.append(os.path.join(os.path.abspath(__file__).rsplit('/', 2)[0], 'accessory'))  # LLaMA2-Accessory/accessory
+sys.path.append(os.path.abspath(__file__).rsplit('/', 2)[0])  # LLaMA2-Accessory/
 
 import torch
 import torch.distributed as dist
@@ -12,12 +12,13 @@ from PIL import Image
 
 import fairscale.nn.model_parallel.initialize as fs_init
 
-from model.meta import MetaModel
-from data.conversation.lib import conv_templates, SeparatorStyle
-from data.transform import get_transform
-from util.tensor_parallel import load_tensor_parallel_model_list
-from util.tensor_type import default_tensor_type
-from util import misc
+from accessory.model.meta import MetaModel
+from accessory.data.conversation.lib import conv_templates, SeparatorStyle
+from accessory.data.transform import get_transform
+from accessory.util.tensor_parallel import load_tensor_parallel_model_list
+from accessory.util.tensor_type import default_tensor_type
+from accessory.util import misc
+
 
 
 class Dataset(torch.utils.data.Dataset):

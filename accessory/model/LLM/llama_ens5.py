@@ -403,8 +403,8 @@ class Transformer(nn.Module):
 
             local_clip_image_feats = self.clip_encode_image(local_image)
             local_convnext_image_feats = self.openclip_convnext_xxl(
-                F.interpolate(local_image.half(), size=(256, 256))
-            ).to(local_image)
+                F.interpolate(local_image.half(), size=(256, 256)).to(local_image)
+            )
             assert local_convnext_image_feats.size()[1:] == (3072, 8, 8)
             local_convnext_image_feats = local_convnext_image_feats.repeat_interleave(
                 2, dim=-1
@@ -443,8 +443,8 @@ class Transformer(nn.Module):
             dist.all_gather_into_tensor(ens_image_feats, local_ens_image_feats,
                                         group=fs_init.get_model_parallel_group())
 
-            ens_image_feats = ens_image_feats.float()[:image_bs]
-            image_feats = image_feats.float()[:image_bs]
+            ens_image_feats = ens_image_feats[:image_bs]
+            image_feats = image_feats[:image_bs]
 
         image_feats = self.qformer_proj(image_feats)
         ens_image_feats = self.visual_proj(ens_image_feats)
@@ -537,4 +537,13 @@ class Transformer(nn.Module):
         for layer in self.layers:
             layer.attention.destroy_kv_cache()
 
-
+    def get_quant_blocklist(self) -> List[str]:
+        vision_prefixes = [
+            "clip.", "openclip_convnext_xxl.", "dinov2_vitg14.", "qformer.",
+            "visual_proj.", "qformer_proj.",
+        ]
+        blocklist = []
+        for n, m in self.named_modules():
+            if any(n.startswith(x) for x in vision_prefixes):
+                blocklist.append(n)
+        return blocklist

@@ -1,7 +1,10 @@
+import warnings
+
 import torch
 import torch.nn as nn
 import json
 from typing import List, Optional
+from pathlib import Path
 
 from fairscale.nn.model_parallel import initialize as fs_init
 
@@ -18,11 +21,12 @@ class MetaModel(nn.Module):
     """
     def __init__(
         self, llama_type: str, llama_config: List[str], tokenizer_path: str,
-        with_visual: bool = False, max_seq_len: int = 2048
+        with_visual: bool = False, max_seq_len: int = 4096
     ) -> None:
         super().__init__()
 
         self.llama_type = llama_type
+        self.with_visual = with_visual
 
         ModelArgs = LLM.__dict__[llama_type].ModelArgs
         Transformer = LLM.__dict__[llama_type].Transformer
@@ -31,13 +35,13 @@ class MetaModel(nn.Module):
         for _ in llama_config:
             with open(_, "r") as f:
                 llama_args.update(json.loads(f.read()))
-        llama_args: ModelArgs = ModelArgs(
-            max_seq_len=max_seq_len, max_batch_size=32, **llama_args
-        )
+        llama_args['max_seq_len'] = max_seq_len
+        llama_args['max_batch_size'] = 32
 
         self.tokenizer = Tokenizer(model_path=tokenizer_path)
-        llama_args.vocab_size = self.tokenizer.n_words
+        llama_args['vocab_size'] = self.tokenizer.n_words
 
+        llama_args: ModelArgs = ModelArgs(**llama_args)
         print("Model Args:\n", llama_args)
 
         model = Transformer(llama_args, with_visual=with_visual)
@@ -64,17 +68,95 @@ class MetaModel(nn.Module):
         print(f"Trainable parameter count : {param_count_local} (local rank), {param_count_all} (all).")
 
 
-    @ staticmethod
-    def from_pretrained(pretrined_path:List[str],
-                        llama_type: str, llama_config: List[str], tokenizer_path: str,
-                        with_visual: bool = False, max_seq_len: int = 2048,
+    @ classmethod
+    def from_pretrained(cls, pretrined_path:str|List[str],
+                        llama_type: Optional[str] = None,
+                        llama_config: Optional[List[str]] = None,
+                        tokenizer_path: Optional[str] = None,
+                        with_visual: bool = False, max_seq_len: int = 4096,
+                        mp_group: Optional[dist.ProcessGroup] = None,
                         dtype=torch.bfloat16, device="cuda"):
-        if not dist.is_initialized():
-            print("Accessory models require distributed mode, which is not yet initialized. Initialize now")
-            misc.init_distributed_mode()
-        fs_init.initialize_model_parallel(1) # todo now from_pretrained only supports mp=1
+        """
+        Instantiate a model from pretrained checkpoints.
+        llama_type, llama_config, and tokenizer_path will be automatically determined if corresponding files can be
+        found under `pretrained_path`. If the files do not exist, or if users want to manually override them,
+        explicit specification is also allowed.
+        """
+        if isinstance(pretrined_path, str):
+            pretrined_path = [pretrined_path]
+        if pretrined_path is None or len(pretrined_path) == 0:
+            raise ValueError("pretrained_path should be specified")
+
+        if mp_group is None:
+            print(f"mp_group not provided. Load model with model parallel size == 1")
+            if dist.is_initialized():
+                mp_group = dist.new_group(ranks=[dist.get_rank()])
+            else:
+                warnings.warn(
+                    "\n\n********************************\n"
+                    "Warning: Torch distributed not initialized when invoking `MetaModel.from_pretrained`.\n"
+                    "trying to init distributed mode within `from_pretrained` with a world size of 1.\n"
+                    "Note: Distrubuted functions like `get_world_size()` are used within Accessory's model implementations,\n"
+                    "Therefore, distributed initilization is required even when using a single GPU.\n"
+                    "This warning is normal if your program isn't designed for distributed computing.\n"
+                    "However, if your program is intended for distributed use,\n"
+                    "please initialize distributed mode before model creation"
+                    "********************************\n")
+                torch.distributed.init_process_group(
+                    backend="nccl", rank=0, world_size=1,
+                    init_method=f"tcp://127.0.0.1:{misc.find_free_port(9000, 10000)}")
+                mp_group = dist.new_group(ranks=[dist.get_rank()])
+        else:
+            print(f"Load model with model parallel size == {dist.get_world_size(mp_group)}")
+
+        fs_init._MODEL_PARALLEL_GROUP = mp_group
+
+        # determine llama_type
+        if llama_type is None:
+            print(f"llama_type not specified, attempting to obtain from {Path(pretrined_path[-1])/'meta.json'}")
+            if (Path(pretrined_path[-1])/'meta.json').exists():
+                with open(Path(pretrined_path[-1])/'meta.json', 'r') as f:
+                    llama_type = json.load(f)["llama_type"]
+                    print(f"Obtained llama_type: {llama_type}")
+            else:
+                print(f"{Path(pretrined_path[-1])/'meta.json'} does not exist")
+                raise ValueError("Cannot determine llama_type")
+
+
+        # determine llama_config
+        if llama_config is None:
+            print(f"llama_config not specified, attempting to find {Path(pretrined_path[-1]) / 'config.json'}")
+            if (Path(pretrined_path[-1])/'config.json').exists():
+                llama_config = [str(Path(pretrined_path[-1])/'config.json')]
+                print(f"Found llama_config: {str(Path(pretrined_path[-1])/'config.json')}")
+            else:
+                print(f"{str(Path(pretrined_path[-1]) / 'config.json')} does not exist\n"
+                      f"will use the default config values (specified in the definition of ModelArgs in {llama_type}.py)")
+
+
+        # determine tokenizer_path
+        if tokenizer_path is None:  # first try setence-piece style
+            print(f"tokenizer_path not specified.")
+
+            print(f"trying to find sentencepiece-style tokenizer at {Path(pretrined_path[-1]) / 'tokenizer.model'}")
+            if (Path(pretrined_path[-1])/'tokenizer.model').exists():
+                print(f"Found {Path(pretrined_path[-1]) / 'tokenizer.model'}, use it.")
+                tokenizer_path = str(Path(pretrined_path[-1]) / 'tokenizer.model')
+            else:
+                print("Not Found")
+        if tokenizer_path is None:  # then try huggingface style
+            print(f"trying to find huggingface-style tokenizer at "
+                  f"{Path(pretrined_path[-1]) / '(tokenizer.json, tokenizer_config.json)'}")
+            if (Path(pretrined_path[-1])/'tokenizer.json').exists() and (Path(pretrined_path[-1])/'tokenizer_config.json').exists():
+                print(f"Found {Path(pretrined_path[-1]) / '(tokenizer.json, tokenizer_config.json)'}, use them.")
+                tokenizer_path = pretrined_path[-1]
+            else:
+                print("Not Found")
+        assert tokenizer_path is not None, "No usable tokenizer avaiable"
+
+
         with default_tensor_type(dtype=dtype, device=device):
-            model = MetaModel(llama_type, llama_config, tokenizer_path, with_visual, max_seq_len)
+            model = cls(llama_type, llama_config, tokenizer_path, with_visual, max_seq_len)
         print(f"Loading pretrained weights from {pretrined_path} ...")
         load_result = tensor_parallel.load_tensor_parallel_model_list(model, pretrined_path)
         assert load_result == {'missing_keys': [], 'unexpected_keys': []}, "checkpoint and model mismatch"
@@ -253,3 +335,8 @@ class MetaModel(nn.Module):
 
     def get_image_words(self):
         return self.llma.image_words
+
+    def get_quant_blocklist(self) -> List[str]:
+        if hasattr(self.llma, "get_quant_blocklist"):
+            return ["llma." + x for x in self.llma.get_quant_blocklist()]
+        return []
