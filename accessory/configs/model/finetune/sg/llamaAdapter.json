@@ -1,0 +1,8 @@
+{
+  "lora_rank": -1,
+  "bias_tuning": true,
+  "use_prefix_new_gate": false,
+  "prefix_layers": 30,
+  "prefix_len": 10,
+  "trainable_mode": "sg"
+}
