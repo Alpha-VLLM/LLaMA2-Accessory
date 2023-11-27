@@ -19,7 +19,7 @@ def main() -> None:
     # When mp_group is None, a single-rank process group will
     # be created and used, which means model parallel size = 1 (not enabled)
     model = SPHINXModel.from_pretrained(
-        pretrined_path="path/to/checkpoint", with_visual=True,
+        pretrined_path="/data0/zyc/ckpt/soup/dialog_data2_llamaEns5_13B_loadLongSphinxPre10K/epoch0", with_visual=True,
         mp_group=dist.new_group(ranks=list(range(world_size)))
     )
     # You may also, say, launch 4 processes and make [0,1] and [2,3] ranks to form mp groups, respectively.
@@ -34,7 +34,7 @@ def main() -> None:
     print(response)
 
     # if you wanna continue
-    qas[-1] = response
+    qas[-1][-1] = response
     qas.append(["Then how does it look like?", None])
     with torch.cuda.amp.autocast(dtype=torch.float16):
         response2 = model.generate_reponse(qas, image, max_gen_len=1024, temperature=0.9, top_p=0.5, seed=0)
