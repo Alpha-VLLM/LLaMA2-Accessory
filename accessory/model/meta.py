@@ -21,7 +21,7 @@ class MetaModel(nn.Module):
     """
     def __init__(
         self, llama_type: str, llama_config: List[str], tokenizer_path: str,
-        with_visual: bool = False, max_seq_len: int = 2048
+        with_visual: bool = False, max_seq_len: int = 4096
     ) -> None:
         super().__init__()
 
@@ -73,7 +73,7 @@ class MetaModel(nn.Module):
                         llama_type: Optional[str] = None,
                         llama_config: Optional[List[str]] = None,
                         tokenizer_path: Optional[str] = None,
-                        with_visual: bool = False, max_seq_len: int = 2048,
+                        with_visual: bool = False, max_seq_len: int = 4096,
                         mp_group: Optional[dist.ProcessGroup] = None,
                         dtype=torch.bfloat16, device="cuda"):
         """
@@ -99,8 +99,8 @@ class MetaModel(nn.Module):
                     "Note: Distrubuted functions like `get_world_size()` are used within Accessory's model implementations,\n"
                     "Therefore, distributed initilization is required even when using a single GPU.\n"
                     "This warning is normal if your program isn't designed for distributed computing.\n"
-                    "However, if your program is intended for distributed use, "
-                    "please arrange the `torch.distributed.init_process_group` call before model creation.\n"
+                    "However, if your program is intended for distributed use,\n"
+                    "please initialize distributed mode before model creation"
                     "********************************\n")
                 torch.distributed.init_process_group(
                     backend="nccl", rank=0, world_size=1,

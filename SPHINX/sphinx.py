@@ -8,7 +8,7 @@ from accessory.data.transform import get_transform
 from accessory.data.conversation.lib import conv_templates
 
 class SPHINXModel(MetaModel):
-    def generate_reponse(self, qas: List[List[str]], image: Optional[Image],
+    def generate_reponse(self, qas: List[List[str]], image: Optional[Image.Image],
                          max_gen_len=512, temperature=0.1, top_p=0.5, seed=0) -> str:
         """
 
@@ -42,13 +42,13 @@ class SPHINXModel(MetaModel):
             conv.append_message("Assistant", a)
 
         prompt = conv.get_prompt()
-        print(prompt)
+        # print(prompt)
 
         # each turn of response ends with `conv_seq`
-        conv_sep = self.conversation.sep
+        conv_sep = conv.sep
 
         for stream_response in self.stream_generate(
-                prompt, image, max_gen_len=max_gen_len, temperature=temperature, top_p=top_p
+            prompt, image, max_gen_len=max_gen_len, temperature=temperature, top_p=top_p
         ):
             end_pos = stream_response["text"].find(conv_sep)
             if end_pos != -1:  # response ends
