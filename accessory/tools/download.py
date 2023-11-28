@@ -94,13 +94,14 @@ def main():
 
         if args.down_sphinx:
             files_to_download = ['config.json', 'tokenizer.model', 'meta.json']
+            prefix = 'sphinx_'
             configfolder = subfolder
         elif args.down_internLM:
             prefix = 'internLM_'
         elif args.down_code:
             prefix = 'code_'
 
-        if prefix:
+        if prefix != 'sphinx_':
             files_to_download.extend(get_file_names(prefix, args.model_size))
 
         download_files(repo_id, configfolder, files_to_download, args.output_path)
