@@ -478,7 +478,7 @@ class Transformer(nn.Module):
             image_tokens = torch.cat(l_image_tokens, dim=1)
             image_words = image_tokens.shape[1]
             assert image_words == self.image_words, f"{image_words} v.s. {self.image_words}, {[_.shape for _ in l_image_tokens]}"
-            h = torch.cat((h_bos, image_tokens, h_caption), dim=1)
+            h = torch.cat((h_bos, image_tokens, h_caption), dim=1).to(h_bos)
             seqlen = h.shape[1]
 
         freqs_cis = self.freqs_cis[:seqlen]
