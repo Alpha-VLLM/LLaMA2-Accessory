@@ -55,17 +55,16 @@ Note:
     to the latest version of ``transformers`` (e.g., >= 4.32.0) should get rid
     of the warning.
 """
-import sys
-import os
-sys.path.append(os.path.abspath(__file__).rsplit('/', 3)[0])
 
 import argparse
 import json
+import os
 from typing import Any, Dict, List
+import re
 
 import torch
 
-from accessory.util.tensor_parallel import (
+from util.tensor_parallel import (
     infer_checkpoint_format_and_mp_size,
     load_tensor_parallel_shard_state_dict,
     ShardedTensorLoader,
@@ -87,27 +86,35 @@ if (hf_major_ver, hf_minor_ver) < (4, 31):
 
 
 def load_and_merge_tensor_parallel_weights(
-    src_weights_path: List[str], torch_dtype: torch.dtype,
+    src_weights_path: List[str], torch_dtype: torch.dtype, 
+    ignore_unknown_keys: bool = False,
 ) -> Dict[str, torch.Tensor]:
-    # Manually specify merge dim for each weight name suffix because:
+    # Manually specify merge dim for each weight name pattern because:
     # 1. To avoid creating a model (and then infer the merge dim) to save
     #    memory.
     # 2. Only weights actually supported by HuggingFace are listed (e.g.,
     #    biases are not supported now) so there won't be a lot of corner cases.
-    suffix_to_merge_dim = (
-        ("tok_embeddings.weight", 1),
-        (".attention.wq.weight", 0),
-        (".attention.wk.weight", 0),
-        (".attention.wv.weight", 0),
-        (".attention.wo.weight", 1),
-        (".feed_forward.w1.weight", 0),
-        (".feed_forward.w2.weight", 1),
-        (".feed_forward.w3.weight", 0),
-        ("output.weight", 0),
-        ("norm.weight", -1),
-        ("rope.freqs", -1),
+    pattern_to_merge_dim = (
+        ("^llma.tok_embeddings.weight$", 1),
+        ("^llma.layers.(\d+).attention.wq.weight$", 0),
+        ("^llma.layers.(\d+).attention.wk.weight$", 0),
+        ("^llma.layers.(\d+).attention.wv.weight$", 0),
+        ("^llma.layers.(\d+).attention.wo.weight$", 1),
+        ("^llma.layers.(\d+).attention_norm.weight", -1),
+        ("^llma.layers.(\d+).feed_forward.w1.weight$", 0),
+        ("^llma.layers.(\d+).feed_forward.w2.weight$", 1),
+        ("^llma.layers.(\d+).feed_forward.w3.weight$", 0),
+        ("^llma.layers.(\d+).ffn_norm.weight", -1),
+        ("^llma.output.weight$", 0),
+        ("^llma.norm.weight$", -1),
+        ("^llma.rope.freqs$", -1),
+    )
+    pattern_to_merge_dim = tuple(
+        (re.compile(pattern), dim)
+        for pattern, dim in pattern_to_merge_dim
     )
     merged_ckpt = {}
+    ignored_keys = []
     for i, path in enumerate(src_weights_path):
         format, mp_size = infer_checkpoint_format_and_mp_size(path)
         sharded_tensor_loaders: Dict[str, ShardedTensorLoader] = {}
@@ -123,15 +130,15 @@ def load_and_merge_tensor_parallel_weights(
                 path, format, shard_id, mp_size
             )
             for key, value in ckpt_shard.items():
-                for suffix, merge_dim in suffix_to_merge_dim:
-                    if key.endswith(suffix):
+                matched = False
+                for pattern, merge_dim in pattern_to_merge_dim:
+                    if pattern.match(key):
+                        matched = True
                         break
-                if not key.endswith(suffix):
-                    raise NotImplementedError(
-                        f"Don't know how to merge weight \"{key}\", or this "
-                        "parameter is not supported by HuggingFace's LLaMA "
-                        "implementation."
-                    )
+                if not matched:
+                    if key not in ignored_keys:
+                        ignored_keys.append(key)
+                    continue
                 if key not in merged_ckpt:
                     merged_size = list(value.size())
                     if merge_dim >= 0:
@@ -149,17 +156,27 @@ def load_and_merge_tensor_parallel_weights(
                         mode="add" if format.endswith("_diff") else "set"
                     )
                 sharded_tensor_loaders[key].load_shard(shard_id, value)
+
         for key, value in sharded_tensor_loaders.items():
             assert value.is_complete(), (
                 "A key is not loaded completely after going through all "
                 "shards. Please check the integrity of the checkpoint folder ("
                 f"key: {key}, checkpoint: {path})."
             )
+
+    if len(ignored_keys) > 0:            
+        print("Unknown key(s) found in source checkpoint:",
+              ", ".join(ignored_keys))
+        assert ignore_unknown_keys, (
+            "To ignore unknown keys, relaunch with --ignore_unknown_keys "
+            "in the command line arguments."
+        )
+
     return merged_ckpt
 
 
 def convert_merged_ckpt_to_hf(
-    merged_state_dict: Dict[str, torch.Tensor], params: Dict[str, Any]
+    merged_state_dict: Dict[str, torch.Tensor], params: Dict[str, Any],
 ) -> List[Dict[str, torch.Tensor]]:
     merged_state_dict = merged_state_dict.copy()
     num_layers = 0
@@ -343,7 +360,7 @@ def main() -> None:
              "right."
     )
     parser.add_argument(
-        "--src_config_path", type=str, default=[], nargs="*",
+        "--src_config_path", type=str, required=True, nargs="+",
         help="Path to the model configuration files (in the name of "
              "params.json as supplied by Meta). Multiple config files are "
              "supported and will be merged from left to right (i.e., the "
@@ -362,6 +379,11 @@ def main() -> None:
         "--dtype", type=str, choices=["fp16", "bf16", "fp32"], default="bf16",
         help="Data type of the converted checkpoints."
     )
+    parser.add_argument(
+        "--ignore_unknown_keys", action="store_true",
+        help="Ignore unknown keys in the source checkpoint (the scripts will "
+             "only give warnings); otherwise the conversion will fail."
+    )
     args = parser.parse_args()
 
     params = {}
@@ -377,7 +399,7 @@ def main() -> None:
 
     print("Loading and merging source checkpoints ...")
     src_ckpt_merged = load_and_merge_tensor_parallel_weights(
-        args.src_weights_path, torch_dtype
+        args.src_weights_path, torch_dtype, args.ignore_unknown_keys
     )
     print("Converting to HuggingFace format ...")
     hf_ckpt = convert_merged_ckpt_to_hf(src_ckpt_merged, params)
