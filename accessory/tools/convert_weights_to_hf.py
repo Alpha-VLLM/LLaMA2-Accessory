@@ -64,7 +64,7 @@ import re
 
 import torch
 
-from util.tensor_parallel import (
+from accessory.util.tensor_parallel import (
     infer_checkpoint_format_and_mp_size,
     load_tensor_parallel_shard_state_dict,
     ShardedTensorLoader,
