@@ -287,14 +287,18 @@ class Transformer(nn.Module):
                         str(impresources.files(accessory)/'resources/hf/Salesforce/blip2-opt-2.7b/config.json')))
                 self.qformer.language_projection = None
                 self.qformer.language_model = None
+            self.qformer.to(self.norm.weight)
 
+            with default_tensor_type(dtype=torch.float32, device="cpu"):
                 print("build llama model with clip")
                 if self.args.load_pretrained_visual_encoder:
                     self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
                 else:
                     self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained=None)
                 self.clip.transformer = None
+            self.clip.to(self.norm.weight)
 
+            with default_tensor_type(dtype=torch.float32, device="cpu"):
                 print("build llama model with openclip")
                 if self.args.load_pretrained_visual_encoder:
                     self.openclip_convnext_xxl, _, _ = open_clip.create_model_and_transforms(
@@ -307,16 +311,14 @@ class Transformer(nn.Module):
                 self.openclip_convnext_xxl = self.openclip_convnext_xxl.visual.trunk
                 self.openclip_convnext_xxl.head.global_pool = nn.Identity()
                 self.openclip_convnext_xxl.head.flatten = nn.Identity()
+            self.openclip_convnext_xxl.to(self.norm.weight)
 
+            with default_tensor_type(dtype=torch.float32, device="cpu"):
                 print("build llama model with dinov2")
                 if self.args.load_pretrained_visual_encoder:
                     self.dinov2_vitg14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14", pretrained=True)
                 else:
                     self.dinov2_vitg14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14", pretrained=False)
-
-            self.qformer.to(self.norm.weight)
-            self.clip.to(self.norm.weight)
-            self.openclip_convnext_xxl.to(self.norm.weight)
             self.dinov2_vitg14.to(self.norm.weight)
 
             self.qformer_proj = nn.Sequential(
