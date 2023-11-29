@@ -29,13 +29,17 @@ Example usage::
     #
     # Then, run in Bash:
 
-    $ cd /path/to/llama2_accessory_github_repo/accessory
+    $ cd /path/to/llama2_accessory_github_repo
     $ python -m tools.convert_weights_to_hf \
         --src_weights_path /path/to/llama-2-70b \
             /path/to/finetune/sg/dialog_sharegpt_70b \
         --src_config_path /path/to/llama-2-70b/params.json \
         --tokenizer_path /path/to/llama/tokenizer.model \
         --dst_weights_path /path/to/llama-2-70b-hf-sharegpt
+
+    # If the model to convert contains unknown parameters (e.g., converting a
+    # multi-modal model to huggingface LLaMA which is language-only), add
+    # --ignore_unknown_keys to the command above.
 
     # Then, use in transformers (in Python):
     >>> from transformers import AutoModelForCausalLM
