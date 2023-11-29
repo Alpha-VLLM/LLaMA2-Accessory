@@ -285,6 +285,10 @@ def load_tensor_parallel_model_state_dict(
     Returns:
         OrderedDict[str, torch.Tensor]: The model state_dict local to the
             model parallel rank of the current process.
+
+    ..note::
+        This function is synchronous within the model parallel group and must
+        be called by all the group workers at the same time.
     """
     def print_if_verbose(*args, **kwargs):
         if verbose:
@@ -361,6 +365,10 @@ def load_tensor_parallel_model(
             being the missing keys and the second being the unexpected keys,
             following the same convention as
             ``torch.nn.Module.load_state_dict``.
+
+    ..note::
+        This function is synchronous within the model parallel group and must
+        be called by all the group workers at the same time.
     """
     assert not format.endswith("_diff"), (
         "A *_diff checkpoint must be used together with the corresponding "
@@ -494,6 +502,10 @@ def load_tensor_parallel_model_list(
             in any of the checkpoints in the list, and is deemed unexpected if
             it is unexpected to the model and has appeared in any one of the
             checkpoints in the list.
+
+    ..note::
+        This function is synchronous within the model parallel group and must
+        be called by all the group workers at the same time.
     """
     missing_keys = set(model.state_dict().keys())
     existing_keys, unexpected_keys = set(), set()
