@@ -22,6 +22,7 @@ import open_clip
 
 import accessory
 from accessory.configs import global_configs
+from accessory.util.tensor_type import default_tensor_type
 if global_configs.USE_FLASH_ATTENTION:
     from flash_attn import flash_attn_func
 
@@ -275,51 +276,48 @@ class Transformer(nn.Module):
         self.image_words = 0
         self.cache_image_words = 0 # for inference
         if with_visual:
+            with default_tensor_type(dtype=torch.float32, device="cpu"):
+                print("build llama model with qformerv2")
+                if self.args.load_pretrained_visual_encoder:
+                    self.qformer = Blip2Model.from_pretrained(
+                        "Salesforce/blip2-opt-2.7b", torch_dtype=self.norm.weight.dtype
+                    )
+                else:
+                    self.qformer = Blip2Model(Blip2Config.from_pretrained(
+                        str(impresources.files(accessory)/'resources/hf/Salesforce/blip2-opt-2.7b/config.json')))
+                self.qformer.language_projection = None
+                self.qformer.language_model = None
 
-            default_dtype = torch.get_default_dtype()
-            torch.set_default_dtype(torch.float32)
+                print("build llama model with clip")
+                if self.args.load_pretrained_visual_encoder:
+                    self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
+                else:
+                    self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained=None)
+                self.clip.transformer = None
 
-            print("build llama model with qformerv2")
-            if self.args.load_pretrained_visual_encoder:
-                self.qformer = Blip2Model.from_pretrained(
-                    "Salesforce/blip2-opt-2.7b", torch_dtype=self.norm.weight.dtype
-                )
-            else:
-                self.qformer = Blip2Model(Blip2Config.from_pretrained(
-                    str(impresources.files(accessory)/'resources/hf/Salesforce/blip2-opt-2.7b/config.json')))
-            self.qformer.language_projection = None
-            self.qformer.language_model = None
+                print("build llama model with openclip")
+                if self.args.load_pretrained_visual_encoder:
+                    self.openclip_convnext_xxl, _, _ = open_clip.create_model_and_transforms(
+                        "convnext_xxlarge", pretrained="laion2b_s34b_b82k_augreg_soup"
+                    )
+                else:
+                    self.openclip_convnext_xxl, _, _ = open_clip.create_model_and_transforms(
+                        "convnext_xxlarge", pretrained=None
+                    )
+                self.openclip_convnext_xxl = self.openclip_convnext_xxl.visual.trunk
+                self.openclip_convnext_xxl.head.global_pool = nn.Identity()
+                self.openclip_convnext_xxl.head.flatten = nn.Identity()
+
+                print("build llama model with dinov2")
+                if self.args.load_pretrained_visual_encoder:
+                    self.dinov2_vitg14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14", pretrained=True)
+                else:
+                    self.dinov2_vitg14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14", pretrained=False)
+
             self.qformer.to(self.norm.weight)
-
-            print("build llama model with clip")
-            if self.args.load_pretrained_visual_encoder:
-                self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
-            else:
-                self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained=None)
-            self.clip.transformer = None
             self.clip.to(self.norm.weight)
-
-            print("build llama model with openclip")
-            if self.args.load_pretrained_visual_encoder:
-                self.openclip_convnext_xxl, _, _ = open_clip.create_model_and_transforms(
-                    "convnext_xxlarge", pretrained="laion2b_s34b_b82k_augreg_soup"
-                )
-            else:
-                self.openclip_convnext_xxl, _, _ = open_clip.create_model_and_transforms(
-                    "convnext_xxlarge", pretrained=None
-                )
-            self.openclip_convnext_xxl = self.openclip_convnext_xxl.visual.trunk
-            self.openclip_convnext_xxl.head.global_pool = nn.Identity()
-            self.openclip_convnext_xxl.head.flatten = nn.Identity()
             self.openclip_convnext_xxl.to(self.norm.weight)
-
-            print("build llama model with dinov2")
-            if self.args.load_pretrained_visual_encoder:
-                self.dinov2_vitg14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14", pretrained=True)
-            else:
-                self.dinov2_vitg14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14", pretrained=False)
             self.dinov2_vitg14.to(self.norm.weight)
-            torch.set_default_dtype(default_dtype)
 
             self.qformer_proj = nn.Sequential(
                 nn.Linear(768, args.dim),
