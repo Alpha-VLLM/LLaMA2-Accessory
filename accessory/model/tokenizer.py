@@ -26,7 +26,6 @@ class Tokenizer:
             logger.info(f"Reloaded SentencePiece model from {model_path}")
 
             # BOS / EOS token IDs
-            self.n_words: int = self.tokenizer.vocab_size()
             self.bos_id: int = self.tokenizer.bos_id()
             self.eos_id: int = self.tokenizer.eos_id()
             assert self.tokenizer.vocab_size() == self.tokenizer.get_piece_size()
@@ -35,7 +34,6 @@ class Tokenizer:
             self.tokenizer = AutoTokenizer.from_pretrained(model_path)
             logger.info(f"load HF transformers tokenizer from {model_path}")
             # BOS / EOS token IDs
-            self.n_words: int = self.tokenizer.vocab_size
             self.bos_id: int = self.tokenizer.bos_token_id
             if self.bos_id is None:
                 self.bos_id = self.tokenizer.eos_token_id
@@ -68,3 +66,11 @@ class Tokenizer:
             with open(Path(save_dir)/"tokenizer.model", 'wb') as f:
                 f.write(self.tokenizer.serialized_model_proto())
 
+    @ property
+    def n_words(self):
+        if self.tokenizer_type == "spm":
+            return self.tokenizer.vocab_size()
+        elif self.tokenizer_type == "transformers":
+            return len(self.tokenizer)
+        else:
+            raise RuntimeError

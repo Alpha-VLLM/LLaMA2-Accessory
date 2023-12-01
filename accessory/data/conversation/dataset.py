@@ -5,7 +5,6 @@ from time import sleep
 import torch
 import yaml
 from torch.utils.data import Dataset
-from PIL import Image
 from ..data_reader import read_img_general
 import json
 import h5py
@@ -165,9 +164,21 @@ class FinetuneDialogDataset(Dataset):
                         "If you are using a supported format, please set the file extension so that the proper parsing "
                         "routine can be called."
                     )
+                print(f"{meta_path}, type{meta_type}: len {len(meta_l)}")
+                if "ratio" in meta:
+                    random.seed(0)
+                    meta_l = random.sample(meta_l, int(len(meta_l)*meta['ratio']))
+                    print(f"sample (ratio = {meta['ratio']}) {len(meta_l)} items")
+                if "root" in meta:
+                    for item in meta_l:
+                        if "image" in item:
+                            item['image'] = str(Path(meta['root'])/item['image'])
+                for i, item in enumerate(meta_l):
+                    for turn in item['conversations']:
+                        if not isinstance(turn['value'], str):
+                            turn['value'] = str(turn['value'])
                 if meta_type not in group_ann:
                     group_ann[meta_type] = []
-                print(f"{meta_path}, type{meta_type}: len {len(meta_l)}")
                 group_ann[meta_type] += meta_l
 
             # sort group_ann for higher efficiency (items in one global batch with similar length)
@@ -234,6 +245,8 @@ class FinetuneDialogDataset(Dataset):
             # image = torch.zeros(3, 224, 224)
 
         source = data_item["conversations"]
+        for _ in source:
+            _['value'] = _['value'].replace("<image>", "").strip()
         conversation, to_predict_values = self.conversation_generator.add_speaker_and_signal(source)
         if len(to_predict_values) == 0:
             warnings.warn(f"see dialog data with nothing to predict, data: {data_item}")
