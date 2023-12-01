@@ -16,7 +16,7 @@ model_list = {
 
 def download_file(repo_id, subfolder, filename, local_dir):
     try:
-        hf_hub_download(repo_id=repo_id, repo_type="model", subfolder=subfolder, filename=filename, resume_download=True, local_dir=local_dir)
+        hf_hub_download(repo_id=repo_id, repo_type="model", subfolder=subfolder, filename=filename, resume_download=True, local_dir=local_dir,local_dir_use_symlinks=False)
         print(f"{filename} downloaded successfully.")
     except Exception as e:
         print(f"Error downloading {filename}: {str(e)}. Please check your arguments.")
