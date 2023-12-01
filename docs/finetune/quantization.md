@@ -2,9 +2,9 @@
 
 We support <u>Q</u>uantized <u>P</u>arameter-<u>E</u>fficient <u>F</u>ine-<u>T</u>uning (**QPEFT**) methods including **QNormBias** and **QNormBiasLoRA**, which significantly minimize the computing demands. In QPEFT, we quantize the base model while only retain carefully selected trainable parameters.
 
-- **QNormBias**. Only the bias term and normalization weights are allowed for gradient updates. The pre-trained LLaMA2 weights are quantized and frozen.
+- **QNormBias**. Only the bias term and normalization weights are allowed for gradient updates. The pretrained LLaMA2 weights are quantized and frozen.
 
-- **QNormBiasLoRA**. The bias term, LoRA weights, and  normalization weights are allowed for gradient updates. The pre-trained LLaMA2 weights are quantized and frozen.
+- **QNormBiasLoRA**. The bias term, LoRA weights, and  normalization weights are allowed for gradient updates. The pretrained LLaMA2 weights are quantized and frozen.
 
 ## Best Practice
 
@@ -16,7 +16,7 @@ torchrun <--some_flags> main_finetune.py <--some_flags> \
 
 For more details, please check the following scripts:
 
-| Method        | Fine-tune <u>Language-only</u> LLaMA 2                                                                                                                         | Fine-tune <u>Multi-Modal</u> LLaMA 2                                                                                                                                     |
+| Method        | Finetune <u>Language-only</u> LLaMA 2                                                                                                                         | Finetune <u>Multi-Modal</u> LLaMA 2                                                                                                                                     |
 |:-------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
 | QNormBias     | [alpaca_llamaPeft_normBias_QF.sh](https://github.com/Alpha-VLLM/LLaMA2-Accessory/blob/main/accessory/exps/finetune/sg/alpaca_llamaPeft_normBias_QF.sh)         | -                                                                                                                                                                        |
 | QNormBiasLoRA | [alpaca_llamaPeft_normBiasLora_QF.sh](https://github.com/Alpha-VLLM/LLaMA2-Accessory/blob/main/accessory/exps/finetune/sg/alpaca_llamaPeft_normBiasLora_QF.sh) | [alpacaLlava_llamaQformerv2Peft_QF_13B.sh](https://github.com/Alpha-VLLM/LLaMA2-Accessory/blob/main/accessory/exps/finetune/mm/alpacaLlava_llamaQformerv2Peft_QF_13B.sh) |
@@ -34,9 +34,9 @@ Models can be loaded in 4-bit NormalFloat (NF4) data format which optimizes both
 | LLaMA2-13B Q-Fomer | 512        | Multi-modal/[LLaVA-Instruct-150K](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/tree/main)             | BF16      | 1          | 31 GB     | 38 GB (NormBiasLoRA) | ✔          |
 | LLaMA2-13B Q-Fomer | 512        | Multi-modal [LLaVA-Instruct-150K](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/tree/main)             | NF4       | 1          | 13 GB     | 15 GB (NormBiasLoRA) | ✔          |
 
-- **GPU hours** of fine-tuning
+- **GPU hours** of finetuning
 
-> Note that we use 8x A100-80GB GPU cards for fine-tuning. The GPU hour refers to `number_of_cards * total_training_time`.
+> Note that we use 8x A100-80GB GPU cards for finetuning. The GPU hour refers to `number_of_cards * total_training_time`.
 
 | Model               | Task / Dataset                                                                                                          | Samples | Epoch | Precision | GPU Hours | 8x A100 Training Time |
 |:-------------------:|:-----------------------------------------------------------------------------------------------------------------------:|:-------:|:-----:|:---------:|:---------:|:---------------------:|

@@ -41,7 +41,7 @@ def get_args_parser():
                         help='path to tokenizer.model')
 
     parser.add_argument('--pretrained_path', default='/path/to/pretrained', type=str, nargs="+",
-                        help='directory containing pre-trained checkpoints')
+                        help='directory containing pretrained checkpoints')
 
     parser.add_argument('--device', default='cuda',
                         help='device for inference')

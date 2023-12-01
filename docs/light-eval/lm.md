@@ -58,7 +58,7 @@ torchrun --nproc-per-node="$nproc_per_node" --master_port "$master_port" src/eva
 
 - `pretrained_type` :
   - For the official LLaMA / LLaMA2 checkpoints released by META, you should set `pretrained_type=meta_ori`.
-  - For  the checkpoints fine-tuned / saved by LLaMA2-Accessory, you should set `pretrained_type=consolidated`.
+  - For  the checkpoints finetuned / saved by LLaMA2-Accessory, you should set `pretrained_type=consolidated`.
 - `data_dir` : Please note that the dataset is stored according to the storage structure described in **dataset**, and you need to point the variable to the dataset folder
 - `nproc_per_node` , `model_parallel ` :  variables set according to the model.
 - `master_port` : variable that set the port used by `torchrun`.

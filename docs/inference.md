@@ -55,9 +55,9 @@ Enjoy your journey with our project!
 
 Before running the inference code, users must ensure that they have correctly installed and configured all necessary environments according to the instructions in the [Installation Document](./install.md).
 
-### How to Download Pre-train Weights
+### How to Download Pretrain Weights
 
-**We are pleased to announce that we have now released the full-version (i.e. merged) pre-trained weights**. You can directly download and utilize them without the need to merge original and delta weights. This simplifies the downloading process and provides an immediate user experience. 
+**We are pleased to announce that we have now released the full-version (i.e. merged) pretrained weights**. You can directly download and utilize them without the need to merge original and delta weights. This simplifies the downloading process and provides an immediate user experience. 
 
 :::{important}
 
@@ -80,7 +80,7 @@ Please continue to stay updated with our latest releases and feel free to share 
 
 :::{warning}
 
-This section may be outdated as we have now released the full-version (i.e. merged) pre-trained weights directly. Applying delta is no longer needed.
+This section may be outdated as we have now released the full-version (i.e. merged) pretrained weights directly. Applying delta is no longer needed.
 
 :::
 

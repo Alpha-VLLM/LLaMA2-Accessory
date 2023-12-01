@@ -1,4 +1,4 @@
-# Demos of Chatbot LLaMA2 fine-tuned using the Flacuna dataset.
+# Demos of Chatbot LLaMA2 finetuned using the Flacuna dataset.
 
 ### 1. **coding**
 

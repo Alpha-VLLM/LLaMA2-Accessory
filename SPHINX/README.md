@@ -18,7 +18,7 @@ We present $\color{goldenrod}{SPHINX}$, a versatile multi-modal large language m
 
 - **Task Mix.** For all-purpose capabilities, we mix a variety of vision-language tasks for mutual improvement: VQA, REC, REG, OCR, DET, POSE, REL DET, T2I, etc.
 
-- **Embedding Mix.** We capture robust visual representations by fusing distinct visual architectures, pre-training, and granularity.
+- **Embedding Mix.** We capture robust visual representations by fusing distinct visual architectures, pretraining, and granularity.
 
 - **Domain Mix.** For data from real-world and synthetic domains, we mix the weights of two domain-specific models for complementarity.
 
@@ -173,7 +173,7 @@ Explanation of each argument:
 + `--n_gpus`: Number of gpus to use. Utilizing more GPUs will alleviate memory usage on each GPU through model parallelism. Currently, this argument should be set to either 1 or 2, as support for *consolidated ckpt num < gpu num* is not yet available.
 + `--tokenizer_path`: Path to the official LLaMA2 tokenizer. Note that the tokenizer file is the same for both LLaMA and LLaMA2. You may download it from [here](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/config/tokenizer.model).
 + `--llama_type`: The model architecture of SPHINX is defined in [accessory/model/LLM/llama_ens.py](../accessory/model/LLM/llama_ens.py),  and specifying `--llama_type=llama_ens` tells the demo program to use this architecture.
-+ `--pretrained_path`: The path to pre-trained checkpoint.
++ `--pretrained_path`: The path to pretrained checkpoint.
 
 #### SPHINX-1k & SPHINX-v2-1k
 Execute the following command for demo hosting:

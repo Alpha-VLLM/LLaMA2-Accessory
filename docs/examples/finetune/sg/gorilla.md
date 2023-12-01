@@ -1,4 +1,4 @@
-## Demos of fine-tuned LLaMA2 using the gorilla tensorflow dataset.
+## Demos of finetuned LLaMA2 using the gorilla tensorflow dataset.
 
 
 ### **Instruction 1:**
@@ -6,7 +6,7 @@ I am working on a project where I need to cluster similar images of street art. 
 
 **Answer:**
 
-<<\<domain\>>>: Image feature vector, <<\<api_call\>>>: hub.KerasLayer('https://tfhub.dev/google/imagenet/mobilenet_v2_100_224/feature_vector/4'), <<\<api_provider\>>>: TensorFlow Hub, <<\<explanation\>>>: This API call loads a pre-trained MobileNetV2 model from TensorFlow Hub, which has been trained on the ImageNet dataset. This model is used for extracting feature vectors from images. You can feed your street art images into this model to obtain feature vectors, which can then be used for clustering. 
+<<\<domain\>>>: Image feature vector, <<\<api_call\>>>: hub.KerasLayer('https://tfhub.dev/google/imagenet/mobilenet_v2_100_224/feature_vector/4'), <<\<api_provider\>>>: TensorFlow Hub, <<\<explanation\>>>: This API call loads a pretrained MobileNetV2 model from TensorFlow Hub, which has been trained on the ImageNet dataset. This model is used for extracting feature vectors from images. You can feed your street art images into this model to obtain feature vectors, which can then be used for clustering. 
 
 <<\<code\>>>: 
 ```
@@ -30,7 +30,7 @@ My dog is always getting into things that can be dangerous. Can you help me iden
 
 **Answer:**
 
-<<\<domain\>>>: Image object detection, <<\<api_call\>>>: detector = hub.load('https://tfhub.dev/tensorflow/ssd_mobilenet_v2/2'), <<\<api_provider\>>>: TensorFlow Hub, <<\<explanation\>>>: This API call loads a pre-trained TensorFlow Hub model for object detection in images using the SSD MobileNet V2 architecture. Once the model is loaded, it can be used to detect objects in images, allowing you to identify the object your dog is about to eat. The model is trained on the COCO dataset, which includes a variety of common objects. 
+<<\<domain\>>>: Image object detection, <<\<api_call\>>>: detector = hub.load('https://tfhub.dev/tensorflow/ssd_mobilenet_v2/2'), <<\<api_provider\>>>: TensorFlow Hub, <<\<explanation\>>>: This API call loads a pretrained TensorFlow Hub model for object detection in images using the SSD MobileNet V2 architecture. Once the model is loaded, it can be used to detect objects in images, allowing you to identify the object your dog is about to eat. The model is trained on the COCO dataset, which includes a variety of common objects. 
 
 <<\<code\>>>: 
 ```

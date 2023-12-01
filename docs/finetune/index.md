@@ -1,4 +1,4 @@
-# Fine-tune
+# Finetune
 
 ```{toctree}
 prerequisites

@@ -1,4 +1,4 @@
-## Demos of Chatbot LLaMA2 fine-tuned using the wizardLM dataset.
+## Demos of Chatbot LLaMA2 finetuned using the wizardLM dataset.
 
 ### 1.**coding**
 
@@ -302,7 +302,7 @@ Explain how the backpropagation algorithm works in the context of deep learning.
 >
 > The adjustment of the weights and biases is done using an optimization algorithm such as stochastic gradient descent, which updates the weights and biases in the direction of the gradient of the loss function with respect to the parameters. This process is repeated for multiple iterations until the network achieves a satisfactory level of accuracy on the training data.
 >
-> Once the network is trained on the training data, it can be used to make predictions on new, unseen data. The backpropagation algorithm can also be used to fine-tune the network by adjusting the weights and biases further based on new data or by using techniques such as transfer learning.
+> Once the network is trained on the training data, it can be used to make predictions on new, unseen data. The backpropagation algorithm can also be used to finetune the network by adjusting the weights and biases further based on new data or by using techniques such as transfer learning.
 
 ### 12.**Environmental Impact**
 

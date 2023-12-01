@@ -1,4 +1,4 @@
-## Demos of Chatbot LLaMA2 fine-tuned using the sharegpt dataset.
+## Demos of Chatbot LLaMA2 finetuned using the sharegpt dataset.
 
 ### 1.**coding**
 

@@ -1,4 +1,4 @@
-## Demos of Chatbot LLaMA2-chat fine-tuned using the Safety RM & Helpfulness RM.
+## Demos of Chatbot LLaMA2-chat finetuned using the Safety RM & Helpfulness RM.
 
 ### **Convesation 1 (General scene):**
 A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions.

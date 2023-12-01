@@ -22,7 +22,7 @@ Example usage::
     # The folders to prepare:
     #
     # /path/to/llama-2-70b: Path to the original LLaMA-2-70B weights by Meta.
-    # /path/to/finetune/sg/dialog_sharegpt_70b: ShareGPT fine-tuned delta
+    # /path/to/finetune/sg/dialog_sharegpt_70b: ShareGPT finetuned delta
     #   weights downloaded from our repo.
     # /path/to/llama/tokenizer.model: Tokenizer model file released by Meta.
     # /path/to/llama2_accessory_github_repo: Path to the cloned Github repo.
@@ -338,7 +338,7 @@ def main() -> None:
     parser = argparse.ArgumentParser("Huggingface Weight Conversion Tool")
     parser.add_argument(
         "--src_weights_path", type=str, required=True, nargs="+",
-        help="Path(s) to the fine-tuned checkpoints. If multiple checkpoint "
+        help="Path(s) to the finetuned checkpoints. If multiple checkpoint "
              "folders are provided, they will be merged from the left to the "
              "right."
     )

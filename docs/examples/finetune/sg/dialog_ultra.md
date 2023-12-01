@@ -1,4 +1,4 @@
-# Demos of Chatbot LLaMA2 fine-tuned using the Ultrachat dataset.
+# Demos of Chatbot LLaMA2 finetuned using the Ultrachat dataset.
 
 ### 1. **coding**
 

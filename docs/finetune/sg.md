@@ -1,4 +1,4 @@
-# Language-only Full-Parameter Fine-tuning
+# Language-only Full-Parameter Finetuning
 
 ## Single-turn LLaMA2-7B on Alpaca
 
@@ -134,7 +134,7 @@ I am working on a project where I need to cluster similar images of street art. 
 
 <<\<api_provider\>>>: TensorFlow Hub,
 
-<<\<explanation\>>>: This API call loads a pre-trained MobileNetV2 model from TensorFlow Hub, which has been trained on the ImageNet dataset. This model is used for extracting feature vectors from images. You can feed your street art images into this model to obtain feature vectors, which can then be used for clustering.
+<<\<explanation\>>>: This API call loads a pretrained MobileNetV2 model from TensorFlow Hub, which has been trained on the ImageNet dataset. This model is used for extracting feature vectors from images. You can feed your street art images into this model to obtain feature vectors, which can then be used for clustering.
 
 <<\<code\>>>:
 

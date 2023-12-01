@@ -5,7 +5,7 @@ import torch
 def get_args_parser():
     parser = argparse.ArgumentParser('Combine or separate the weights of the model.', add_help=False)
     parser.add_argument('--pretrained_path', default='/path/to/pretrained', type=str,
-                        help='directory containing pre-trained checkpoints')
+                        help='directory containing pretrained checkpoints')
     parser.add_argument('--delta_path', default='/path/to/delta', type=str,
                         help='directory containing delta checkpoints')
     parser.add_argument('--output_path', default='./output',

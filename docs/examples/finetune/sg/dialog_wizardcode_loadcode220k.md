@@ -1,4 +1,4 @@
-# Demos of Chatbot LLaMA2 fine-tuned using the wizardCode dataset + continue pretraining.
+# Demos of Chatbot LLaMA2 finetuned using the wizardCode dataset + continue pretraining.
 
 ### 1. **coding**
 

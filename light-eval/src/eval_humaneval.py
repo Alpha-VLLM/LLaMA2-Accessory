@@ -31,7 +31,7 @@ def get_args_parser():
     parser.add_argument('--tokenizer_path', type=str, default="../tokenizer.model",
                         help='path to tokenizer.model')
     parser.add_argument('--pretrained_path', default='/path/to/pretrained', type=str,
-                        help='directory containing pre-trained checkpoints')
+                        help='directory containing pretrained checkpoints')
     parser.add_argument('--pretrained_type', type=str, default="consolidated", choices=['consolidated', 'meta_ori'],
                         help='pretrained checkpoint save format')
     # Parrallel parameters

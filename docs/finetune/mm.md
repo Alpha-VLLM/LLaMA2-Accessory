@@ -2,7 +2,7 @@
 
 ## Two-Stage Training of Multi-Modal LLaMA2
 
-For multi-modal fine-tuning, we follow a two-stage paradigm
+For multi-modal finetuning, we follow a two-stage paradigm
 
 ### Stage1
 

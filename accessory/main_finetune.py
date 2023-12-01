@@ -188,7 +188,7 @@ def main(args):
                 promote_trainable_params_to_fp32(model)
                 misc.print_param_status(model)
 
-                # load pre-trained weights
+                # load pretrained weights
                 print(f"## Load pretrained from {args.pretrained_path}", force=True)
                 load_tensor_parallel_model(model, args.pretrained_path, args.pretrained_type)
 

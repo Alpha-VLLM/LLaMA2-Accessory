@@ -9,7 +9,7 @@
    🤗 <a href="https://huggingface.co/Alpha-VLLM/SPHINX" target="_blank">HF Repo</a> • 👋 join our <a href="docs/wechat.md" target="_blank">WeChat</a> • 🚀 <a href="http://imagebind-llm.opengvlab.com/" target="_blank">Demo</a>
 </p>
 
-🚀**LLaMA2-Accessory** is an open-source toolkit for pre-training, fine-tuning and deployment of **Large Language Models (LLMs)** and **multimodal LLMs**. This repo is mainly inherited from [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter) with more advanced features.🧠
+🚀**LLaMA2-Accessory** is an open-source toolkit for pretraining, finetuning and deployment of **Large Language Models (LLMs)** and **multimodal LLMs**. This repo is mainly inherited from [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter) with more advanced features.🧠
 
 ✨Within this toolkit, we present **SPHINX**, a versatile multimodal large language model (MLLM) that combines a diverse array of training tasks, data domains, and visual embeddings.
 
@@ -20,20 +20,20 @@
 - **[2023.09.14]** [WeMix-LLaMA2-70B](https://github.com/Alpha-VLLM/WeMix-LLM) shows excellent performance on the [OpenCompass](https://opencompass.org.cn/leaderboard-llm) benchmark!🔥🔥🔥
 - **[2023.09.02]** We now support InternLM🔥🔥🔥
 - **[2023.08.28]** We release quantized LLM with [OmniQuant](https://github.com/OpenGVLab/OmniQuant), which is an efficient, accurate, and omnibearing (even extremely low bit) quantization algorithm. Multimodal version is coming soon🔥🔥
-- **[2023.08.27]** We now support CodeLLaMA and instruction fine-tuning on [evol-code-alpaca](https://huggingface.co/datasets/theblackcat102/evol-codealpaca-v1)🔥🔥
+- **[2023.08.27]** We now support CodeLLaMA and instruction finetuning on [evol-code-alpaca](https://huggingface.co/datasets/theblackcat102/evol-codealpaca-v1)🔥🔥
 - **[2023.08.27]** We release our documentation in a webbook format 🔗[Check it out here](https://llama2-accessory.readthedocs.io/)
 - **[2023.08.21]** We release the Quantization codes and Evaluation result🔥
-- **[2023.08.05]** We release the multimodel fine-tuning codes and checkpoints🔥
+- **[2023.08.05]** We release the multimodel finetuning codes and checkpoints🔥
 - **[2023.07.23]** Initial release 📌
 
 ## Features
 * **💡Support More Datasets and Tasks**
-  - 🎯 Pre-training with [RefinedWeb](https://huggingface.co/datasets/tiiuae/falcon-refinedweb) and [StarCoder](https://github.com/bigcode-project/starcoder).
-  - 📚 Single-modal fine-tuning with [Alpaca](https://github.com/tatsu-lab/stanford_alpaca), [ShareGPT](https://github.com/domeccleston/sharegpt), [LIMA](https://arxiv.org/pdf/2305.11206.pdf), [WizardLM](https://github.com/nlpxucan/WizardLM), [Flacuna](https://github.com/declare-lab/flacuna), [Platypus](https://github.com/arielnlee/Platypus), [UltraChat](https://github.com/thunlp/UltraChat) and [MOSS](https://github.com/OpenLMLab/MOSS).
-  - 🌈 Multi-modal fine-tuning with image-text pairs ([LAION](https://laion.ai/blog/laion-5b/), [COYO](https://github.com/kakaobrain/coyo-dataset) and more), interleaved image-text data ([MMC4](https://github.com/allenai/mmc4) and [OBELISC](https://github.com/huggingface/OBELISC)) and visual instruction data ([LLaVA](https://github.com/haotian-liu/LLaVA), [Shrika](https://github.com/shikras/shikra), [Bard](https://bard.google.com/))
+  - 🎯 Pretraining with [RefinedWeb](https://huggingface.co/datasets/tiiuae/falcon-refinedweb) and [StarCoder](https://github.com/bigcode-project/starcoder).
+  - 📚 Single-modal finetuning with [Alpaca](https://github.com/tatsu-lab/stanford_alpaca), [ShareGPT](https://github.com/domeccleston/sharegpt), [LIMA](https://arxiv.org/pdf/2305.11206.pdf), [WizardLM](https://github.com/nlpxucan/WizardLM), [Flacuna](https://github.com/declare-lab/flacuna), [Platypus](https://github.com/arielnlee/Platypus), [UltraChat](https://github.com/thunlp/UltraChat) and [MOSS](https://github.com/OpenLMLab/MOSS).
+  - 🌈 Multi-modal finetuning with image-text pairs ([LAION](https://laion.ai/blog/laion-5b/), [COYO](https://github.com/kakaobrain/coyo-dataset) and more), interleaved image-text data ([MMC4](https://github.com/allenai/mmc4) and [OBELISC](https://github.com/huggingface/OBELISC)) and visual instruction data ([LLaVA](https://github.com/haotian-liu/LLaVA), [Shrika](https://github.com/shikras/shikra), [Bard](https://bard.google.com/))
   - 🔧 LLM for API Control ([GPT4Tools](https://github.com/StevenGrove/GPT4Tools) and [Gorilla](https://github.com/ShishirPatil/gorilla)).
 * **⚡Efficient Optimization and Deployment**
-  - 🚝 Parameter-efficient fine-tuning with [Zero-init Attenion](https://github.com/OpenGVLab/LLaMA-Adapter) and [Bias-norm Tuning](https://github.com/OpenGVLab/LLaMA-Adapter).
+  - 🚝 Parameter-efficient finetuning with [Zero-init Attenion](https://github.com/OpenGVLab/LLaMA-Adapter) and [Bias-norm Tuning](https://github.com/OpenGVLab/LLaMA-Adapter).
   - 💻 Fully Sharded Data Parallel ([FSDP](https://engineering.fb.com/2021/07/15/open-source/fsdp/)), [Flash Attention 2](https://github.com/Dao-AILab/flash-attention) and [QLoRA](https://github.com/artidoro/qlora).
 * **🏋️‍♀️Support More Visual Encoders and LLMs**
 
@@ -46,7 +46,7 @@
 
 ## Model Usage
 
-:robot: Instructions for model [pre-training](https://llama2-accessory.readthedocs.io/en/latest/pretrain.html), [fine-tuning](https://llama2-accessory.readthedocs.io/en/latest/finetune/index.html), [inference](https://llama2-accessory.readthedocs.io/en/latest/inference.html), and other related topics are all available in the [document](https://llama2-accessory.readthedocs.io).
+:robot: Instructions for model [pretraining](https://llama2-accessory.readthedocs.io/en/latest/pretrain.html), [finetuning](https://llama2-accessory.readthedocs.io/en/latest/finetune/index.html), [inference](https://llama2-accessory.readthedocs.io/en/latest/inference.html), and other related topics are all available in the [document](https://llama2-accessory.readthedocs.io).
 
 ## Frequently Asked Questions (FAQ)
 
@@ -79,7 +79,7 @@
 If you find our code and paper useful, please kindly cite:
 ```bash
 @article{zhang2023llamaadapter,
-  title = {LLaMA-Adapter: Efficient Fine-tuning of Language Models with Zero-init Attention},
+  title = {LLaMA-Adapter: Efficient Finetuning of Language Models with Zero-init Attention},
   author={Zhang, Renrui and Han, Jiaming and Liu, Chris and Gao, Peng and Zhou, Aojun and Hu, Xiangfei and Yan, Shilin and Lu, Pan and Li, Hongsheng and Qiao, Yu},
   journal={arXiv preprint arXiv:2303.16199},
   year={2023}

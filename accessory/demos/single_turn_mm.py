@@ -31,7 +31,7 @@ def get_args_parser():
                         help='path to tokenizer.model')
 
     parser.add_argument('--pretrained_path', default='/path/to/pretrained', type=str, nargs="+",
-                        help='directory containing pre-trained checkpoints')
+                        help='directory containing pretrained checkpoints')
 
     parser.add_argument('--image_transform', default='resized_center_crop', type=str,
                         help='type of image transformation (see accessory/data/transform.py for options)')

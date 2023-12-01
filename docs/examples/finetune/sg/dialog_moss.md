@@ -1,6 +1,6 @@
 
 
-# Demos of Chatbot LLaMA2 fine-tuned using the moss dataset.
+# Demos of Chatbot LLaMA2 finetuned using the moss dataset.
 
 ### 1. **coding**
 
