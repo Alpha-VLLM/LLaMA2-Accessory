@@ -7,19 +7,25 @@ The vanilla dataset is supported in {link2repo}`[data/falcon.py](accessory/data/
 
 An example for pretraining with the vanilla dataset is provided in {link2repo}`[exps/pretrain/vanilla.sh](accessory/exps/pretrain/vanilla.sh)`. Here are some notes about the script:
 
-+ To run the script one your own environment, point the `llama_config` variable to the `params.json` file defining the model structure, and the `tokenizer_path` variable to the `tokenizer.model` file.
-+ A meta file specifying the list of `.parquet` files to use should be created and pointed to by the `data_meta_path` variable. We provide an example meta file for the *Falcon Refined-web* dataset {link2repo}`[here](data_example/PretrainMeta.json)`.
+1\. To run the script on your own machine, point the `llama_config` variable to the `*.json` files defining model configuration, and the `tokenizer_path` variable to the spm (*i.e.* tokenizer.model) or huggingface tokenizer.
+:::{tip}
+
+See FAQ to know more about [llama_config](./faq.md#how-to-set-llama_config) and [tokenizer_path](./faq.md#how-to-set-tokenizer_path).
+
+:::
+
+2\. A meta file specifying the list of `.parquet` files to use should be created and pointed to by the `data_meta_path` variable. We provide an example meta file for the *Falcon Refined-web* dataset {link2repo}`[here](data_example/PretrainMeta.json)`.
   + The elements in the meta file should be either absolute paths, or paths relative to `data_root`.
 
 ## Packed Dataset
 
-For more efficient token utilization, the packed dataset is supported in {link2repo}`[data/falcon_packed.py](accessory/data/falcon_packed.py)` The packed dataset concatenates contents from different data pieces into a whole and then splits it into equal-length segments. To train with packed dataset, you need to first pre-process your data, namely to tokenize, concatenate, split, and save them. A script for doing this is provided in {link2repo}`[tools/generate_packed_data.py](accessory/tools/generate_packed_data.py)`.
+For more efficient token utilization, the packed dataset is supported in {link2repo}`[data/falcon_packed.py](accessory/data/falcon_packed.py)`. The packed dataset concatenates contents from different data pieces into a whole and then splits it into equal-length segments. To train with packed dataset, you need to first pre-process your data, namely to tokenize, concatenate, split, and save them. A script for doing this is provided in {link2repo}`[tools/generate_packed_data.py](accessory/tools/generate_packed_data.py)`.
 
 ```bash
 python -u tools/generate_packed_data.py
 ```
 
-An example for pretraining with the packed dataset is provided in {link2repo}`[exps/pretrain/13B_packed.sh](accessory/exps/pretrain/13B_packed.sh)`. Similar to the case of the vanilla dataset, you also need to create a meta file and point `data_meta_path` to it. If you use our `generate_packed_dataset.py` to preprocess data, elements in the meta file should end with `.pkl` (See {link2repo}`[here](data_example/PretrainMetaPacked.json) for example)`. 
+An example for pretraining with the packed dataset is provided in {link2repo}`[exps/pretrain/13B_packed.sh](accessory/exps/pretrain/13B_packed.sh)`. Similar to the case of the vanilla dataset, you also need to create a meta file and point `data_meta_path` to it. If you use our `generate_packed_dataset.py` to preprocess data, elements in the meta file should end with `.pkl` (See {link2repo}`[here](data_example/PretrainMetaPacked.json)` for example). 
 
 
 

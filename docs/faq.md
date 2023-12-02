@@ -1,62 +1,63 @@
 # Frequently Asked Questions (FAQ)
 
-## 1. What Is Flash Attention?
+## Install & Preperation
+### Why are my LLaMA checkpoints `*.bin` or `*.safetensors`?
+There are two common formats for LLaMA checkpoints: the original format provided by Meta, and the 
+Huggingface format. Checkpoints in the former format are stored in `consolidated.*.pth` files, whereas
+checkpoints in the latter format are stored in `*.bin` or `*.safetensors` files. **LLaMA2-Accessory works 
+with the former format (`consolidated.*.pth` files).**
 
-Flash Attention is a module designed to enhance the efficiency of attention computation. You may install it using the command below:
 
-```bash
-pip install flash-attn --no-build-isolation
+## Model
+### How to set `llama_config`?
+In LLaMA2-Accessory, each model class has a corresponding `ModelArgs` class, which is defined in the same file as the model class. 
+The `ModelArgs` class contains arguments for configuring of the model. An example of `ModelArgs` can be found in 
+{link2repo}`[this file](accessory/model/LLM/llama.py)`. Arguments in `ModelArgs` can be given default values at their definition. 
+On the other hand, the overriding of the arguments can be achieved by filling the `llama_config` argument when 
+creating `MetaModel`.
+
+`llama_config` is expected to be a list of strings, specifying the paths to the `*.json` configuration files. 
+The most commonly used configufation files are those defining model sizes (7B, 13B, 65B, *etc.*), **which are officially 
+provided by Meta and named `params.json`**. For example, the configuration file for 13B llama is 
+provided at `https://huggingface.co/meta-llama/Llama-2-13b/blob/main/params.json`. So generally when you want to change 
+the model from `7B` to `13B` while leaving other things consistent, you can simply change `llama_config` from 
+`['/path/to/7B/params.json']` to `['/path/to/13B/params.json']`
+
+Except model size, there are still other things to configure and can be different from model to model.
+For example, the PEFT model {link2repo}`[llama_peft](accessory/model/LLM/llama_peft.py)` allows users to 
+configure the detailed PEFT settings, including the rank of lora and whether to tune bias.
+{link2repo}`[llamaPeft_normBiasLora.json](accessory/configs/model/finetune/sg/llamaPeft_normBiasLora.json)` 
+contains the configuration that we usually use:
+```json
+{"lora_rank": 16, "bias_tuning": true}
 ```
+Based on this, when instantiating a `llama_peft` model, we can set `llama_type=llama_peft`, and 
+`llama_config = ['/path/to/7B/params.json', '/path/to/llamaPeft_normBiasLora.json']` for 7B model, and 
+`llama_config = ['/path/to/13B/params.json', '/path/to/llamaPeft_normBiasLora.json']` for 13B model. Of cources you can 
+also merge the size and PEFT configs into a single file, and the effect is the same.
 
-Please note that the `flash_attn` module is *not* supported on all types of GPUs. Should it not be applicable to your machine, kindly set `USE_FLASH_ATTENTION` to `False` in [accessory/configs/global_configs.py](../accessory/configs/global_configs.py). The vanilla attention computation will then be utilized.
+Note that the following arguments in `ModelArgs` are relatively special and their final values are not determined by 
+the specification in `llama_config`:
++ `max_seq_len`: `MetaModel.__init__` has a homonymous argument which directly determines the value
++ `max_batch_size`: is currently hard-coded to be 32 in `MetaModel.__init__`
++ `vocab_size` is dynamically determined by the actual vocabulary size of the tokenizer
 
-## 2. Requirements for Apex and CUDA Version
 
-This project relies on [Apex](https://github.com/NVIDIA/apex), which necessitates compilation from source. We are planning to make it an optional choice in the future, but currently, you are advised to follow the [official instructions](https://github.com/NVIDIA/apex#from-source). Please ensure your CUDA version (**11.7**) aligns with the requirements for Apex.
 
-## 3. How to Apply Delta Weights?
+### How to set `tokenizer_path`?
+LLaMA2-Accessory supports both spm tokenizers (provided by Meta, generally named `tokenizer.model`) and huggingface
+tokenizers (composed of `tokenizer.json` and `tokenizer_config.json`). When using spm tokenizers, 
+`tokenizer_path` should point to the `tokenizer.model` file; when using huggingface tokenizers, 
+`tokenizer_path` should point to **the directory** containing `tokenizer.json` and `tokenizer_config.json`.
 
-**(Please note that the following content may be outdated as we have now fully open-sourced our pretrained weights)**
+:::{tip}
 
-We release our checkpoints as delta weights to comply with the LLaMA2 model license. To utilize our provided weights for inference or further tuning, kindly adhere to the following instructions to merge our delta into the original LLaMA2 weights to obtain the full weights:
+For the LLaMA family, the tokenizer is the same across LLaMA and LLaMA2, and across different model sizes.
+As an exception, CodeLLaMA uses a different tokenizer. 
 
-1. Upon agreeing to the License, Acceptable Use Policy, and Meta's privacy policy, proceed to download the LLaMA2 weights from [here](link).
-2. Utilize the following scripts to obtain finetuned weights by applying our delta. Make sure to download the delta weights from the model release page.
-    ```bash
-    # For Download
-    python tools/download.py --model_name check/in/release/page --input_type sg/or/mm --output_path path/to/save --model_size 7B/13B/70B --down_config
-    # For Merging
-    python tools/weight_operate.py --pretrained_path /path/to/llama2/ --delta_path /path/to/delta --output_path /path/to/finetuned
-    ```
-
-## 4. How to Utilize Trainable Parameters from `main_finetune.py`?
-
-### **Merging with LLaMA2 Weights**
-
-If you've only saved the trainable parameters from `main_finetune.py` and wish to combine them with the `llama2` weights:
-
-- Use our recently introduced feature where demo Python files accept multiple directories for the `--pretrained_path` argument. The function `util.tensor_parallel.load_tensor_parallel_model_list` will autonomously discern checkpoint types (e.g., "meta_ori", "consolidated", or "diff") based on their names and load them sequentially. If a parameter appears in multiple checkpoints, later ones will overwrite earlier ones.
-  
-- If you prefer manual merging:
-  ``` python
-  for key, value in new_state_dict.items():
-      ori_state_dict[key] = value
-  ```
-  Remember, compared to the original llama checkpoints, our parameter names have an added `"llma."` prefix.
-
-### **Using the Parameters for Demos**
-
-For those who saved both trainable and non-trainable parameters from `main_finetune.py`:
-
-- They can be directly used in the `single_turn_mm.py` demo. Ensure `--only_save_trainable` is set to `False`. Here's how to use the saved weights:
-```bash
-python demos/single_turn_mm.py --pretrained_path <folder/to/base/model> <folder/to/trainable/parameters> <--other_flags>
-```
+:::
 
 ---
-
-
-
 
 
 ***Should you have any further queries, please don't hesitate to post in the issue section. We will endeavor to respond promptly to your questions. Thank you for engaging with our project.***

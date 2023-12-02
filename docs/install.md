@@ -61,7 +61,7 @@ pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation -
 *We strongly advise installing this package for optimal performance*. However, if you have difficulty installing this package, LLaMA2-Accessory can operate smoothly without it.
 
 
-## Install LLaMA2-Accessory as Python Packege
+## 4. Install LLaMA2-Accessory as Python Packege
 After going through the previous steps, you can now use most of the functionalities provided by LLaMA2-Accessory, including pretraining, finetuning, etc. 
 However, the usage is restricted by working directory. For example, it would be inconvenient to instantiate LLaMA2-Accessory models in other projects.
 To solve this problem, you can install LLaMA2-Accessory into your python enviroment as a package:

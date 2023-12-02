@@ -67,7 +67,7 @@ myst_enable_extensions = [
     # "linkify",
     # "substitution",
 ]
-myst_heading_anchors = 3
+myst_heading_anchors = 5
 
 # -- Options for HTML output -------------------------------------------------
 
