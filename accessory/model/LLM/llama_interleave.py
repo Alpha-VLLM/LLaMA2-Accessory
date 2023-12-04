@@ -249,27 +249,27 @@ class TransformerBlock(nn.Module):
 
 
 class Transformer(nn.Module):
-    def __init__(self, params: ModelArgs, with_visual=False):
+    def __init__(self, args: ModelArgs, with_visual=False):
         super().__init__()
-        self.params = params
-        self.vocab_size = params.vocab_size
-        self.n_layers = params.n_layers
+        self.args = args
+        self.vocab_size = args.vocab_size
+        self.n_layers = args.n_layers
         self.tok_embeddings = ParallelEmbedding(
-            params.vocab_size, params.dim, init_method=default_linear_init
+            args.vocab_size, args.dim, init_method=default_linear_init
         )
 
         self.layers = torch.nn.ModuleList()
-        for layer_id in range(params.n_layers):
-            self.layers.append(TransformerBlock(layer_id, params))
+        for layer_id in range(args.n_layers):
+            self.layers.append(TransformerBlock(layer_id, args))
 
-        self.norm = RMSNorm(params.dim, eps=params.norm_eps)
+        self.norm = RMSNorm(args.dim, eps=args.norm_eps)
         self.output = ColumnParallelLinear(
-            params.dim, params.vocab_size, bias=False, init_method=default_linear_init
+            args.dim, args.vocab_size, bias=False, init_method=default_linear_init
         )
 
         self.freqs_cis = precompute_freqs_cis(
-            self.params.dim // self.params.n_heads, self.params.max_seq_len * 2,
-            theta=self.params.rope_theta, scaling=self.params.rope_scaling
+            self.args.dim // self.args.n_heads, self.args.max_seq_len * 2,
+            theta=self.args.rope_theta, scaling=self.args.rope_scaling
         )
 
         self.image_words = 0
@@ -309,19 +309,19 @@ class Transformer(nn.Module):
             torch.set_default_dtype(default_dtype)
 
             self.qformer_proj = nn.Sequential(
-                nn.Linear(768, params.dim),
-                nn.LayerNorm(params.dim)
+                nn.Linear(768, args.dim),
+                nn.LayerNorm(args.dim)
             )
 
             self.visual_proj = nn.Sequential(
-                nn.Linear(3072 + 1024 + 1536, params.dim),
-                nn.LayerNorm(params.dim),
+                nn.Linear(3072 + 1024 + 1536, args.dim),
+                nn.LayerNorm(args.dim),
             )
 
             self.image_size = 672
             # add image tags
-            self.start_img = nn.Parameter(torch.rand(1, 1, params.dim))
-            self.end_img = nn.Parameter(torch.rand(1, 1, params.dim))
+            self.start_img = nn.Parameter(torch.rand(1, 1, args.dim))
+            self.end_img = nn.Parameter(torch.rand(1, 1, args.dim))
 
             self.d_media_symbol_words = {
                 '<image>': (32 + 257 + 2) * 10,
@@ -375,7 +375,7 @@ class Transformer(nn.Module):
         # images should be of size [bsz, 672, 672]
         # convert them to 5 224*224 images
         ori_bs = image.shape[0]
-        image_224 = F.interpolate(image.half(), size=(224,224), mode="bicubic").to(image)
+        image_224 = F.interpolate(image.float(), size=(224,224), mode="bicubic").to(image)
         image_parts = []
 
         if media_symbol == "<image>":
@@ -384,7 +384,7 @@ class Transformer(nn.Module):
                     image_parts.append(image[...,y_start:y_start+224,x_start:x_start+224])
             assert len(image_parts) == 9
         elif media_symbol == "<image_pair>":
-            image = F.interpolate(image.half(), size=(448,448), mode="bicubic").to(image)
+            image = F.interpolate(image.float(), size=(448,448), mode="bicubic").to(image)
             for y_start in range(0, image.shape[-2], 224):
                 for x_start in range(0, image.shape[-1], 224):
                     image_parts.append(image[...,y_start:y_start+224,x_start:x_start+224])
@@ -412,7 +412,7 @@ class Transformer(nn.Module):
 
             local_clip_image_feats = self.clip_encode_image(local_image)
             local_convnext_image_feats = self.openclip_convnext_xxl(
-                F.interpolate(local_image.half(), size=(256, 256))
+                F.interpolate(local_image.float(), size=(256, 256))
             ).to(local_image)
             assert local_convnext_image_feats.size()[1:] == (3072, 8, 8)
             local_convnext_image_feats = local_convnext_image_feats.repeat_interleave(
@@ -458,7 +458,7 @@ class Transformer(nn.Module):
         image_feats = self.qformer_proj(image_feats)
         ens_image_feats = self.visual_proj(ens_image_feats)
         image_feats = torch.cat([image_feats, ens_image_feats], dim=1)
-        # image_feats = torch.zeros([image.size(0), 32, 768], dtype=torch.half, device=image.device)
+        # image_feats = torch.zeros([image.size(0), 32, 768], dtype=torch.float(), device=image.device)
         # image_feats = self.qformer_proj(image_feats)
 
 
@@ -507,37 +507,21 @@ class Transformer(nn.Module):
         return output
 
     @torch.inference_mode()
-    def forward_inference(self, tokens: torch.Tensor, start_pos: int, image=None):
-        _bsz, seqlen = tokens.shape
+    def forward_inference(self, examples: torch.Tensor, start_pos: int, additional: dict):
+        _bsz, seqlen = examples.shape
+        assert _bsz == 1, f"batch size > 1 not yet supported for {self.__class__}"
         if start_pos == 0:
             self._allocate_kv_cache(_bsz)  # kv cache will not re-allocate if size is unchanged
-        h = self.tok_embeddings(tokens)
+        h = self.tok_embeddings(examples)
         self.freqs_cis = self.freqs_cis.to(h.device)
 
-        if image is not None:
+
+        if additional is not None:
             assert start_pos == 0
-            h_bos, h_caption = h[:, :1], h[:, 1:]
-            l_image_tokens: List = self.encode_image(image)
-            for i, image_tokens in enumerate(l_image_tokens):
-                image_tokens = torch.cat((self.start_img.expand(_bsz, -1, -1),
-                                          image_tokens,
-                                          self.end_img.expand(_bsz, -1, -1)), dim=1)
-                l_image_tokens[i] = image_tokens
-            image_tokens = torch.cat(l_image_tokens, dim=1)
-            self.cache_image_words = image_tokens.shape[1]
-            assert self.cache_image_words == self.image_words
-            h = torch.cat((h_bos, image_tokens, h_caption), dim=1)
-            seqlen = h.shape[1]
-            freqs_cis = self.freqs_cis[0: seqlen]
+            h = self.fill_media(h, additional)
+            freqs_cis = self.freqs_cis[0:seqlen]
         else:
-            if start_pos == 0:
-                self.cache_image_words = 0
-                freqs_cis = self.freqs_cis[0: seqlen]
-            else:
-                # if image was not None when start_pos=0,
-                # the offset should be added to start_pos within later forward_inference calls
-                start_pos = start_pos + self.cache_image_words
-                freqs_cis = self.freqs_cis[start_pos: start_pos + seqlen]
+            freqs_cis = self.freqs_cis[start_pos: start_pos + seqlen]
 
         # Despite that "causal" also works for seqlen == 1, keep it to None for possibly
         # better performance
@@ -547,11 +531,11 @@ class Transformer(nn.Module):
             h = layer(h, start_pos, freqs_cis, mask)
         h = self.norm(h)
         output = self.output(h[:, -1, :])  # only compute last logits
-        return output.float()
+        return output.float(), start_pos + seqlen
 
     def _allocate_kv_cache(self, max_batch_size: int) -> None:
         for layer in self.layers:
-            layer.attention.allocate_kv_cache(max_batch_size, self.params.max_seq_len)
+            layer.attention.allocate_kv_cache(max_batch_size, self.args.max_seq_len)
 
     def _destroy_kv_cache(self) -> None:
         for layer in self.layers:

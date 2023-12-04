@@ -1,7 +1,9 @@
+import copy
+
 import torch
 import torch.nn as nn
 import json
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from fairscale.nn.model_parallel import initialize as fs_init
 
@@ -26,12 +28,12 @@ class MetaModel(nn.Module):
         ModelArgs = LLM.__dict__[llama_type].ModelArgs
         Transformer = LLM.__dict__[llama_type].Transformer
 
-        params = {}
+        model_args = {}
         for _ in llama_config:
             with open(_, "r") as f:
-                params.update(json.loads(f.read()))
+                model_args.update(json.loads(f.read()))
         model_args: ModelArgs = ModelArgs(
-            max_seq_len=max_seq_len, max_batch_size=32, **params
+            max_seq_len=max_seq_len, max_batch_size=32, **model_args
         )
         self.tokenizer = Tokenizer(model_path=tokenizer_path)
         model_args.vocab_size = self.tokenizer.n_words
@@ -111,8 +113,8 @@ class MetaModel(nn.Module):
         return_logits: bool = False
     ) -> List[str]:
         bsz = len(prompts)
-        params = self.llma.params
-        assert bsz <= params.max_batch_size, (bsz, params.max_batch_size)
+        args = self.llma.args
+        assert bsz <= args.max_batch_size, (bsz, args.max_batch_size)
 
         prompt_tokens = [self.tokenizer.encode(
             x, bos=True, eos=False) for x in prompts]
@@ -120,7 +122,7 @@ class MetaModel(nn.Module):
         min_prompt_size = min([len(t) for t in prompt_tokens])
         max_prompt_size = max([len(t) for t in prompt_tokens])
 
-        max_seq_len = params.max_seq_len
+        max_seq_len = args.max_seq_len
         if images is not None:
             max_seq_len -= self.llma.image_words
 
@@ -171,51 +173,56 @@ class MetaModel(nn.Module):
     @ torch.inference_mode()
     def stream_generate(
         self,
-        prompt: str,
-        images: Optional[torch.Tensor],
+        # prompt: str,
+        examples: List[List[int]] | torch.Tensor,  # examples should already be filled with media placeholders consistent to additional
+        # images: Optional[torch.Tensor],
+        additional: Dict,
         max_gen_len: int,
         temperature: float = 0.8,
         top_p: float = 0.95,
     ):
-        params = self.llma.params
 
-        prompt_tokens = self.tokenizer.encode(prompt, bos=True, eos=False)
-        # truncate from the left. leave some space for generation.
-        max_seq_len = params.max_seq_len
-        if images is not None:
-            max_seq_len -= self.llma.image_words
+        examples = copy.deepcopy(examples)
+
+        assert len(examples) == 1, "only batch size == 1 is currently supported for inference"
+        args = self.llma.args
+
+        max_seq_len = args.max_seq_len
 
         max_prompt_size = max_seq_len - max_gen_len
-        prompt_tokens = prompt_tokens[-max_prompt_size:]
 
-        prompt_size = len(prompt_tokens)
+        # examples[0] = examples[0][-max_prompt_size:]
 
-        total_len = min(max_seq_len, max_gen_len + prompt_size)
+        prompt_size = len(examples[0])
+        max_total_len = min(max_seq_len, max_gen_len + prompt_size)
 
-        tokens = torch.full([total_len], 0).cuda().long()
-
-        tokens[:len(prompt_tokens)] = torch.tensor(prompt_tokens).long()
-        start_pos = prompt_size
-        prev_pos = 0
-        generate_until = start_pos
-        for cur_pos in range(start_pos, total_len):
-            logits = self.llma.forward_inference(tokens[None, prev_pos:cur_pos], prev_pos, images if prev_pos == 0 else None)
-            if temperature > 0:
-                probs = torch.softmax(logits / temperature, dim=-1)
-                next_token = self.sample_top_p(probs, top_p)
-            else:
-                next_token = torch.argmax(logits, dim=-1)
-            next_token = next_token.item()
-
-            if next_token == self.tokenizer.eos_id:
+        input_tokens = torch.tensor(examples, dtype=torch.long, device="cuda")
+        generated_tokens = []
+        start_pos = 0
+        while True:
+            try:
+                logits, end_pos = self.llma.forward_inference(input_tokens, start_pos, additional if start_pos == 0 else None)
+            except IndexError:  # out of range
                 break
+            else:
+                if temperature > 0:
+                    probs = torch.softmax(logits / temperature, dim=-1)
+                    next_token = self.sample_top_p(probs, top_p)
+                else:
+                    next_token = torch.argmax(logits, dim=-1)
+                next_token = next_token.item()
 
-            tokens[cur_pos] = next_token
-            prev_pos = cur_pos
-            generate_until = cur_pos + 1
-            yield {"text": self.tokenizer.decode(tokens[start_pos:generate_until].tolist()), "end_of_content": False}
+                generated_tokens.append(next_token)
 
-        yield {"text": self.tokenizer.decode(tokens[start_pos:generate_until].tolist()), "end_of_content": True}
+                if next_token == self.tokenizer.eos_id or end_pos >= max_total_len:
+                    break
+
+                start_pos = end_pos
+                input_tokens = torch.tensor([[next_token]], dtype=torch.long, device="cuda")
+                print(logits.shape, end_pos, self.tokenizer.decode(generated_tokens))
+                yield {"text": self.tokenizer.decode(generated_tokens), "end_of_content": False}
+
+        yield {"text": self.tokenizer.decode(generated_tokens), "end_of_content": True}
 
 
     def sample_top_p(self, probs, p):
