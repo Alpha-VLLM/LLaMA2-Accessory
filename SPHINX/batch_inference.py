@@ -27,7 +27,7 @@ class Dataset(torch.utils.data.Dataset):
         if list_path.endswith(".csv"):
             df = pd.read_csv(list_path, sep="\t")
         elif list_path.endswith(".parquet"):
-            df = pd.read_parquet(list_path, sep="\t")
+            df = pd.read_parquet(list_path)
         else:
             raise NotImplementedError("List path has unknown extension: " + list_path)
 
