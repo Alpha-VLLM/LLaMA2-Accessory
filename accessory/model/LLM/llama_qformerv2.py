@@ -94,6 +94,7 @@ class Attention(nn.Module):
     ) -> torch.Tensor:
         """
         Supported mask spec:
+
         1. Float tensor: The tensor is added to the attention score matrix.
         2. Boolean tensor: Substitute the ``True`` values with ``0.0`` and ``False`` values with
            ``-inf``, then process in the same way as the float tensor.

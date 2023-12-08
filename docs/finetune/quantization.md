@@ -1,4 +1,4 @@
-# Fine-Tuning with Quantization
+# Finetuning with Quantization
 
 We support <u>Q</u>uantized <u>P</u>arameter-<u>E</u>fficient <u>F</u>ine-<u>T</u>uning (**QPEFT**) methods including **QNormBias** and **QNormBiasLoRA**, which significantly minimize the computing demands. In QPEFT, we quantize the base model while only retain carefully selected trainable parameters.
 

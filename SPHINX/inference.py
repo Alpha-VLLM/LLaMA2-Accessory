@@ -19,7 +19,7 @@ def main() -> None:
     # When mp_group is None, a single-rank process group will
     # be created and used, which means model parallel size = 1 (not enabled)
     model = SPHINXModel.from_pretrained(
-        pretrined_path="/data0/zyc/ckpt/soup/dialog_data2_llamaEns5_13B_loadLongSphinxPre10K/epoch0", with_visual=True,
+        pretrained_path="/path/to/pretrained", with_visual=True,
         mp_group=dist.new_group(ranks=list(range(world_size)))
     )
     # You may also, say, launch 4 processes and make [0,1] and [2,3] ranks to form mp groups, respectively.

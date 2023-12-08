@@ -1,4 +1,4 @@
-# LLaMA2-Accessory: An Open-source Toolkit for LLM Development 🚀
+# Overview
 
 ![](./logo.png)
 

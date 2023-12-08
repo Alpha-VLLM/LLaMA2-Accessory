@@ -78,10 +78,10 @@ from PIL import Image
 import torch
 
 # Besides loading the `consolidated.*.pth` model weights, from_pretrained will also try to 
-# use `tokenizer.json', 'meta.json', and 'config.json' under `pretrained_path` to configure
+# use `tokenizer.model', 'meta.json', and 'config.json' under `pretrained_path` to configure
 # the `tokenizer_path`, `llama_type`, and `llama_config` of the model. You may also override
-# the configurations by explitly specifying the arguments
-model = SPHINXModel.from_pretrained(pretrined_path="path/to/checkpoint", with_visual=True)
+# the configurations by explicitly specifying the arguments
+model = SPHINXModel.from_pretrained(pretrained_path="path/to/checkpoint", with_visual=True)
 
 image = Image.open("examples/1.jpg")
 qas = [["What's in the image?", None]]
@@ -120,7 +120,7 @@ def main(world_size, rank) -> None:
     # When mp_group is None, a single-rank process group will
     # be created and used, which means model parallel size = 1 (not enabled)
     model = SPHINXModel.from_pretrained(
-        pretrined_path="path/to/checkpoint", with_visual=True,
+        pretrained_path="path/to/checkpoint", with_visual=True,
         mp_group=dist.new_group(ranks=list(range(world_size)))
     ) 
     

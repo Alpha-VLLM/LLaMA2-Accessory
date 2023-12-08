@@ -67,24 +67,48 @@ class MetaModel(nn.Module):
                 param_count_local += param.numel()
         print(f"Trainable parameter count : {param_count_local} (local rank), {param_count_all} (all).")
 
-
-    @ classmethod
-    def from_pretrained(cls, pretrined_path:str|List[str],
+    @classmethod
+    def from_pretrained(cls, pretrained_path: str|List[str],
                         llama_type: Optional[str] = None,
-                        llama_config: Optional[List[str]] = None,
+                        llama_config: Optional[str|List[str]] = None,
                         tokenizer_path: Optional[str] = None,
                         with_visual: bool = False, max_seq_len: int = 4096,
                         mp_group: Optional[dist.ProcessGroup] = None,
                         dtype=torch.bfloat16, device="cuda"):
         """
-        Instantiate a model from pretrained checkpoints.
-        llama_type, llama_config, and tokenizer_path will be automatically determined if corresponding files can be
-        found under `pretrained_path`. If the files do not exist, or if users want to manually override them,
-        explicit specification is also allowed.
+        Besides loading the `consolidated.*.pth` model weights, this function also tries to find tokenizer,
+        'meta.json', and 'config.json' under `pretrained_path` to configure the `tokenizer_path`,
+        `llama_type`, and `llama_config` of the model. The automatically determined values will be
+        overridden by user's exploit specification of the arguments.
+        :param pretrained_path: Paths to directories containing `consolidated.*.pth` weight files. If multiple paths
+                are given, weights will be loaded sequentially.
+        :param llama_type: Type of the inner LLM. The corresponding model class definition should be found in
+                accessory/model/LLM/llama_type.py. If not specified, this function will probe the `meta.json`
+                file under `pretrained_path` to try to determine the value.
+        :param llama_config: Inner LLM configurations. Can be one or a list of strings, each of which is the path
+                to a `*.json` configuration file. If not specified, this function will probe the `config.json`
+                file under `pretrained_path` to try to determine the value.
+        :param tokenizer_path: LLaMA2-Accessory supports both spm tokenizers (provided by Meta, generally named
+                tokenizer.model) and huggingface tokenizers (composed of tokenizer.json and tokenizer_config.json).
+                When using spm tokenizers, tokenizer_path should point to the `tokenizer.model` file;
+                when using huggingface tokenizers, tokenizer_path should point to the directory containing
+                tokenizer.json and tokenizer_config.json. If not specified, this function will probe the
+                `pretrained_path` directory for tokenizer in either format.
+        :param with_visual: Set it to True if the model is expected to receive image input. Inner LLM models
+                rely on this argument to decide whether to instantiate the visual encoder.
+        :param max_seq_len: max context window size of the model
+        :param mp_group:  If the parameters of the model are *not* split on multiple GPUs with model parallel,
+                namely model parallel size == 1, then `mp_group` can be left to `None`. However, if model
+                parallel is needed, `mp_group` should be an already initialized torch process group, ranks
+                within which compose a logically complete model.
+        :param dtype: parameter data type
+        :param device: parameter device
+
+        :return: An Accessory.model.MetaModel object with pretrained checkpoints loaded.
         """
-        if isinstance(pretrined_path, str):
-            pretrined_path = [pretrined_path]
-        if pretrined_path is None or len(pretrined_path) == 0:
+        if isinstance(pretrained_path, str):
+            pretrained_path = [pretrained_path]
+        if pretrained_path is None or len(pretrained_path) == 0:
             raise ValueError("pretrained_path should be specified")
 
         if mp_group is None:
@@ -97,7 +121,7 @@ class MetaModel(nn.Module):
                     "Warning: Torch distributed not initialized when invoking `MetaModel.from_pretrained`.\n"
                     "trying to init distributed mode within `from_pretrained` with a world size of 1.\n"
                     "Note: Distrubuted functions like `get_world_size()` are used within Accessory's model implementations,\n"
-                    "Therefore, distributed initilization is required even when using a single GPU.\n"
+                    "Therefore, distributed initialization is required even when using a single GPU.\n"
                     "This warning is normal if your program isn't designed for distributed computing.\n"
                     "However, if your program is intended for distributed use,\n"
                     "please initialize distributed mode before model creation"
@@ -113,24 +137,24 @@ class MetaModel(nn.Module):
 
         # determine llama_type
         if llama_type is None:
-            print(f"llama_type not specified, attempting to obtain from {Path(pretrined_path[-1])/'meta.json'}")
-            if (Path(pretrined_path[-1])/'meta.json').exists():
-                with open(Path(pretrined_path[-1])/'meta.json', 'r') as f:
+            print(f"llama_type not specified, attempting to obtain from {Path(pretrained_path[-1])/'meta.json'}")
+            if (Path(pretrained_path[-1])/'meta.json').exists():
+                with open(Path(pretrained_path[-1])/'meta.json', 'r') as f:
                     llama_type = json.load(f)["llama_type"]
                     print(f"Obtained llama_type: {llama_type}")
             else:
-                print(f"{Path(pretrined_path[-1])/'meta.json'} does not exist")
+                print(f"{Path(pretrained_path[-1])/'meta.json'} does not exist")
                 raise ValueError("Cannot determine llama_type")
 
 
         # determine llama_config
         if llama_config is None:
-            print(f"llama_config not specified, attempting to find {Path(pretrined_path[-1]) / 'config.json'}")
-            if (Path(pretrined_path[-1])/'config.json').exists():
-                llama_config = [str(Path(pretrined_path[-1])/'config.json')]
-                print(f"Found llama_config: {str(Path(pretrined_path[-1])/'config.json')}")
+            print(f"llama_config not specified, attempting to find {Path(pretrained_path[-1]) / 'config.json'}")
+            if (Path(pretrained_path[-1])/'config.json').exists():
+                llama_config = [str(Path(pretrained_path[-1])/'config.json')]
+                print(f"Found llama_config: {str(Path(pretrained_path[-1])/'config.json')}")
             else:
-                print(f"{str(Path(pretrined_path[-1]) / 'config.json')} does not exist\n"
+                print(f"{str(Path(pretrained_path[-1]) / 'config.json')} does not exist\n"
                       f"will use the default config values (specified in the definition of ModelArgs in {llama_type}.py)")
 
 
@@ -138,18 +162,18 @@ class MetaModel(nn.Module):
         if tokenizer_path is None:  # first try setence-piece style
             print(f"tokenizer_path not specified.")
 
-            print(f"trying to find sentencepiece-style tokenizer at {Path(pretrined_path[-1]) / 'tokenizer.model'}")
-            if (Path(pretrined_path[-1])/'tokenizer.model').exists():
-                print(f"Found {Path(pretrined_path[-1]) / 'tokenizer.model'}, use it.")
-                tokenizer_path = str(Path(pretrined_path[-1]) / 'tokenizer.model')
+            print(f"trying to find sentencepiece-style tokenizer at {Path(pretrained_path[-1]) / 'tokenizer.model'}")
+            if (Path(pretrained_path[-1])/'tokenizer.model').exists():
+                print(f"Found {Path(pretrained_path[-1]) / 'tokenizer.model'}, use it.")
+                tokenizer_path = str(Path(pretrained_path[-1]) / 'tokenizer.model')
             else:
                 print("Not Found")
         if tokenizer_path is None:  # then try huggingface style
             print(f"trying to find huggingface-style tokenizer at "
-                  f"{Path(pretrined_path[-1]) / '(tokenizer.json, tokenizer_config.json)'}")
-            if (Path(pretrined_path[-1])/'tokenizer.json').exists() and (Path(pretrined_path[-1])/'tokenizer_config.json').exists():
-                print(f"Found {Path(pretrined_path[-1]) / '(tokenizer.json, tokenizer_config.json)'}, use them.")
-                tokenizer_path = pretrined_path[-1]
+                  f"{Path(pretrained_path[-1]) / '(tokenizer.json, tokenizer_config.json)'}")
+            if (Path(pretrained_path[-1])/'tokenizer.json').exists() and (Path(pretrained_path[-1])/'tokenizer_config.json').exists():
+                print(f"Found {Path(pretrained_path[-1]) / '(tokenizer.json, tokenizer_config.json)'}, use them.")
+                tokenizer_path = pretrained_path[-1]
             else:
                 print("Not Found")
         assert tokenizer_path is not None, "No usable tokenizer avaiable"
@@ -157,8 +181,8 @@ class MetaModel(nn.Module):
 
         with default_tensor_type(dtype=dtype, device=device):
             model = cls(llama_type, llama_config, tokenizer_path, with_visual, max_seq_len)
-        print(f"Loading pretrained weights from {pretrined_path} ...")
-        load_result = tensor_parallel.load_tensor_parallel_model_list(model, pretrined_path)
+        print(f"Loading pretrained weights from {pretrained_path} ...")
+        load_result = tensor_parallel.load_tensor_parallel_model_list(model, pretrained_path)
         assert load_result == {'missing_keys': [], 'unexpected_keys': []}, "checkpoint and model mismatch"
         model.eval()
         return model

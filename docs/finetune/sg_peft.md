@@ -1,4 +1,4 @@
-# Language-only Parameter-Efficient Fine-Tuning
+# Language-only Parameter-Efficient Finetuning
 
 ## Bias&Norm Tuning of LLaMA2-7B on Alpaca 
 

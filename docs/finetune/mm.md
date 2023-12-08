@@ -1,4 +1,4 @@
-# Multi-Modal Full-Parameter Fine-Tuning
+# Multi-Modal Full-Parameter Finetuning
 
 ## Two-Stage Training of Multi-Modal LLaMA2
 

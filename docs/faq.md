@@ -17,7 +17,7 @@ On the other hand, the overriding of the arguments can be achieved by filling th
 creating `MetaModel`.
 
 `llama_config` is expected to be a list of strings, specifying the paths to the `*.json` configuration files. 
-The most commonly used configufation files are those defining model sizes (7B, 13B, 65B, *etc.*), **which are officially 
+The most commonly used configuration files are those defining model sizes (7B, 13B, 65B, *etc.*), **which are officially 
 provided by Meta and named `params.json`**. For example, the configuration file for 13B llama is 
 provided at `https://huggingface.co/meta-llama/Llama-2-13b/blob/main/params.json`. So generally when you want to change 
 the model from `7B` to `13B` while leaving other things consistent, you can simply change `llama_config` from 
@@ -33,12 +33,21 @@ contains the configuration that we usually use:
 ```
 Based on this, when instantiating a `llama_peft` model, we can set `llama_type=llama_peft`, and 
 `llama_config = ['/path/to/7B/params.json', '/path/to/llamaPeft_normBiasLora.json']` for 7B model, and 
-`llama_config = ['/path/to/13B/params.json', '/path/to/llamaPeft_normBiasLora.json']` for 13B model. Of cources you can 
+`llama_config = ['/path/to/13B/params.json', '/path/to/llamaPeft_normBiasLora.json']` for 13B model. Of course, you can 
 also merge the size and PEFT configs into a single file, and the effect is the same.
+
+:::{note} 
+
+When multiple `.json` config files are assigned to `llama_config`, The combined configuration from all these files
+will be used, with keys from later files overwriting those from earlier ones. This is especially handy when you want
+to make specific model configuration adjustments, like the LoRA dimension, which is consistent across various model
+sizes, eliminating the need to produce individual files for each size.
+
+:::
 
 Note that the following arguments in `ModelArgs` are relatively special and their final values are not determined by 
 the specification in `llama_config`:
-+ `max_seq_len`: `MetaModel.__init__` has a homonymous argument which directly determines the value
++ `max_seq_len`: `MetaModel.__init__` receives an argument with the same name, which directly determines the value
 + `max_batch_size`: is currently hard-coded to be 32 in `MetaModel.__init__`
 + `vocab_size` is dynamically determined by the actual vocabulary size of the tokenizer
 
@@ -52,8 +61,10 @@ tokenizers (composed of `tokenizer.json` and `tokenizer_config.json`). When usin
 
 :::{tip}
 
-For the LLaMA family, the tokenizer is the same across LLaMA and LLaMA2, and across different model sizes.
-As an exception, CodeLLaMA uses a different tokenizer. 
+For the LLaMA family, the tokenizer is the same across LLaMA and LLaMA2, and across different model sizes (in most 
+cases the `tokenizer.model` file is downloaded together with LLaMA weights; you can also download it separately from
+[here](https://huggingface.co/meta-llama/Llama-2-13b/blob/main/tokenizer.model)). In contrast, CodeLLaMA uses a
+different [tokenizer](https://huggingface.co/codellama/CodeLlama-7b-hf/blob/main/tokenizer.model).
 
 :::
 
