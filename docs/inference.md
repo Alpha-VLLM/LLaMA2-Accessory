@@ -298,7 +298,7 @@ torchrun --nproc-per-node=$NPROC --master-port=$PORT demos/single_turn.py \
 ```
 
 ### Single-turn Multi-modal Dialogue
-Use the `{link2repo}`[single_turn_mm.py](accessory/demos/single_turn_mm.py)` script for single-turn multi-modal dialogues:
+Use the {link2repo}`[single_turn_mm.py](accessory/demos/single_turn_mm.py)` script for single-turn multi-modal dialogues:
 
 ```bash
 torchrun --nproc-per-node=$NPROC --master-port=$PORT demos/single_turn_mm.py \
@@ -312,7 +312,7 @@ torchrun --nproc-per-node=$NPROC --master-port=$PORT demos/single_turn.py \
 
 ### Multi-turn Single-modal Dialogue
 
-For multi-turn single-modal dialogues, use the `{link2repo}`[multi_turn.py](accessory/demos/multi_turn.py)` script:
+For multi-turn single-modal dialogues, use the {link2repo}`[multi_turn.py](accessory/demos/multi_turn.py)` script:
 
 ```bash
 python demos/multi_turn.py --n_gpus $NPROC \
@@ -325,7 +325,7 @@ python demos/multi_turn.py <--some_flags> --quant
 
 ### Multi-turn Multi-modal Dialogue
 
-For multi-turn multi-modal dialogues, use the `{link2repo}`[multi_turn_mm.py](accessory/demos/multi_turn_mm.py)` script:
+For multi-turn multi-modal dialogues, use the {link2repo}`[multi_turn_mm.py](accessory/demos/multi_turn_mm.py)` script:
 
 ```bash
 python demos/multi_turn_mm.py --n_gpus $NPROC \
