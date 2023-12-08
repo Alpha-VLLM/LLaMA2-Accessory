@@ -12,6 +12,7 @@ import h5py
 from accessory.model.tokenizer import Tokenizer
 import os
 from pathlib import Path
+import copy
 
 from . import lib as conversation_lib
 
@@ -109,7 +110,7 @@ class ConversationGenerator:
 
 
 class FinetuneDialogDataset(Dataset):
-    def __init__(self, config_path, transform, max_words=30, image_words=257, tokenizer_path=None,
+    def __init__(self, config_path, transform, max_words=30, image_words=257, tokenizer=None,
                  cache_on_disk=False, rank=0):
 
         print(f"read dataset config from {config_path}")
@@ -241,7 +242,11 @@ class FinetuneDialogDataset(Dataset):
         print(f"transform:\n{self.transform}")
         self.max_words = max_words
         self.image_words = image_words
-        self.tokenizer = Tokenizer(model_path=tokenizer_path)
+
+        if isinstance(tokenizer, str):
+            self.tokenizer = Tokenizer(model_path=tokenizer)
+        else:
+            self.tokenizer = copy.deepcopy(tokenizer)
         self.conversation_generator = ConversationGenerator(self.tokenizer)
 
     def __len__(self):
@@ -269,21 +274,21 @@ class FinetuneDialogDataset(Dataset):
             warnings.warn(f"see dialog data with nothing to predict, data: {data_item}")
             return self[index-1]
 
-        tokenzed_conversation = self.tokenizer.encode(conversation, bos=True, eos=True)
-        labels = [IGNORE_INDEX for _ in tokenzed_conversation]
+        tokenized_conversation = self.tokenizer.encode(conversation, bos=True, eos=True)
+        labels = [IGNORE_INDEX for _ in tokenized_conversation]
 
         check_pos = 0
         for value in to_predict_values:
             tokenized_value = self.tokenizer.encode(value, bos=False, eos=False)
-            value_pos = find_sublist(tokenzed_conversation[check_pos:], tokenized_value) + check_pos
+            value_pos = find_sublist(tokenized_conversation[check_pos:], tokenized_value) + check_pos
             if value_pos == -1:
                 print("a sentence mismatches the corresponding piece in the conversation")
                 return self[index-1]
             labels[value_pos:value_pos+len(tokenized_value)] = tokenized_value
-            assert labels[value_pos:value_pos+len(tokenized_value)] == tokenzed_conversation[value_pos:value_pos+len(tokenized_value)]
+            assert labels[value_pos:value_pos+len(tokenized_value)] == tokenized_conversation[value_pos:value_pos+len(tokenized_value)]
             check_pos = value_pos+len(tokenized_value)
 
-        input2 = torch.tensor(tokenzed_conversation, dtype=torch.int64)
+        input2 = torch.tensor(tokenized_conversation, dtype=torch.int64)
         labels = torch.tensor(labels, dtype=torch.int64)
 
         if image is not None:

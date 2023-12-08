@@ -18,7 +18,7 @@ from .system_prompt import format_prompt
 
 
 class FinetuneDataset(Dataset):
-    def __init__(self, config_path, transform, max_words=30, image_words=257, tokenizer_path=None,
+    def __init__(self, config_path, transform, max_words=30, image_words=257, tokenizer=None,
                  cache_on_disk=False, rank=0):
 
         print(f"read dataset config from {config_path}")
@@ -153,7 +153,10 @@ class FinetuneDataset(Dataset):
         self.transform = transform
         self.max_words = max_words
         self.image_words = image_words
-        self.tokenizer = Tokenizer(model_path=tokenizer_path)
+        if isinstance(tokenizer, str):
+            self.tokenizer = Tokenizer(model_path=tokenizer)
+        else:
+            self.tokenizer = copy.deepcopy(tokenizer)
 
     def __len__(self):
         return len(self.ann)
