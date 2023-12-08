@@ -16,11 +16,18 @@ model_list = {
 
 def download_file(repo_id, subfolder, filename, local_dir):
     try:
-        hf_hub_download(repo_id=repo_id, repo_type="model", subfolder=subfolder, filename=filename, resume_download=True, local_dir=local_dir)
+        hf_hub_download(repo_id=repo_id, repo_type="model", subfolder=subfolder, filename=filename, resume_download=True, local_dir=local_dir,local_dir_use_symlinks=False)
         print(f"{filename} downloaded successfully.")
     except Exception as e:
         print(f"Error downloading {filename}: {str(e)}. Please check your arguments.")
         exit(1)
+
+def download_files(repo_id, subfolder, file_names, output_path):
+    for file_name in file_names:
+        download_file(repo_id, subfolder, file_name, output_path)
+
+def get_file_names(prefix, model_size):
+    return [prefix + 'tokenizer.model', prefix + f"{model_size}_params.json"]
 
 def ask_question(prompt, options, default_value=None):
     while True:
@@ -45,11 +52,12 @@ def interactive_mode(args):
         args.model_name = args.model_name or ask_question("\nChoose a model:", models)
     
     args.model_size = args.model_size or ask_question("\nChoose a model size:", ['7B', '13B', '34B', '70B', '180B'])
-    config_choice = ask_question("\nDownload which version of params.json and tokenizer.model?", ['LLaMA2', 'InterLM', 'CodeLlama', 'no'])
+    config_choice = ask_question("\nDownload which version of params.json and tokenizer.model?", ['LLaMA2', 'InterLM', 'CodeLlama', 'SPHINX', 'no'])
     if config_choice != 'no':
         args.down_config = True
         args.down_internLM = (config_choice == 'InterLM')
         args.down_code = (config_choice == 'CodeLlama')
+        args.down_sphinx = (config_choice == 'SPHINX')
     else:
         args.down_config = False
 
@@ -80,14 +88,23 @@ def main():
     repo_id = f"Alpha-VLLM/LLaMA2-Accessory"
 
     if args.down_config:
+        files_to_download = []
+        configfolder = 'config'
         prefix = ''
-        if args.down_internLM:
+
+        if args.down_sphinx:
+            files_to_download = ['config.json', 'tokenizer.model', 'meta.json']
+            prefix = 'sphinx_'
+            configfolder = subfolder
+        elif args.down_internLM:
             prefix = 'internLM_'
         elif args.down_code:
             prefix = 'code_'
-        download_file(repo_id, 'config', prefix+'tokenizer.model', args.output_path)
-        param_file = prefix+f"{args.model_size}_params.json"
-        download_file(repo_id, 'config', param_file, args.output_path)
+
+        if prefix != 'sphinx_':
+            files_to_download.extend(get_file_names(prefix, args.model_size))
+
+        download_files(repo_id, configfolder, files_to_download, args.output_path)
 
     num_files_map = {'7B': 1, '13B': 2, '34B': 4, '70B': 8, '180B': 8}
     max_num = num_files_map.get(args.model_size, 1)
@@ -98,7 +115,7 @@ def main():
         else:
             file_name = f"consolidated.{num:02d}-of-{max_num:02d}.model.pth"
         download_file(repo_id, subfolder, file_name, args.output_path)
-
+    
     print(f"{args.model_name} model files downloaded successfully to {args.output_path}")
 
 if __name__ == '__main__':

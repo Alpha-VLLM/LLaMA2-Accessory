@@ -52,9 +52,9 @@ We release the following checkpoints:
 
 | Name         | Architecture                                      | Checkpoint                                                   |
 | ------------ | ------------------------------------------------- | ------------------------------------------------------------ |
-| SPHINX       | [llama_ens](../accessory/model/LLM/llama_ens.py)  | [here](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX) |
-| SPHINX-1K    | [llama_ens5](../accessory/model/LLM/llama_ens.py) | [here](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-1k) |
-| SPHINX-v2-1k | [llama_ens5](../accessory/model/LLM/llama_ens.py) | [here](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-v2-1k) |
+| SPHINX       | [llama_ens](../accessory/model/LLM/llama_ens.py)  | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX)/[Baidu](https://pan.baidu.com/s/1HE6NoF1ZawhMgJxeh9r2kQ?pwd=46s7)(提取码：46s7) |
+| SPHINX-1K    | [llama_ens5](../accessory/model/LLM/llama_ens.py) | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-1k)/[Baidu](https://pan.baidu.com/s/1SRfyFGJdapaUTgYZOAdXyg?pwd=pua9)(提取码：pua9) |
+| SPHINX-v2-1k | [llama_ens5](../accessory/model/LLM/llama_ens.py) | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-v2-1k)/[Baidu](https://pan.baidu.com/s/1PKCf515EGmSnSZ8teERHjQ?pwd=88z0)(提取码：88z0) |
 
 *Note that SPHINX-1K was previously called Long-SPHINX*
 
