@@ -19,7 +19,7 @@ from accessory.util.misc import setup_for_distributed
 from accessory.util.tensor_parallel import load_tensor_parallel_model_list
 from accessory.util.tensor_type import default_tensor_type
 from accessory.model.meta import MetaModel
-from accessory.data.conversation.lib import conv_templates, SeparatorStyle
+from accessory.data.conversation import default_conversation, ConversationGenerator
 from PIL import Image, ImageDraw
 from accessory.data.transform import get_transform
 from segment_anything import sam_model_registry, SamPredictor
@@ -65,12 +65,11 @@ def model_worker(
         "bf16": torch.bfloat16,
         "fp16": torch.float16
     }[args.dtype]
-    with default_tensor_type(dtype=target_dtype,
-                             device="cpu" if args.quant else "cuda"):
-        model = MetaModel(
-            args.llama_type, args.llama_config, args.tokenizer_path,
-            with_visual=True, max_seq_len=args.model_max_seq_len,
-        )
+    model = MetaModel.from_pretrained(
+        args.llama_type, args.llama_config, args.tokenizer_path,
+        with_visual=True, max_seq_len=args.model_max_seq_len,
+        dtype=target_dtype, device="cpu" if args.quant else "cuda"
+    )
     print("Loading pretrained weights ...")
     load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
     print("load result:\n", load_result)
@@ -90,6 +89,8 @@ def model_worker(
         model.cuda()
     model.eval()
     print(f"Model = {str(model)}")
+    conv_generator = ConversationGenerator(model.tokenizer, conv_template_func=default_conversation)
+    conv_sep = conv_generator.response_end_signal
 
     barrier.wait()
 
@@ -104,22 +105,14 @@ def model_worker(
                 image = transform(image).unsqueeze(0).cuda().to(target_dtype)
             else:
                 image = None
-            conv = conv_templates["v1"].copy()
-            for user, bot in chatbot:
-                conv.append_message(conv.roles[0], user)
-                conv.append_message(conv.roles[1], bot)
+            prompt = conv_generator.qas_to_prompt(chatbot)
 
-            with torch.cuda.amp.autocast(dtype=target_dtype):
-                print(conv.get_prompt())
+            with torch.cuda.amp.autocast(dtype=target_dtype, enabled=not args.quant):
+                print(prompt)
                 for stream_response in model.stream_generate(
-                    conv.get_prompt(), image,
+                    prompt, image,
                     max_gen_len, temperature, top_p
                 ):
-                    conv_sep = (
-                        conv.sep
-                        if conv.sep_style == SeparatorStyle.SINGLE
-                        else conv.sep2
-                    )
                     end_pos = stream_response["text"].find(conv_sep)
                     if end_pos != -1:
                         stream_response["text"] = (
@@ -434,16 +427,16 @@ if __name__ == "__main__":
              "--gpu_ids 0 1 2 ... n-1"
     )
     parser.add_argument(
-        "--tokenizer_path", type=str, required=True,
+        "--tokenizer_path", type=str, default=None,
         help="Path to the tokenizer.model file provided along with the LLaMA "
              "model."
     )
     parser.add_argument(
-        "--llama_type", default="llama", type=str, metavar="MODEL",
+        "--llama_type", default=None, type=str, metavar="MODEL",
         help="LLaMA model type."
     )
     parser.add_argument(
-        "--llama_config", type=str, default=[], nargs="*",
+        "--llama_config", type=str, default=None, nargs="*",
         help="Path to the llama model config json."
     )
     parser.add_argument(

@@ -1,0 +1,8 @@
+:root {
+  --sd-color-primary: #f37726;
+}
+
+.logo__image {
+  border: 2px solid lightgray;
+  border-radius: 50%;
+}

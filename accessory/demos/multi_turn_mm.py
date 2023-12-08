@@ -18,12 +18,12 @@ from accessory.util.misc import setup_for_distributed
 from accessory.util.tensor_parallel import load_tensor_parallel_model_list
 from accessory.util.tensor_type import default_tensor_type
 from accessory.model.meta import MetaModel
-from accessory.data.conversation.lib import conv_templates, SeparatorStyle
-from PIL import Image
+from accessory.data.conversation import default_conversation, ConversationGenerator
 from accessory.data.transform import get_transform
 
 
 class Ready: pass
+class ModelFailure: pass
 
 def model_worker(
     rank: int, args: argparse.Namespace, barrier: mp.Barrier,
@@ -61,12 +61,11 @@ def model_worker(
         "bf16": torch.bfloat16,
         "fp16": torch.float16
     }[args.dtype]
-    with default_tensor_type(dtype=target_dtype,
-                             device="cpu" if args.quant else "cuda"):
-        model = MetaModel(
-            args.llama_type, args.llama_config, args.tokenizer_path,
-            with_visual=True, max_seq_len=args.model_max_seq_len,
-        )
+    model = MetaModel.from_pretrained(
+        args.llama_type, args.llama_config, args.tokenizer_path,
+        with_visual=True, max_seq_len=args.model_max_seq_len,
+        dtype=target_dtype, device="cpu" if args.quant else "cuda"
+    )
     print("Loading pretrained weights ...")
     load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
     print("load result:\n", load_result)
@@ -86,56 +85,53 @@ def model_worker(
         model.cuda()
     model.eval()
     print(f"Model = {str(model)}")
+    conv_generator = ConversationGenerator(model.tokenizer, conv_template_func=default_conversation)
+    conv_sep = conv_generator.response_end_signal
 
     barrier.wait()
 
     while True:
         if response_queue is not None:
             response_queue.put(Ready())
-        img_path, chatbot, max_gen_len, temperature, top_p, img_transform = request_queue.get()
-        if img_path is not None:
-            image = Image.open(img_path).convert('RGB')
-            image = get_transform(img_transform)(image).unsqueeze(0).cuda().to(target_dtype)
-        else:
-            image = None
-        conv = conv_templates["v1"].copy()
-        for user, bot in chatbot:
-            conv.append_message(conv.roles[0], user)
-            conv.append_message(conv.roles[1], bot)
+        try:
+            image, chatbot, max_gen_len, temperature, top_p, img_transform = request_queue.get()
+            if image is not None:
+                image = image.convert("RGB")
+                transform = get_transform(img_transform, getattr(model.llma, 'image_size', 224))
+                image = transform(image).unsqueeze(0).cuda().to(target_dtype)
+            else:
+                image = None
+            prompt = conv_generator.qas_to_prompt(chatbot)
 
-        with torch.cuda.amp.autocast(dtype=target_dtype):
-            print(conv.get_prompt())
-            for stream_response in model.stream_generate(
-                conv.get_prompt(), image,
-                max_gen_len, temperature, top_p
-            ):
-                conv_sep = (
-                    conv.sep
-                    if conv.sep_style == SeparatorStyle.SINGLE
-                    else conv.sep2
-                )
-                end_pos = stream_response["text"].find(conv_sep)
-                if end_pos != -1:
-                    stream_response["text"] = (
-                        stream_response['text'][:end_pos].rstrip() + "\n"
-                    )
-                    stream_response["end_of_content"] = True
+            with torch.cuda.amp.autocast(dtype=target_dtype, enabled=not args.quant):
+                print(prompt)
+                for stream_response in model.stream_generate(
+                    prompt, image,
+                    max_gen_len, temperature, top_p
+                ):
+                    end_pos = stream_response["text"].find(conv_sep)
+                    if end_pos != -1:
+                        stream_response["text"] = (
+                            stream_response['text'][:end_pos].rstrip() + "\n"
+                        )
+                        stream_response["end_of_content"] = True
 
-                # keep a few characters if not end_of_content to avoid sending
-                # part of conv_sep before all of it is generated.
-                if not stream_response["end_of_content"]:
-                    if len(stream_response["text"]) < len(conv_sep):
-                        continue
-                    stream_response["text"] = (
-                        stream_response["text"][:-len(conv_sep)]
-                    )
+                    # keep a few characters if not end_of_content to avoid sending
+                    # part of conv_sep before all of it is generated.
+                    if not stream_response["end_of_content"]:
+                        if len(stream_response["text"]) < len(conv_sep):
+                            continue
+                        stream_response["text"] = (
+                            stream_response["text"][:-len(conv_sep)]
+                        )
 
-                if response_queue is not None:
-                    response_queue.put(stream_response)
+                    if response_queue is not None:
+                        response_queue.put(stream_response)
 
-                if stream_response["end_of_content"]:
-                    break
-
+                    if stream_response["end_of_content"]:
+                        break
+        except Exception:
+            response_queue.put(ModelFailure())
 
 def gradio_worker(
     request_queues: List[mp.Queue], response_queue: mp.Queue,
@@ -156,15 +152,17 @@ def gradio_worker(
     def show_user_input(msg, chatbot):
         return "", chatbot + [[msg, None]]
 
-    def stream_model_output(img_path, chatbot, max_gen_len, gen_t, top_p, img_transform):
+    def stream_model_output(img, chatbot, max_gen_len, gen_t, top_p, img_transform):
         while True:
             content_piece = response_queue.get()
             if isinstance(content_piece, Ready):
                 break
         for queue in request_queues:
-            queue.put((img_path, chatbot, max_gen_len, gen_t, top_p, img_transform))
+            queue.put((img, chatbot, max_gen_len, gen_t, top_p, img_transform))
         while True:
             content_piece = response_queue.get()
+            if isinstance(content_piece, ModelFailure):
+                raise RuntimeError
             chatbot[-1][1] = content_piece["text"]
             yield chatbot
             if content_piece["end_of_content"]:
@@ -181,17 +179,17 @@ def gradio_worker(
         return chatbot, msg
 
     with gr.Blocks(css="#image_input {height: 100% !important}") as demo:
-        gr.Markdown("# SPHINX-MLLM Demo")
+        gr.Markdown("# LLaMA2-Accessory Multi-turn Mutli-modal Demo")
         with gr.Row() as r:
             with gr.Column(scale=1):
-                img_path = gr.Image(label='Image Input', type='filepath', elem_id="image_input")
+                img_input = gr.Image(label='Image Input', type='pil', elem_id="image_input")
             with gr.Column(scale=2):
                 chatbot = gr.Chatbot()
                 msg = gr.Textbox()
         with gr.Row():
             submit_button = gr.Button("Submit", variant="primary")
             undo_button = gr.Button("Undo")
-            clear_button = gr.ClearButton([chatbot, msg, img_path])
+            clear_button = gr.ClearButton([chatbot, msg, img_input])
         with gr.Row():
             max_gen_len = gr.Slider(
                 minimum=1, maximum=args.model_max_seq_len // 2,
@@ -211,15 +209,15 @@ def gradio_worker(
         msg.submit(
             show_user_input, [msg, chatbot], [msg, chatbot],
         ).then(
-            stream_model_output, [img_path, chatbot, max_gen_len, gen_t, top_p, img_transform], chatbot,
+            stream_model_output, [img_input, chatbot, max_gen_len, gen_t, top_p, img_transform], chatbot,
         )
         submit_button.click(
             show_user_input, [msg, chatbot], [msg, chatbot],
         ).then(
-            stream_model_output, [img_path, chatbot, max_gen_len, gen_t, top_p, img_transform], chatbot,
+            stream_model_output, [img_input, chatbot, max_gen_len, gen_t, top_p, img_transform], chatbot,
         )
         undo_button.click(undo, chatbot, chatbot)
-        img_path.change(clear, [], [chatbot, msg])
+        img_input.change(clear, [], [chatbot, msg])
     barrier.wait()
     demo.queue(api_open=True, concurrency_count=1).launch(share=True)
 
@@ -238,16 +236,16 @@ if __name__ == "__main__":
              "--gpu_ids 0 1 2 ... n-1"
     )
     parser.add_argument(
-        "--tokenizer_path", type=str, required=True,
+        "--tokenizer_path", type=str, default=None,
         help="Path to the tokenizer.model file provided along with the LLaMA "
              "model."
     )
     parser.add_argument(
-        "--llama_type", default="llama", type=str, metavar="MODEL",
+        "--llama_type", default=None, type=str, metavar="MODEL",
         help="LLaMA model type."
     )
     parser.add_argument(
-        "--llama_config", type=str, default=[], nargs="*",
+        "--llama_config", type=str, default=None, nargs="*",
         help="Path to the llama model config json."
     )
     parser.add_argument(

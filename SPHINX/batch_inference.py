@@ -13,7 +13,7 @@ from PIL import Image
 import fairscale.nn.model_parallel.initialize as fs_init
 
 from accessory.model.meta import MetaModel
-from accessory.data.conversation.lib import conv_templates, SeparatorStyle
+from accessory.data.conversation import default_conversation, ConversationGenerator
 from accessory.data.transform import get_transform
 from accessory.util.tensor_parallel import load_tensor_parallel_model_list
 from accessory.util.tensor_type import default_tensor_type
@@ -103,15 +103,13 @@ def main() -> None:
         ),
     )
 
-    conv = conv_templates["v1"].copy()
-    conv.append_message(conv.roles[0], args.prompt)
-    conv.append_message(conv.roles[1], None)
-    formatted_prompt = conv.get_prompt()
+    conv_generator = ConversationGenerator(model.tokenizer, conv_template_func=default_conversation)
+    conv_sep = conv_generator.response_end_signal
 
-    conv_sep = conv.sep if conv.sep_style == SeparatorStyle.SINGLE else conv.sep2
+    prompt = conv_generator.qas_to_prompt([[args.prompt, None]])
 
     if dist.get_rank() == 0:
-        print("Formatted prompt:", repr(formatted_prompt))
+        print("Formatted prompt:", repr(prompt))
         from tqdm import tqdm
     else:
         tqdm = lambda x: x
@@ -127,7 +125,7 @@ def main() -> None:
             )
         
         with torch.cuda.amp.autocast(dtype=torch.bfloat16):
-            generated = model.generate([formatted_prompt] * image.size(0), image,
+            generated = model.generate([prompt] * image.size(0), image,
                                        args.max_gen_len, args.temperature, args.top_p)
         
         truncated = []

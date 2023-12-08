@@ -25,13 +25,25 @@ To run our provided experiment scripts on you own machine, please first adjust t
 
    and your should set `pretrained_type=consolidated` in the `.sh` file
 
-+ Point `llama_config` in `.sh` to the model parameter file (usually named as `params.json`) that differentiates model sizes (7B, 13B, ...)
++ Point `llama_config` in `.sh` scripts to the model configuration files (`*.json`) that specify model size 
+  (7B, 13B, ...) and other settings (if any). See [here](../faq.md#how-to-set-llama_config) to know more.
++ Point `tokenizer_path` in `.sh` to the tokenizer, See more [here](../faq.md#how-to-set-tokenizer_path).
++ Point the `data_config` argument in `.sh` to a `.yaml` file defining the collection of finetuning datasets, 
+  each of which is identified by a `.json` meta file. 
++ Modify *model parallel size* properly. 'model parallel size' specifies how the parameters of each complete model 
+  are split and distributed across multiple GPUs. The Meta official has provided a set of corresponding relationships,
+  for example, 7B corresponds to a model parallel size of 1, 13B corresponds to 2, and 70B corresponds to 8. 
+  The effect of this is to keep the load on each GPU relatively constant as the total number of model parameters
+  increases. Overall, following this guideline is generally a good choice in most situations; however, if you are 
+  very familiar with the subject, you can also try to break this binding.
 
-  + You can also assign multiple `.json` config files to `llama_config` simultaneously.  The combined configuration from all these files will be used, with keys from later files overwriting those from earlier ones. This is especially handy when you want to make specific model configuration adjustments, like the LoRA dimension, which is consistent across various model sizes, eliminating the need to produce individual files for each size.
+:::{important}
 
-+ Point `tokenizer_path` in `.sh` to the tokenizer file (usually named as `tokenizer.model`)
-+ The `data_config` argument in the `.sh` file points to a `.yaml` file defining the finetuning datasets. You need to first download the data and modify the paths in `.yaml` to the correct location. 
-+ LLaMA models of different model sizes use different *model parallel sizes*. For example, LLaMA 7B's default model parallel size is 1, and LLaMA 13B's default model parallel size is 2. Thus, if you want to modify a script from training 7B models to training 13B models, the model_parallel parameter should be modified accordingly.
+LLaMA2-Accessory itself supports model parallelism (which, within the current scope of LLaMA2-Accessory, is equivalent 
+to tensor parallelism) and Fully Sharded Data Parallel (FSDP). Both of these involve the partitioning of the model, 
+but it is important to note that they are **very different and orthogonal** (i.e., they can be used simultaneously) 
+technologies. A brief understanding of these two technologies is very helpful for better utilizing LLaMA2-Accessory. 
+[This blog from Microsoft]((https://www.microsoft.com/en-us/research/blog/deepspeed-extreme-scale-model-training-for-everyone/))
+is an excellent learning resource.
 
-  + If you just train your model from scratch (i.e. do not load any pretrained checkpoints), you may change the model parallel size arbitrarily based on your needs. However, if you do load some pretrained checkpoints, it is important to guarantee the same model parallel size as pretrained checkpoints. 
-
+:::

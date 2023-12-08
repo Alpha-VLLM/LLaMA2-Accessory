@@ -5,7 +5,7 @@ from PIL import Image
 from accessory.model.meta import MetaModel
 
 from accessory.data.transform import get_transform
-from accessory.data.conversation.lib import conv_templates
+from accessory.data.conversation import default_conversation, ConversationGenerator
 
 class SPHINXModel(MetaModel):
     def generate_reponse(self, qas: List[List[str]], image: Optional[Image.Image],
@@ -22,9 +22,9 @@ class SPHINXModel(MetaModel):
             seed: random seed
 
         Returns:
-            str: reponse
+            str: response
         """
-        # to avoid smapling inconsistency among model parallel workers
+        # to avoid sampling inconsistency among model parallel workers
         torch.manual_seed(seed)
         np.random.seed(seed)
 
@@ -33,19 +33,14 @@ class SPHINXModel(MetaModel):
             target_size = getattr(self.llma, 'image_size', 224)  # 448 for SPHINX-1k, 224 for SPHINX
             image = get_transform("padded_resize", target_size)(image).unsqueeze(0).to(list(self.parameters())[0])
 
-
-        conv = conv_templates["v1"].copy()
+        conv_generator = ConversationGenerator(self.tokenizer, default_conversation)
         assert qas[-1][1] is None
 
-        for q, a in qas:
-            conv.append_message("Human", q)
-            conv.append_message("Assistant", a)
-
-        prompt = conv.get_prompt()
+        prompt = conv_generator.qas_to_prompt(qas)
         # print(prompt)
 
         # each turn of response ends with `conv_seq`
-        conv_sep = conv.sep
+        conv_sep = conv_generator.response_end_signal
 
         for stream_response in self.stream_generate(
             prompt, image, max_gen_len=max_gen_len, temperature=temperature, top_p=top_p

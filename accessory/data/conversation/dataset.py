@@ -1,6 +1,7 @@
 import random
 import warnings
 from time import sleep
+from typing import List, Callable
 
 import torch
 import yaml
@@ -18,8 +19,6 @@ import traceback
 
 IGNORE_INDEX = -100
 
-DEFAULT_IMAGE_TOKEN = "<image>"
-
 
 class LabelAllZeroError(Exception):
     def __init__(self, message=None):
@@ -30,10 +29,18 @@ class LabelAllZeroError(Exception):
 
 
 class ConversationGenerator:
-    def __init__(self, tokenizer):
+    def __init__(self, tokenizer, conv_template_func: Callable=conversation_lib.default_conversation):
         self.tokenizer = tokenizer
-        self.header = f"{conversation_lib.default_conversation.system}\n\n"
+        # modify this assignment to change conversation template
+        self.conv_func = conv_template_func
         self._probe_tokenizer_style()
+
+        conv = conv_template_func()
+        self.response_end_signal = (
+            conv.sep
+            if conv.sep_style == conversation_lib.SeparatorStyle.SINGLE
+            else conv.sep2
+        )
 
     def _probe_tokenizer_style(self):
         """
@@ -42,53 +49,63 @@ class ConversationGenerator:
         Knowing which style the tokenizer takes is necessary for correct ground-truth label masking.
 
         """
+        conv = self.conv_func()
         probe = "Probe am I"
-        sentence1 = self.tokenizer.encode(conversation_lib.default_conversation.roles[1] + ": " + probe,
+        sentence1 = self.tokenizer.encode(conv.roles[1] + ": " + probe,
                                           bos=False, eos=False)
         sentence2 = self.tokenizer.encode(probe,
                                           bos=False, eos=False)
         if sentence1[-len(sentence2):] == sentence2:
-            self.space_before_to_predict = False
+            self.space_part_of_next_word = False
         else:
-            sentence3 = self.tokenizer.encode(" " + probe,
-                                              bos=False, eos=False)
+            sentence3 = self.tokenizer.encode(" " + probe, bos=False, eos=False)
             assert sentence1[-len(sentence3):] == sentence3
-            self.space_before_to_predict = True
+            self.space_part_of_next_word = True
 
-    def add_speaker_and_signal(self, source, get_conversation=True):
-        """Add speaker and start/end signal on each round."""
-        BEGIN_SIGNAL = "### "
-        END_SIGNAL = "\n"
-        conversation = self.header
+    def add_speaker_and_signal(self, source: List):
+        """
+        Given source instruction and response pieces, return the text containing the complete conversation,
+        and the list of values that the model should learn to predict during training
+        :param source: [{"from": "human", "value": "..."}, {"from": "gpt", "value": "..."}, ...]
+        :return: `conversation`: string containing the complete conversation;
+                 `to_predict_list`: the list of values that the model should learn to predict during training
+        """
+        conv = self.conv_func()
 
-        to_predict_list = []
-
-        for sentence in source:
+        for i, sentence in enumerate(source):
             from_str = sentence["from"]
             if from_str.lower() in ["human"]:
-                from_str = conversation_lib.default_conversation.roles[0]
+                role = conv.roles[0]
             elif from_str.lower() in ["gpt", "assistant"]:
-                from_str = conversation_lib.default_conversation.roles[1]
+                role = conv.roles[1]
             else:
                 raise ValueError(f"unknown dialog role: {from_str.lower()}")
 
             value = sentence["value"]
-            if DEFAULT_IMAGE_TOKEN in value:
-                value = value.replace(DEFAULT_IMAGE_TOKEN, '').strip()
 
-            sentence_value = BEGIN_SIGNAL + from_str + ": " + value + END_SIGNAL
+            conv.append_message(role, value)
 
-            if from_str == conversation_lib.default_conversation.roles[1]:
-                to_predict_value = value + END_SIGNAL + "###"
-                if self.space_before_to_predict:
-                    to_predict_value = " " + to_predict_value
-                to_predict_list.append(to_predict_value)
+        processed = conv.process(self.space_part_of_next_word)
+        conversation, to_predict_list = processed['conv'], processed['to_predict']
 
-            if get_conversation:
-                conversation = conversation + sentence_value
-
-        conversation = conversation + BEGIN_SIGNAL
         return conversation, to_predict_list
+
+    def qas_to_prompt(self, qas: List[List[str, str]]):
+        """
+        convert the list of question-answer pairs to a string, which contains the conversation involving all
+          the questions and answers. When the last answer is None, the returned string is the prompt which
+          can be used by the model to generate the last answer.
+        :param qas: [[question1, answer1], [question2, answer2], ..., [questionX, answerX]]
+          note that the last answer, i.e. answerX, can be None
+        :return: the prompt
+        """
+        conv = self.conv_func()
+        for q, a in qas:
+            conv.append_message(conv.roles[0], q)
+            conv.append_message(conv.roles[1], a)
+
+        prompt = conv.get_prompt(self.space_part_of_next_word)
+        return prompt
 
 
 class FinetuneDialogDataset(Dataset):

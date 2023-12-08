@@ -3,7 +3,7 @@ import warnings
 import torch
 import torch.nn as nn
 import json
-from typing import List, Optional
+from typing import List, Optional, Iterable
 from pathlib import Path
 
 from fairscale.nn.model_parallel import initialize as fs_init
@@ -156,6 +156,7 @@ class MetaModel(nn.Module):
             else:
                 print(f"{str(Path(pretrained_path[-1]) / 'config.json')} does not exist\n"
                       f"will use the default config values (specified in the definition of ModelArgs in {llama_type}.py)")
+                llama_config = []
 
 
         # determine tokenizer_path
@@ -300,17 +301,18 @@ class MetaModel(nn.Module):
     def stream_generate(
         self,
         prompt: str,
-        images: Optional[torch.Tensor],
+        image: Optional[torch.Tensor],
         max_gen_len: int,
         temperature: float = 0.8,
         top_p: float = 0.95,
+        additional_stop_symbols: Iterable[str] = ()
     ):
         args = self.llma.args
 
         prompt_tokens = self.tokenizer.encode(prompt, bos=True, eos=False)
         # truncate from the left. leave some space for generation.
         max_seq_len = args.max_seq_len
-        if images is not None:
+        if image is not None:
             max_seq_len -= self.llma.image_words
 
         max_prompt_size = max_seq_len - max_gen_len
@@ -327,7 +329,7 @@ class MetaModel(nn.Module):
         prev_pos = 0
         generate_until = start_pos
         for cur_pos in range(start_pos, total_len):
-            logits = self.llma.forward_inference(tokens[None, prev_pos:cur_pos], prev_pos, images if prev_pos == 0 else None)
+            logits = self.llma.forward_inference(tokens[None, prev_pos:cur_pos], prev_pos, image if prev_pos == 0 else None)
             if temperature > 0:
                 probs = torch.softmax(logits / temperature, dim=-1)
                 next_token = self.sample_top_p(probs, top_p)
@@ -341,9 +343,18 @@ class MetaModel(nn.Module):
             tokens[cur_pos] = next_token
             prev_pos = cur_pos
             generate_until = cur_pos + 1
-            yield {"text": self.tokenizer.decode(tokens[start_pos:generate_until].tolist()), "end_of_content": False}
 
-        yield {"text": self.tokenizer.decode(tokens[start_pos:generate_until].tolist()), "end_of_content": True}
+            generated = self.tokenizer.decode(tokens[start_pos:generate_until].tolist())
+            for stop_symbol in additional_stop_symbols:
+                stop_pos = generated.find(stop_symbol)
+                if stop_pos != -1:
+                    generated = generated[:stop_pos]
+                    return {"text": generated, "end_of_content": True}
+
+            yield {"text": generated, "end_of_content": False}
+
+        generated = self.tokenizer.decode(tokens[start_pos:generate_until].tolist())
+        return {"text": generated, "end_of_content": True}
 
 
     def sample_top_p(self, probs, p):

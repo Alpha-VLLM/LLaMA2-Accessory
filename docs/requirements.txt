@@ -8,3 +8,9 @@ sphinx_examples
 sphinx_tabs
 sphinx_thebe
 sphinx_togglebutton
+sphinx-autodoc2
+sphinxext-opengraph
+sphinxext-rediraffe
+sphinx_pyscript
+sphinx_tippy
+linkify

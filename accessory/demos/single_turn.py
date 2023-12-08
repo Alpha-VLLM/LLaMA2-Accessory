@@ -20,11 +20,11 @@ from accessory.util.tensor_type import default_tensor_type
 def get_args_parser():
     parser = argparse.ArgumentParser('Single-turn (conversation) demo', add_help=False)
     # Model parameters
-    parser.add_argument('--llama_type', default='llama', type=str, metavar='MODEL',
+    parser.add_argument('--llama_type', default=None, type=str, metavar='MODEL',
                         help='type of llama')
-    parser.add_argument('--llama_config', default=[], type=str, nargs="*",
+    parser.add_argument('--llama_config', default=None, type=str, nargs="*",
                         help='Path to llama model config')
-    parser.add_argument('--tokenizer_path', type=str, default="../tokenizer.model",
+    parser.add_argument('--tokenizer_path', type=str, default=None,
                         help='path to tokenizer.model')
 
     parser.add_argument('--pretrained_path', default='/path/to/pretrained', type=str, nargs="+",
@@ -54,8 +54,8 @@ target_dtype = {
     "bf16": torch.bfloat16,
     "fp16": torch.float16,
 }[args.dtype]
-with default_tensor_type(dtype=target_dtype, device="cpu" if args.quant else "cuda"):
-    model = MetaModel(args.llama_type, args.llama_config, args.tokenizer_path, with_visual=False)
+model = MetaModel.from_pretrained(args.llama_type, args.llama_config, args.tokenizer_path, with_visual=False,
+                                  dtype=target_dtype, device="cpu" if args.quant else "cuda")
 
 print(f"load pretrained from {args.pretrained_path}")
 load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
