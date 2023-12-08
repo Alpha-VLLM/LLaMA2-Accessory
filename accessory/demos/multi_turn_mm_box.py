@@ -22,7 +22,6 @@ from accessory.model.meta import MetaModel
 from accessory.data.conversation.lib import conv_templates, SeparatorStyle
 from PIL import Image, ImageDraw
 from accessory.data.transform import get_transform
-from segment_anything import sam_model_registry, SamPredictor
 
 import regex as re
 
@@ -278,7 +277,7 @@ def draw_box_mask_on_image(img: Image, l_name_box_color, predictor):
         if edge_s_name in key_point_cache and edge_t_name in key_point_cache:
             draw.line([key_point_cache[edge_s_name], key_point_cache[edge_t_name]], fill="green", width=3)
 
-    if len(boxes) > 0:
+    if len(boxes) > 0 and predictor is not None:
         img_mask = img.copy()
         img_array = np.array(img)
         predictor.set_image(img_array)
@@ -312,8 +311,12 @@ def gradio_worker(
             of Web UI to be after the start of the model.
     """
 
-    sam = sam_model_registry["vit_h"](checkpoint="sam_vit_h_4b8939.pth").cuda()
-    sam_predictor = SamPredictor(sam)
+    if args.disable_sam:
+        sam_predictor = None
+    else:
+        from segment_anything import sam_model_registry, SamPredictor
+        sam = sam_model_registry["vit_h"](checkpoint="sam_vit_h_4b8939.pth").cuda()
+        sam_predictor = SamPredictor(sam)
 
     def show_user_input(msg, chatbot, chatbox_display):
         return "", chatbot + [[msg, None]], chatbox_display + [[msg, None]]
@@ -473,6 +476,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--bind_all", action="store_true",
         help="Listen to all addresses on the host."
+    )
+    parser.add_argument(
+        "--disable_sam", action="store_true",
+        help="Do not create SAM model. This saves some GPU memory but object "
+             "masks will no longer be predicted."
     )
     args = parser.parse_args()
 
