@@ -177,14 +177,17 @@ class MetaModel(nn.Module):
                 tokenizer_path = pretrained_path[-1]
             else:
                 print("Not Found")
-        assert tokenizer_path is not None, "No usable tokenizer avaiable"
+        assert tokenizer_path is not None, "No usable tokenizer available"
 
 
         with default_tensor_type(dtype=dtype, device=device):
             model = cls(llama_type, llama_config, tokenizer_path, with_visual, max_seq_len)
         print(f"Loading pretrained weights from {pretrained_path} ...")
         load_result = tensor_parallel.load_tensor_parallel_model_list(model, pretrained_path)
-        assert load_result == {'missing_keys': [], 'unexpected_keys': []}, "checkpoint and model mismatch"
+        if load_result != {'missing_keys': [], 'unexpected_keys': []}:
+            warnings.warn(f"checkpoint and model mismatch: \n{load_result}")
+        else:
+            print("all params match perfectly!")
         model.eval()
         return model
 

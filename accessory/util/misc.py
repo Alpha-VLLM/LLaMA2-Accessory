@@ -10,10 +10,10 @@ from pathlib import Path
 import subprocess
 from types import SimpleNamespace
 import json
+import numpy as np
 
 import torch
 import torch.distributed as dist
-from torch import inf
 from torch.distributed.fsdp.sharded_grad_scaler import ShardedGradScaler
 from torch.distributed.fsdp import (
     FullyShardedDataParallel as FSDP,
@@ -83,7 +83,14 @@ def is_main_process():
     return get_rank() == 0
 
 
+def random_seed(seed=0):
+    random.seed(seed)
+    torch.random.manual_seed(seed)
+    np.random.seed(seed)
+
+
 def init_distributed_mode(args=SimpleNamespace()):
+    random_seed()
     if getattr(args, 'dist_on_itp', False):
         args.rank = int(os.environ['OMPI_COMM_WORLD_RANK'])
         args.world_size = int(os.environ['OMPI_COMM_WORLD_SIZE'])
