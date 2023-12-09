@@ -10,3 +10,4 @@ from . import llama_ens10
 from . import llama_ens_peft
 from . import internlm
 from . import falcon
+from . import mistral
