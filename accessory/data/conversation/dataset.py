@@ -91,7 +91,7 @@ class ConversationGenerator:
 
         return conversation, to_predict_list
 
-    def qas_to_prompt(self, qas: List[List[str, str]]):
+    def qas_to_prompt(self, qas: List[List[str]]):
         """
         convert the list of question-answer pairs to a string, which contains the conversation involving all
           the questions and answers. When the last answer is None, the returned string is the prompt which

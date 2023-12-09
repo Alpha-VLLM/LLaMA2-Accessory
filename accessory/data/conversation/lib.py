@@ -14,7 +14,7 @@ class Conversation:
     """A class that keeps all conversation history."""
     system: str
     roles: Tuple[str, str]
-    messages: List | Tuple
+    messages: List
     sep_style: SeparatorStyle = SeparatorStyle.SINGLE
     sep: str = "###"
     sep2: str = None
@@ -69,7 +69,7 @@ class Conversation:
         return result
 
     def get_prompt(self, space_part_of_next_word=True):
-        return self.get_prompt(space_part_of_next_word)['conv']
+        return self.process(space_part_of_next_word)['conv']
 
     def append_message(self, role, message):
         self.messages.append([role, message])
@@ -89,7 +89,7 @@ def conv_v1():
         system="A chat between a curious human and an artificial intelligence assistant. "
                "The assistant gives helpful, detailed, and polite answers to the human's questions.",
         roles=("Human", "Assistant"),
-        messages=(),
+        messages=[],
         sep_style=SeparatorStyle.SINGLE,
         sep="###",
     )
@@ -101,7 +101,7 @@ def conv_v1_2():
         system="A chat between a curious human and an artificial intelligence assistant. "
                "The assistant gives helpful, detailed, and polite answers to the human's questions.",
         roles=("Human", "Assistant"),
-        messages=(),
+        messages=[],
         sep_style=SeparatorStyle.SINGLE,
         sep="###",
     )
@@ -114,7 +114,7 @@ def conv_vicuna_v1_1():
                "The assistant gives helpful, detailed, and polite answers to the user's questions.",
         roles=("USER", "ASSISTANT"),
         version="v1",
-        messages=(),
+        messages=[],
         sep_style=SeparatorStyle.TWO,
         sep=" ",
         sep2="</s>",
@@ -126,7 +126,7 @@ def conv_bair_v1():
     conv = Conversation(
         system="BEGINNING OF CONVERSATION:",
         roles=("USER", "GPT"),
-        messages=(),
+        messages=[],
         sep_style=SeparatorStyle.TWO,
         sep=" ",
         sep2="</s>",
@@ -139,7 +139,7 @@ def simple_conv():
         system="A chat between a curious human and an artificial intelligence assistant. "
                "The assistant gives helpful, detailed, and polite answers to the human's questions.",
         roles=("Human", "Assistant"),
-        messages=(),
+        messages=[],
         sep_style=SeparatorStyle.SINGLE,
         sep="###",
     )
@@ -152,7 +152,7 @@ def simple_conv_multimodal():
                "You are able to understand the visual content that the user provides, and assist the user with a variety of tasks using natural language."
                "Follow the instructions carefully and explain your answers in detail.",
         roles=("Human", "Assistant"),
-        messages=(),
+        messages=[],
         sep_style=SeparatorStyle.SINGLE,
         sep="###",
     )
@@ -166,7 +166,7 @@ def conv_llava_v1():
                "Follow the instructions carefully and explain your answers in detail.",
         roles=("USER", "ASSISTANT"),
         version="v1",
-        messages=(),
+        messages=[],
         sep_style=SeparatorStyle.TWO,
         sep=" ",
         sep2="</s>",
