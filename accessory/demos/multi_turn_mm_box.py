@@ -110,7 +110,6 @@ def model_worker(
                     prompt, image,
                     max_gen_len, temperature, top_p
                 ):
-                    print(stream_response["text"])
                     end_pos = stream_response["text"].find(conv_sep)
                     if end_pos != -1:
                         stream_response["text"] = (
