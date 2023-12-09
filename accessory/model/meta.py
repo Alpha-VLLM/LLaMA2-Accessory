@@ -17,8 +17,6 @@ import torch.distributed as dist
 
 
 class MetaModel(nn.Module):
-    """ Masked Autoencoder with VisionTransformer backbone
-    """
     def __init__(
         self, llama_type: str, llama_config: List[str], tokenizer_path: str,
         with_visual: bool = False, max_seq_len: int = 4096
