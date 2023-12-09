@@ -17,7 +17,7 @@ import gradio as gr
 
 from accessory.util.misc import setup_for_distributed
 from accessory.model.meta import MetaModel
-from accessory.data.conversation import default_conversation, ConversationGenerator
+from accessory.data.conversation import default_conversation
 
 
 class Ready: pass
@@ -79,8 +79,8 @@ def model_worker(
         model.cuda()
     model.eval()
     print(f"Model = {str(model)}")
-    conv_generator = ConversationGenerator(model.tokenizer, conv_template_func=default_conversation)
-    conv_sep = conv_generator.response_end_signal
+    conv = default_conversation()
+    conv_sep = conv.response_end_signal
 
     barrier.wait()
 
@@ -88,7 +88,8 @@ def model_worker(
         if response_queue is not None:
             response_queue.put(Ready())
         chatbot, max_gen_len, temperature, top_p = request_queue.get()
-        prompt = conv_generator.qas_to_prompt(chatbot)
+        conv.load_qas(chatbot)
+        prompt = conv.get_prompt()
 
         for stream_response in model.stream_generate(
             prompt, None,

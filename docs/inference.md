@@ -130,18 +130,19 @@ Similar to the single-turn case, the template for multi-turn conversation should
 finetuning and inference. The following shows an example of the default template used by LLaMA2-Accessory.
 ```python
 from accessory.model.meta import MetaModel
-from accessory.data.conversation import ConversationGenerator, default_conversation
+from accessory.data.conversation import default_conversation
 
 model = MetaModel.from_pretrained("/path/to/pretrained", max_seq_len=2048)
 
-conv_generator = ConversationGenerator(model.tokenizer, conv_template_func=default_conversation)
+conv = default_conversation()
 
 # for multi-turn-finetuned model
 q1 = "What's the best programming language in the world?"
 a1 = "The best programming language in the world in PHP."
 q2 = "Are you sure? Why not Python?"
 qas = [[q1, a1], [q2, None]]  # leave the last answer, namely the one to generate, to None
-prompt = conv_generator.qas_to_prompt(qas)
+conv.load_qas(qas)
+prompt = conv.get_prompt()
 # prompt is equal to:
 #   "A chat between a curious human and an artificial intelligence assistant. "
 #   "The assistant gives helpful, detailed, and polite answers to the human's questions.\n\n"
@@ -151,7 +152,7 @@ prompt = conv_generator.qas_to_prompt(qas)
 #   "### Assistant:"
 
 # conv_sep is the symbol marking the end of one response, equal to "###" in this example
-conv_sep = conv_generator.response_end_signal
+conv_sep = conv.response_end_signal
 
 # ------EITHER-------
 response = None
@@ -207,12 +208,13 @@ print(response)
 
 
 # ---------multi turn---------
-from accessory.data.conversation import ConversationGenerator, default_conversation
+from accessory.data.conversation import default_conversation
 
-conv_generator = ConversationGenerator(model.tokenizer, conv_template_func=default_conversation)
 qas = [["What's in the image?", None]]
-prompt = conv_generator.qas_to_prompt(qas)
-conv_sep = conv_generator.response_end_signal
+conv = default_conversation()
+conv.load_qas(qas)
+prompt = conv.get_prompt()
+conv_sep = conv.response_end_signal
 
 response = None
 for response_in_progress in model.stream_generate(

@@ -22,7 +22,7 @@ class Conversation:
 
     skip_next: bool = False
 
-    def process(self, space_part_of_next_word=True):
+    def process(self):
         l_to_predict = []
         if self.sep_style == SeparatorStyle.SINGLE:
             ret = self.system + '\n\n' + self.sep
@@ -33,14 +33,10 @@ class Conversation:
                     ret += " " + role + ": " + message + '\n' + self.sep
                     if role == self.roles[1]:
                         to_predict_value = message + '\n' + self.sep
-                        if space_part_of_next_word:
-                            to_predict_value = " " + to_predict_value
                         l_to_predict.append(to_predict_value)
                 else:
                     assert i == len(self.messages) - 1, "only last message can be None"
                     ret += " " + role + ":"
-                    if not space_part_of_next_word:
-                        ret += " "
         elif self.sep_style == SeparatorStyle.TWO:
             seps = [self.sep, self.sep2]
             ret = self.system + seps[0]
@@ -51,14 +47,10 @@ class Conversation:
                     ret += " " + role + ": " + message + seps[i % 2]
                     if role == self.roles[1]:
                         to_predict_value = message + seps[i % 2]
-                        if space_part_of_next_word:
-                            to_predict_value = " " + to_predict_value
                         l_to_predict.append(to_predict_value)
                 else:
                     assert i == len(self.messages) - 1, "only last message can be None"
                     ret += " " + role + ":"
-                    if not space_part_of_next_word:
-                        ret += " "
         else:
             raise ValueError(f"Invalid style: {self.sep_style}")
 
@@ -68,8 +60,8 @@ class Conversation:
         }
         return result
 
-    def get_prompt(self, space_part_of_next_word=True):
-        return self.process(space_part_of_next_word)['conv']
+    def get_prompt(self):
+        return self.process()['conv']
 
     def append_message(self, role, message):
         self.messages.append([role, message])
@@ -83,6 +75,27 @@ class Conversation:
             sep=self.sep,
             sep2=self.sep2)
 
+    def load_qas(self, qas: List[List[str]]):
+        """
+        convert the list of question-answer pairs to a string, which contains the conversation involving all
+          the questions and answers. When the last answer is None, the returned string is the prompt which
+          can be used by the model to generate the last answer.
+        :param qas: [[question1, answer1], [question2, answer2], ..., [questionX, answerX]]
+          note that the last answer, i.e. answerX, can be None
+        :return: the prompt
+        """
+        self.messages = []
+        for q, a in qas:
+            self.append_message(self.roles[0], q)
+            self.append_message(self.roles[1], a)
+
+    @ property
+    def response_end_signal(self):
+        return (
+            self.sep
+            if self.sep_style == SeparatorStyle.SINGLE
+            else self.sep2
+        )
 
 def conv_v1():
     conv = Conversation(

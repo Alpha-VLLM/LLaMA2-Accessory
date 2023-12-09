@@ -5,7 +5,7 @@ from PIL import Image
 from accessory.model.meta import MetaModel
 
 from accessory.data.transform import get_transform
-from accessory.data.conversation import default_conversation, ConversationGenerator
+from accessory.data.conversation import default_conversation
 
 class SPHINXModel(MetaModel):
     def generate_reponse(self, qas: List[List[str]], image: Optional[Image.Image],
@@ -33,14 +33,15 @@ class SPHINXModel(MetaModel):
             target_size = getattr(self.llma, 'image_size', 224)  # 448 for SPHINX-1k, 224 for SPHINX
             image = get_transform("padded_resize", target_size)(image).unsqueeze(0).to(list(self.parameters())[0])
 
-        conv_generator = ConversationGenerator(self.tokenizer, default_conversation)
+        conv = default_conversation()
         assert qas[-1][1] is None
 
-        prompt = conv_generator.qas_to_prompt(qas)
+        conv.load_qas(qas)
+        prompt = conv.get_prompt()
         # print(prompt)
 
         # each turn of response ends with `conv_seq`
-        conv_sep = conv_generator.response_end_signal
+        conv_sep = conv.response_end_signal
 
         for stream_response in self.stream_generate(
             prompt, image, max_gen_len=max_gen_len, temperature=temperature, top_p=top_p

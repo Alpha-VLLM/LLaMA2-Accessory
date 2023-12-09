@@ -17,7 +17,7 @@ import gradio as gr
 
 from accessory.util.misc import setup_for_distributed
 from accessory.model.meta import MetaModel
-from accessory.data.conversation import default_conversation, ConversationGenerator
+from accessory.data.conversation import default_conversation
 from PIL import Image, ImageDraw
 from accessory.data.transform import get_transform
 from segment_anything import sam_model_registry, SamPredictor
@@ -84,8 +84,9 @@ def model_worker(
         model.cuda()
     model.eval()
     print(f"Model = {str(model)}")
-    conv_generator = ConversationGenerator(model.tokenizer, conv_template_func=default_conversation)
-    conv_sep = conv_generator.response_end_signal
+
+    conv = default_conversation()
+    conv_sep = conv.response_end_signal
 
     barrier.wait()
 
@@ -100,7 +101,8 @@ def model_worker(
                 image = transform(image).unsqueeze(0).cuda().to(target_dtype)
             else:
                 image = None
-            prompt = conv_generator.qas_to_prompt(chatbot)
+            conv.load_qas(chatbot)
+            prompt = conv.get_prompt()
 
             with torch.cuda.amp.autocast(dtype=target_dtype, enabled=not args.quant):
                 print(prompt)
@@ -108,6 +110,7 @@ def model_worker(
                     prompt, image,
                     max_gen_len, temperature, top_p
                 ):
+                    print(stream_response["text"])
                     end_pos = stream_response["text"].find(conv_sep)
                     if end_pos != -1:
                         stream_response["text"] = (

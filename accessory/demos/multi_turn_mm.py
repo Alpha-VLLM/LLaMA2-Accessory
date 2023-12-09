@@ -1,6 +1,8 @@
 import random
 import sys
 import os
+import traceback
+
 sys.path.append(os.path.abspath(__file__).rsplit('/', 3)[0])
 
 import argparse
@@ -17,7 +19,7 @@ import gradio as gr
 
 from accessory.util.misc import setup_for_distributed
 from accessory.model.meta import MetaModel
-from accessory.data.conversation import default_conversation, ConversationGenerator
+from accessory.data.conversation import default_conversation
 from accessory.data.transform import get_transform
 
 
@@ -81,8 +83,9 @@ def model_worker(
         model.cuda()
     model.eval()
     print(f"Model = {str(model)}")
-    conv_generator = ConversationGenerator(model.tokenizer, conv_template_func=default_conversation)
-    conv_sep = conv_generator.response_end_signal
+
+    conv = default_conversation()
+    conv_sep = conv.response_end_signal
 
     barrier.wait()
 
@@ -97,7 +100,8 @@ def model_worker(
                 image = transform(image).unsqueeze(0).cuda().to(target_dtype)
             else:
                 image = None
-            prompt = conv_generator.qas_to_prompt(chatbot)
+            conv.load_qas(chatbot)
+            prompt = conv.get_prompt()
 
             with torch.cuda.amp.autocast(dtype=target_dtype, enabled=not args.quant):
                 print(prompt)
@@ -127,6 +131,7 @@ def model_worker(
                     if stream_response["end_of_content"]:
                         break
         except Exception:
+            print(traceback.format_exc())
             response_queue.put(ModelFailure())
 
 def gradio_worker(

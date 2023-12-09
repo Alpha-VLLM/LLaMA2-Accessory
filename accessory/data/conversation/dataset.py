@@ -36,32 +36,33 @@ class ConversationGenerator:
         self.conv_func = conv_template_func
         self._probe_tokenizer_style()
 
-        conv = conv_template_func()
-        self.response_end_signal = (
-            conv.sep
-            if conv.sep_style == conversation_lib.SeparatorStyle.SINGLE
-            else conv.sep2
-        )
-
     def _probe_tokenizer_style(self):
         """
-        Given a sentence, e.g. "My darling", some tokenizers will make the space a seperate token,
-        while some others will merge the space into the next word, forming a token representing " darling".
-        Knowing which style the tokenizer takes is necessary for correct ground-truth label masking.
+        Given a sentence, e.g. "Hi my darling", some tokenizers (e.g. LLaMA's) will pose the following behavior:
+        >>> # leading characters will be treated as if there were an " " in the beginning
+        >>> tokenizer.encode("Hi my darling") == tokenizer.encode("Hi") + tokenizer.encode("my darling")
+        >>> # leading space " " is redundant and should not be added
+        >>> tokenizer.encode("Hi my darling") != tokenizer.encode("Hi") + tokenizer.encode(" my darling")
+        >>> tokenizer.encode(" my darling") == tokenizer.encode(" ") + tokenizer.encode(" my darling")
+        However, some others (e.g. InternLM's) will behave differently:
+        >>> # leading space " " has to be explicitly added
+        >>> tokenizer.encode("Hi my darling") == tokenizer.encode("Hi") + tokenizer.encode(" my darling")
+        Knowing which style the tokenizer takes is necessary for separeting the tokens that the model should learn
+        to predict (i.e. those corresponding to AI responses) from the whole conversation
 
         """
         conv = self.conv_func()
-        probe = "Probe am I"
+        probe = "probe am I"
         sentence1 = self.tokenizer.encode(conv.roles[1] + ": " + probe,
                                           bos=False, eos=False)
         sentence2 = self.tokenizer.encode(probe,
                                           bos=False, eos=False)
         if sentence1[-len(sentence2):] == sentence2:
-            self.space_part_of_next_word = False
+            self.space_before_to_predict = False
         else:
             sentence3 = self.tokenizer.encode(" " + probe, bos=False, eos=False)
             assert sentence1[-len(sentence3):] == sentence3
-            self.space_part_of_next_word = True
+            self.space_before_to_predict = True
 
     def add_speaker_and_signal(self, source: List):
         """
@@ -86,27 +87,12 @@ class ConversationGenerator:
 
             conv.append_message(role, value)
 
-        processed = conv.process(self.space_part_of_next_word)
+        processed = conv.process()
         conversation, to_predict_list = processed['conv'], processed['to_predict']
+        if self.space_before_to_predict:
+            to_predict_list = [" " + _ for _ in to_predict_list]
 
         return conversation, to_predict_list
-
-    def qas_to_prompt(self, qas: List[List[str]]):
-        """
-        convert the list of question-answer pairs to a string, which contains the conversation involving all
-          the questions and answers. When the last answer is None, the returned string is the prompt which
-          can be used by the model to generate the last answer.
-        :param qas: [[question1, answer1], [question2, answer2], ..., [questionX, answerX]]
-          note that the last answer, i.e. answerX, can be None
-        :return: the prompt
-        """
-        conv = self.conv_func()
-        for q, a in qas:
-            conv.append_message(conv.roles[0], q)
-            conv.append_message(conv.roles[1], a)
-
-        prompt = conv.get_prompt(self.space_part_of_next_word)
-        return prompt
 
 
 class FinetuneDialogDataset(Dataset):

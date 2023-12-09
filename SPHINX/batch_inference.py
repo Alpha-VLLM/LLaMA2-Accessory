@@ -13,7 +13,7 @@ from PIL import Image
 import fairscale.nn.model_parallel.initialize as fs_init
 
 from accessory.model.meta import MetaModel
-from accessory.data.conversation import default_conversation, ConversationGenerator
+from accessory.data.conversation import default_conversation
 from accessory.data.transform import get_transform
 from accessory.util.tensor_parallel import load_tensor_parallel_model_list
 from accessory.util.tensor_type import default_tensor_type
@@ -103,10 +103,11 @@ def main() -> None:
         ),
     )
 
-    conv_generator = ConversationGenerator(model.tokenizer, conv_template_func=default_conversation)
-    conv_sep = conv_generator.response_end_signal
+    conv = default_conversation()
+    conv.load_qas([[args.prompt, None]])
+    prompt = conv.get_prompt()
+    conv_sep = conv.response_end_signal
 
-    prompt = conv_generator.qas_to_prompt([[args.prompt, None]])
 
     if dist.get_rank() == 0:
         print("Formatted prompt:", repr(prompt))
