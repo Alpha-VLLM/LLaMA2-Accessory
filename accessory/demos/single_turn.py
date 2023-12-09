@@ -8,6 +8,8 @@ import argparse
 import torch
 import torch.distributed as dist
 import gradio as gr
+import numpy as np
+import random
 
 from accessory.util import misc
 from fairscale.nn.model_parallel import initialize as fs_init
@@ -20,6 +22,8 @@ from accessory.util.tensor_type import default_tensor_type
 def get_args_parser():
     parser = argparse.ArgumentParser('Single-turn (conversation) demo', add_help=False)
     # Model parameters
+    parser.add_argument('--pretrained_path', default='/path/to/pretrained', type=str, nargs="+",
+                        help='directory containing pretrained checkpoints')
     parser.add_argument('--llama_type', default=None, type=str, metavar='MODEL',
                         help='type of llama')
     parser.add_argument('--llama_config', default=None, type=str, nargs="*",
@@ -27,39 +31,39 @@ def get_args_parser():
     parser.add_argument('--tokenizer_path', type=str, default=None,
                         help='path to tokenizer.model')
 
-    parser.add_argument('--pretrained_path', default='/path/to/pretrained', type=str, nargs="+",
-                        help='directory containing pretrained checkpoints')
+    parser.add_argument('--max_seq_len', type=int, default=4096)
 
     parser.add_argument('--device', default='cuda',
                         help='device for inference')
-    parser.add_argument('--model_parallel_size', default=1, type=int)
-
-    parser.add_argument('--world_size', default=1, type=int,
-                        help='number of distributed processes')
-    parser.add_argument('--local_rank', default=-1, type=int)
-    parser.add_argument('--dist_on_itp', action='store_true')
-    parser.add_argument('--dist_url', default='env://',
-                        help='url used to set up distributed training')
     parser.add_argument("--dtype", type=str, choices=["fp16", "bf16"], default="bf16",
                         help="The dtype used for model weights and inference.")
     parser.add_argument('--quant', action='store_true', help="enable quantization")
+
+    parser.add_argument('--dist_on_itp', action='store_true')
     return parser
 
 args = get_args_parser().parse_args()
 
 # define the model
+random.seed(0)
+torch.random.manual_seed(0)
+np.random.seed(0)
 misc.init_distributed_mode(args)
-fs_init.initialize_model_parallel(args.model_parallel_size)
+fs_init.initialize_model_parallel(dist.get_world_size())
 target_dtype = {
     "bf16": torch.bfloat16,
     "fp16": torch.float16,
 }[args.dtype]
-model = MetaModel.from_pretrained(args.llama_type, args.llama_config, args.tokenizer_path, with_visual=False,
-                                  dtype=target_dtype, device="cpu" if args.quant else "cuda")
+model = MetaModel.from_pretrained(args.pretrained_path, args.llama_type, args.llama_config, args.tokenizer_path,
+                                  with_visual=False, max_seq_len=args.max_seq_len,
+                                  mp_group=fs_init.get_model_parallel_group(),
+                                  dtype=target_dtype, device="cpu" if args.quant else "cuda",)
 
-print(f"load pretrained from {args.pretrained_path}")
-load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
-print("load result: ", load_result)
+# with default_tensor_type(dtype=target_dtype, device="cpu" if args.quant else "cuda"):
+#     model = MetaModel(args.llama_type, args.llama_config, args.tokenizer_path, with_visual=False)
+# print(f"load pretrained from {args.pretrained_path}")
+# load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
+# print("load result: ", load_result)
 
 
 if args.quant:

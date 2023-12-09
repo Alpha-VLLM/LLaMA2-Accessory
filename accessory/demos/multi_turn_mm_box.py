@@ -1,4 +1,4 @@
-import copy
+import random
 import sys
 import os
 sys.path.append(os.path.abspath(__file__).rsplit('/', 3)[0])
@@ -16,8 +16,6 @@ from fairscale.nn.model_parallel import initialize as fs_init
 import gradio as gr
 
 from accessory.util.misc import setup_for_distributed
-from accessory.util.tensor_parallel import load_tensor_parallel_model_list
-from accessory.util.tensor_type import default_tensor_type
 from accessory.model.meta import MetaModel
 from accessory.data.conversation import default_conversation, ConversationGenerator
 from PIL import Image, ImageDraw
@@ -57,6 +55,7 @@ def model_worker(
 
     torch.manual_seed(1)
     np.random.seed(1)
+    random.seed(1)
 
     # set the print behavior.
     setup_for_distributed(rank == 0)
@@ -65,14 +64,10 @@ def model_worker(
         "bf16": torch.bfloat16,
         "fp16": torch.float16
     }[args.dtype]
-    model = MetaModel.from_pretrained(
-        args.llama_type, args.llama_config, args.tokenizer_path,
-        with_visual=True, max_seq_len=args.model_max_seq_len,
-        dtype=target_dtype, device="cpu" if args.quant else "cuda"
-    )
-    print("Loading pretrained weights ...")
-    load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
-    print("load result:\n", load_result)
+    model = MetaModel.from_pretrained(args.pretrained_path, args.llama_type, args.llama_config, args.tokenizer_path,
+                                      with_visual=True, max_seq_len=args.max_seq_len,
+                                      mp_group=fs_init.get_model_parallel_group(),
+                                      dtype=target_dtype, device="cpu" if args.quant else "cuda", )
     if args.quant:
         from accessory.util.quant import quantize
         print("Quantizing model to 4bit!")
@@ -374,8 +369,8 @@ def gradio_worker(
             clear_button = gr.ClearButton([chatbot, chatbot_display, msg, img_input])
         with gr.Row():
             max_gen_len = gr.Slider(
-                minimum=1, maximum=args.model_max_seq_len // 4,
-                value=args.model_max_seq_len // 4, interactive=True,
+                minimum=1, maximum=args.max_seq_len // 4,
+                value=args.max_seq_len // 4, interactive=True,
                 label="Single-turn max response length",
             )
             gen_t = gr.Slider(
@@ -427,10 +422,9 @@ if __name__ == "__main__":
              "--gpu_ids 0 1 2 ... n-1"
     )
     parser.add_argument(
-        "--tokenizer_path", type=str, default=None,
-        help="Path to the tokenizer.model file provided along with the LLaMA "
-             "model."
-    )
+        "--pretrained_path", type=str, required=True, nargs="+",
+        help="Path to the llama model checkpoints. A list of checkpoints is "
+             "supported and will be merged from left to right.")
     parser.add_argument(
         "--llama_type", default=None, type=str, metavar="MODEL",
         help="LLaMA model type."
@@ -440,13 +434,14 @@ if __name__ == "__main__":
         help="Path to the llama model config json."
     )
     parser.add_argument(
-        "--model_max_seq_len", type=int, default=4096,
-        help="Max sequence length accepted by the pretrained model."
+        "--tokenizer_path", type=str, default=None,
+        help="Path to the tokenizer.model file provided along with the LLaMA "
+             "model."
     )
     parser.add_argument(
-        "--pretrained_path", type=str, required=True, nargs="+",
-        help="Path to the llama model checkpoints. A list of checkpoints is "
-             "supported and will be merged from left to right.")
+        "--max_seq_len", type=int, default=4096,
+        help="Max sequence length accepted by the pretrained model."
+    )
     parser.add_argument(
         "--master_port", type=int, default=23560,
         help="A port used by the PyTorch distributed module to initialize."
@@ -456,7 +451,7 @@ if __name__ == "__main__":
         help="An address used by the PyTorch distributed module to initialize."
     )
     parser.add_argument(
-        "--dtype", type=str, choices=["fp16", "bf16"], default="fp16",
+        "--dtype", type=str, choices=["fp16", "bf16"], default="bf16",
         help="The dtype used for model weights and inference."
     )
     parser.add_argument(
