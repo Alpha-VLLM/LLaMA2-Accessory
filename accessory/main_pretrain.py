@@ -42,8 +42,9 @@ except ImportError:
 import accessory.util.misc as misc
 from accessory.util.misc import NativeScalerWithGradNormCount as NativeScaler
 from accessory.util.tensor_type import default_tensor_type, promote_trainable_params_to_fp32
+from accessory.util.tensor_parallel import load_tensor_parallel_model_list
 from accessory.model.meta import MetaModel
-from accessory.engine_pretrain import train_one_epoch, val_one_epoch
+from accessory.engine_pretrain import train_one_epoch
 from accessory.data import falcon, falcon_packed
 
 
@@ -65,8 +66,8 @@ def get_args_parser():
 
     parser.add_argument('--pretrained_path', default=None, type=str,
                         help='(Optional) directory containing checkpoints to start from')
-    parser.add_argument('--pretrained_type', type=str, default="meta_ori", choices=['consolidated', 'meta_ori'],
-                        help='pretrained checkpoint save format')
+    parser.add_argument('--pretrained_type', type=str, default=None, choices=['consolidated', 'meta_ori'],
+                        help='<Deprecated> pretrained checkpoint save format, will be automatically discerned now')
 
     # Optimizer parameters
     parser.add_argument('--weight_decay', type=float, default=0.02,
@@ -164,7 +165,12 @@ def main(args):
     misc.print_param_status(model)
     if args.pretrained_path:
         print(f"load pretrained from {args.pretrained_path}")
-        misc.load_pretrained(args.pretrained_path, args.pretrained_type, model)
+        load_tensor_parallel_model_list(model, args.pretrained_path)
+        if args.pretrained_type is not None:
+            warnings.warn(
+                "The `--pretrained_type` argument has been deprecated and will be removed soon. "
+                "The types of checkpoints are now automatically discerned by file names now"
+            )
     print("Unwrapped Model = %s" % str(model))
 
     # resume stage1

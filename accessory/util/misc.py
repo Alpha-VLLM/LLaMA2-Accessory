@@ -525,45 +525,6 @@ def resume_stage2(args, model, optimizer, loss_scaler, dataset_train):
         return epoch_iter
 
 
-def load_pretrained(load_dir, pretrained_type, model):
-    mp_rank = fs_init.get_model_parallel_rank()
-    mp_world_size = fs_init.get_model_parallel_world_size()
-
-    dp_rank = fs_init.get_data_parallel_rank()
-    if dp_rank == 0: # later broadcast to all ranks through FSDP init
-        if pretrained_type == "consolidated":
-            candidate_names = [
-                os.path.join(load_dir, f"consolidated.{mp_rank:02d}-of-{mp_world_size:02d}.pth"),
-                os.path.join(load_dir, f"consolidated.{mp_rank:02d}-of-{mp_world_size:02d}.model.pth")
-            ]
-            state_dict_path = None
-            for _ in candidate_names:
-                if os.path.exists(_):
-                    state_dict_path = _
-                    break
-            if state_dict_path is None:
-                raise FileNotFoundError(f"none of {candidate_names} exist")
-            state_dict = torch.load(state_dict_path, map_location='cpu')
-            if 'model' in state_dict:
-                state_dict = state_dict['model']
-            load_result = model.load_state_dict(state_dict, strict=False)
-        elif pretrained_type == "meta_ori":
-            ckpt_mp_world_size = len([
-                path for path in os.listdir(load_dir)
-                if path.startswith("consolidated.") and path.endswith(".pth")
-            ])
-            assert ckpt_mp_world_size == mp_world_size, (
-                "Loading from checkpoints of different mp_world_size is currently not supported."
-            )
-            state_dict_path = os.path.join(load_dir, f"consolidated.{mp_rank:02d}.pth")
-            state_dict = torch.load(state_dict_path, map_location='cpu')
-            model_state = {f"llma.{key}": val for key, val in state_dict.items()}
-            load_result = model.load_state_dict(model_state, strict=False)
-        else:
-            raise ValueError(f"Unknown pretrained_type: {pretrained_type}")
-        print('load pretrained result:\n', load_result)
-
-
 def all_reduce_mean(x):
     world_size = get_world_size()
     if world_size > 1:

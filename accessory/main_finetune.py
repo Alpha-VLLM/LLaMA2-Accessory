@@ -48,7 +48,7 @@ from accessory.engine_finetune import train_one_epoch
 from accessory.data.alpaca import FinetuneDataset, FinetuneDistSampler
 from accessory.data.conversation.dataset import FinetuneDialogDataset
 from accessory.data.transform import get_transform
-from accessory.util.tensor_parallel import load_tensor_parallel_model
+from accessory.util.tensor_parallel import load_tensor_parallel_model_list
 
 
 def get_args_parser():
@@ -73,8 +73,8 @@ def get_args_parser():
 
     parser.add_argument('--pretrained_path', default='/path/to/pretrained', type=str,
                         help='path to checkpoint from pretrain stage')
-    parser.add_argument('--pretrained_type', type=str, choices=['consolidated', 'meta_ori'],
-                        help='pretrained checkpoint save format')
+    parser.add_argument('--pretrained_type', type=str, default=None, choices=['consolidated', 'meta_ori'],
+                        help='<Deprecated> pretrained checkpoint save format, will be automatically discerned now')
 
     # Optimizer parameters
     parser.add_argument('--weight_decay', type=float, default=0.02,
@@ -190,7 +190,12 @@ def main(args):
 
                 # load pretrained weights
                 print(f"## Load pretrained from {args.pretrained_path}", force=True)
-                load_tensor_parallel_model(model, args.pretrained_path, args.pretrained_type)
+                load_tensor_parallel_model_list(model, args.pretrained_path)
+                if args.pretrained_type is not None:
+                    warnings.warn(
+                        "The `--pretrained_type` argument has been deprecated and will be removed soon. "
+                        "The types of checkpoints are now automatically discerned by file names now"
+                    )
 
                 print("## Quantizing model to 4bit!", force=True)
                 quantization_config = BitsAndBytesConfig.from_dict(
@@ -215,7 +220,12 @@ def main(args):
         promote_trainable_params_to_fp32(model)
         misc.print_param_status(model)
         print(f"load pretrained from {args.pretrained_path}")
-        load_tensor_parallel_model(model, args.pretrained_path, args.pretrained_type)
+        load_tensor_parallel_model_list(model, args.pretrained_path)
+        if args.pretrained_type is not None:
+            warnings.warn(
+                "The `--pretrained_type` argument has been deprecated and will be removed soon. "
+                "The types of checkpoints are now automatically discerned by file names now"
+            )
     print("Unwrapped Model = %s" % str(model))
 
     # resume stage1
