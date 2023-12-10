@@ -14,7 +14,7 @@
 ✨Within this toolkit, we present **SPHINX**, a versatile multimodal large language model (MLLM) that combines a diverse array of training tasks, data domains, and visual embeddings.
 
 ## News
-- **[2023-12-08]** We now support [mixtral-8x7b]() inference and finetuning! 🔥🔥🔥
+- **[2023-12-08]** We now support [mixtral-8x7b](https://llama2-accessory.readthedocs.io/en/latest/projects/mixtral-8x7b.html) inference and finetuning! 🔥🔥🔥
 - **[2023-12-08]** We release [OneLLM](https://github.com/csuhan/OneLLM) which aligns **eight** modalities to language using a unified framework!🔥🔥🔥
 - **[2023-11-17]** We release [SPHINX-V2](https://github.com/Alpha-VLLM/LLaMA2-Accessory/tree/main/SPHINX), the same architecture but enhanced capabilities! 🔥🔥🔥
 - **[2023.10.17]** We release the demo, code, and model of [SPHINX](https://github.com/Alpha-VLLM/LLaMA2-Accessory/tree/main/SPHINX)!🔥🔥🔥
