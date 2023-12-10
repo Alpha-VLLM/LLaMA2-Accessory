@@ -20,6 +20,41 @@ from fairscale.nn.model_parallel.layers import (
 )
 
 
+class LoraLinear(nn.Linear):
+    def __init__(
+        self,
+        in_features: int,
+        out_features: int,
+        bias: bool = True,
+        lora_rank = 0
+    ):
+        super().__init__(in_features, out_features, bias)
+
+        self.lora_rank = lora_rank
+        if self.lora_rank > 0:
+            self.lora_a = nn.Linear(self.in_features, self.lora_rank, bias=False)
+            # workaround because trunc_normal_ does not currently support bfloat16
+            _ = init.trunc_normal_(self.lora_a.weight.data.to(torch.float32), std=.02)
+            self.lora_a.weight.data.copy_(_)
+            self.lora_b = nn.Linear(self.lora_rank, self.out_features, bias=False)
+            nn.init.zeros_(self.lora_b.weight)
+        else:
+            self.lora_a = None
+            self.lora_b = None
+
+    def forward(self, input_: torch.Tensor) -> torch.Tensor:  # type:ignore
+        # Matrix multiply.
+        output = F.linear(input_, self.weight, self.bias)
+        if self.lora_a is not None:
+            modification = self.lora_b(self.lora_a(input_))
+        else:
+            modification = None
+
+        if modification is not None:
+            output = output + modification
+        return output
+
+
 class LoraColumnParallelLinear(ColumnParallelLinear):
     """Linear layer with column parallelism.
 

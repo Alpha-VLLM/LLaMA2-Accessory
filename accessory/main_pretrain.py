@@ -64,7 +64,7 @@ def get_args_parser():
                         help='path to tokenizer.model')
 
 
-    parser.add_argument('--pretrained_path', default=None, type=str,
+    parser.add_argument('--pretrained_path', default=None, type=str, nargs="*",
                         help='(Optional) directory containing checkpoints to start from')
     parser.add_argument('--pretrained_type', type=str, default=None, choices=['consolidated', 'meta_ori'],
                         help='<Deprecated> pretrained checkpoint save format, will be automatically discerned now')
@@ -165,7 +165,8 @@ def main(args):
     misc.print_param_status(model)
     if args.pretrained_path:
         print(f"load pretrained from {args.pretrained_path}")
-        load_tensor_parallel_model_list(model, args.pretrained_path)
+        load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
+        print("load result: ", load_result)
         if args.pretrained_type is not None:
             warnings.warn(
                 "The `--pretrained_type` argument has been deprecated and will be removed soon. "

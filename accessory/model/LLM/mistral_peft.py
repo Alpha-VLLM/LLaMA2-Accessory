@@ -16,6 +16,7 @@ from fairscale.nn.model_parallel.layers import (
     copy_to_model_parallel_region,
     reduce_from_model_parallel_region
 )
+from ..peft import LoraColumnParallelLinear, LoraRowParallelLinear, LoraLinear
 
 from ..components import RMSNorm
 import open_clip
@@ -52,6 +53,10 @@ class ModelArgs:
 
     rope_scaling: Optional[float] = None
 
+    lora_rank: int = -1 # lora
+    bias_tuning: bool = True  # bias
+    norm_tuning: bool = False
+
 
 class Attention(nn.Module):
     def __init__(self, args: ModelArgs):
@@ -63,33 +68,37 @@ class Attention(nn.Module):
         self.n_rep = self.n_local_heads // self.n_local_kv_heads
         self.head_dim = args.dim // args.n_heads
 
-        self.wq = ColumnParallelLinear(
+        self.wq = LoraColumnParallelLinear(
             args.dim,
             args.n_heads * self.head_dim,
-            bias=False,
+            bias=args.bias_tuning,
             gather_output=False,
             init_method=default_linear_init,
+            lora_rank=args.lora_rank
         )
-        self.wk = ColumnParallelLinear(
+        self.wk = LoraColumnParallelLinear(
             args.dim,
             self.n_kv_heads * self.head_dim,
-            bias=False,
+            bias=args.bias_tuning,
             gather_output=False,
             init_method=default_linear_init,
+            lora_rank=args.lora_rank
         )
-        self.wv = ColumnParallelLinear(
+        self.wv = LoraColumnParallelLinear(
             args.dim,
             self.n_kv_heads * self.head_dim,
-            bias=False,
+            bias=args.bias_tuning,
             gather_output=False,
             init_method=default_linear_init,
+            lora_rank=args.lora_rank
         )
-        self.wo = RowParallelLinear(
+        self.wo = LoraRowParallelLinear(
             args.n_heads * self.head_dim,
             args.dim,
-            bias=False,
+            bias=args.bias_tuning,
             input_is_parallel=True,
             init_method=default_linear_init,
+            lora_rank=args.lora_rank
         )
 
         self.args = args
@@ -192,16 +201,17 @@ class ExpertFeedForward(nn.Module):
         self,
         dim: int,
         hidden_dim: int,
+        args:ModelArgs
     ):
         super().__init__()
-        self.w1 = nn.Linear(
-            dim, hidden_dim, bias=False,
+        self.w1 = LoraLinear(
+            dim, hidden_dim, bias=args.bias_tuning, lora_rank=args.lora_rank
         )
-        self.w2 = nn.Linear(
-            hidden_dim, dim, bias=False,
+        self.w2 = LoraLinear(
+            hidden_dim, dim, bias=args.bias_tuning, lora_rank=args.lora_rank
         )
-        self.w3 = nn.Linear(
-            dim, hidden_dim, bias=False,
+        self.w3 = LoraLinear(
+            dim, hidden_dim, bias=args.bias_tuning, lora_rank=args.lora_rank
         )
 
         for param in self.parameters():
@@ -224,6 +234,7 @@ class MoE(nn.Module):
         hidden_dim: int,
         num_experts: int,
         num_experts_per_tok: int,
+        args: ModelArgs
     ):
         super().__init__()
         mp_size = fs_init.get_model_parallel_world_size()
@@ -232,7 +243,7 @@ class MoE(nn.Module):
         n_local_experts = num_experts // mp_size
         self.local_experts = [str(i) for i in range(n_local_experts*mp_rank, n_local_experts*(mp_rank+1))]
         self.experts = nn.ModuleDict({
-            i : ExpertFeedForward(dim, hidden_dim) for i in self.local_experts
+            i : ExpertFeedForward(dim, hidden_dim, args) for i in self.local_experts
         })
         self.gate = nn.Linear(dim, num_experts, bias=False)
         def gate_grad_hook(grad):
@@ -275,7 +286,8 @@ class TransformerBlock(nn.Module):
             dim=args.dim,
             hidden_dim=args.hidden_dim,
             num_experts=args.moe['num_experts'],
-            num_experts_per_tok=args.moe["num_experts_per_tok"]
+            num_experts_per_tok=args.moe["num_experts_per_tok"],
+            args=args
         )
         self.layer_id = layer_id
         self.attention_norm = RMSNorm(args.dim, eps=args.norm_eps)
@@ -297,6 +309,7 @@ class TransformerBlock(nn.Module):
 
 
 class Transformer(nn.Module):
+    is_peft = True
     def __init__(self, args: ModelArgs, with_visual=False):
         super().__init__()
         self.args = args
@@ -339,7 +352,15 @@ class Transformer(nn.Module):
         trainable = {}
         for name, para in self.named_parameters():
             if not name.startswith("clip."):
-                trainable[name] = para
+                trainable_key_words = []
+                if self.args.lora_rank > 0:
+                    trainable_key_words.append("lora")
+                if self.args.norm_tuning:
+                    trainable_key_words.append("norm")
+                if self.args.bias_tuning:
+                    trainable_key_words.append("bias")
+                if any([_ in name for _ in trainable_key_words]):
+                    trainable[name] = para
 
         return trainable
 

@@ -71,7 +71,7 @@ def get_args_parser():
                         help='path to tokenizer.model')
 
 
-    parser.add_argument('--pretrained_path', default='/path/to/pretrained', type=str,
+    parser.add_argument('--pretrained_path', default=['/path/to/pretrained'], type=str, nargs="+",
                         help='path to checkpoint from pretrain stage')
     parser.add_argument('--pretrained_type', type=str, default=None, choices=['consolidated', 'meta_ori'],
                         help='<Deprecated> pretrained checkpoint save format, will be automatically discerned now')
@@ -190,7 +190,8 @@ def main(args):
 
                 # load pretrained weights
                 print(f"## Load pretrained from {args.pretrained_path}", force=True)
-                load_tensor_parallel_model_list(model, args.pretrained_path)
+                load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
+                print("load result: ", load_result)
                 if args.pretrained_type is not None:
                     warnings.warn(
                         "The `--pretrained_type` argument has been deprecated and will be removed soon. "
@@ -220,7 +221,8 @@ def main(args):
         promote_trainable_params_to_fp32(model)
         misc.print_param_status(model)
         print(f"load pretrained from {args.pretrained_path}")
-        load_tensor_parallel_model_list(model, args.pretrained_path)
+        load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
+        print("load result: ", load_result)
         if args.pretrained_type is not None:
             warnings.warn(
                 "The `--pretrained_type` argument has been deprecated and will be removed soon. "

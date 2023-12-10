@@ -426,7 +426,7 @@ def load_diff_checkpoint(
 
 
 def load_tensor_parallel_model_list(
-    model: nn.Module, path_list: List[str], verbose: bool = False
+    model: nn.Module, path_list: str|List[str], verbose: bool = False
 ) -> Dict:
     r"""This method accepts a list of checkpoint paths, and load each
     checkpoint to the model in the order as given in the list. The behaviors
@@ -456,6 +456,8 @@ def load_tensor_parallel_model_list(
             unexpected if it is unexpected to the model and has appeared in any
             one of the checkpoints in the list.
     """
+    if isinstance(path_list, str):
+        path_list = [path_list]
     existing_keys, missing_keys, unexpected_keys = set(), set(model.state_dict().keys()), set()
     for i, path in enumerate(path_list):
         inferred_format, _ = infer_checkpoint_format_and_mp_size(path)
