@@ -1,12 +1,14 @@
 import argparse
 import os
 from huggingface_hub import hf_hub_download
+from huggingface_hub import snapshot_download
+
 def colored(text, color):
     color_map = {'yellow': "\033[93m", 'green': "\033[92m", 'red': "\033[91m"}
     return f"{color_map.get(color, '')}{text}\033[0m"
 model_list = {
     'convert': {
-        'sg': ['InternLM','Falcon','Falcon_180b']
+        'sg': ['InternLM','Falcon','Falcon_180b','mixtral-8x7b-32kseqlen']
     },
     'finetune': {
         'mm': ['alpacaLlava_llamaQformerv2', 'alpacaLlava_llamaQformerv2_13b', 'alpacaLlava_llamaQformerv2Peft_13b', 'caption_llamaQformerv2', 'caption_llamaQformerv2_13b', 'SPHINX/SPHINX-1k','SPHINX/SPHINX','SPHINX/SPHINX-v2-1k'],
@@ -51,7 +53,6 @@ def interactive_mode(args):
     if models:
         args.model_name = args.model_name or ask_question("\nChoose a model:", models)
     
-    args.model_size = args.model_size or ask_question("\nChoose a model size:", ['7B', '13B', '34B', '70B', '180B'])
     config_choice = ask_question("\nDownload which version of params.json and tokenizer.model?", ['LLaMA2', 'InterLM', 'CodeLlama', 'SPHINX', 'no'])
     if config_choice != 'no':
         args.down_config = True
@@ -68,7 +69,6 @@ def get_args_parser():
     parser = argparse.ArgumentParser('Download the weights of the model.', add_help=False)
     parser.add_argument('--train_type', default=None, choices=['finetune', 'convert'])
     parser.add_argument('--input_type', default=None, choices=['sg', 'mm'])
-    parser.add_argument('--model_size', default=None, choices=['7B', '13B', '34B', '70B','180B'])
     parser.add_argument('--model_name', default=None, type=str)
     parser.add_argument('--down_config', default=None, action="store_true")
     parser.add_argument('--down_diff', default=None, action="store_true")
@@ -106,17 +106,9 @@ def main():
 
         download_files(repo_id, configfolder, files_to_download, args.output_path)
 
-    num_files_map = {'7B': 1, '13B': 2, '34B': 4, '70B': 8, '180B': 8}
-    max_num = num_files_map.get(args.model_size, 1)
 
-    for num in range(max_num):
-        if args.down_diff:
-            file_name = f"consolidated.{num:02d}-of-{max_num:02d}.model-diff.pth"
-        else:
-            file_name = f"consolidated.{num:02d}-of-{max_num:02d}.model.pth"
-        download_file(repo_id, subfolder, file_name, args.output_path)
-    
-    print(f"{args.model_name} model files downloaded successfully to {args.output_path}")
+    snapshot_download(repo_id=repo_id, allow_patterns=f"{subfolder}/*",repo_type='model', local_dir=args.output_path, local_dir_use_symlinks=False, resume_download=True)
+ 
 
 if __name__ == '__main__':
     main()
