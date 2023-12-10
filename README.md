@@ -17,15 +17,15 @@
 - **[2023-12-08]** We now support [mixtral-8x7b](https://llama2-accessory.readthedocs.io/en/latest/projects/mixtral-8x7b.html) inference and finetuning! 🔥🔥🔥
 - **[2023-12-08]** We release [OneLLM](https://github.com/csuhan/OneLLM) which aligns **eight** modalities to language using a unified framework!🔥🔥🔥
 - **[2023-11-17]** We release [SPHINX-V2](https://github.com/Alpha-VLLM/LLaMA2-Accessory/tree/main/SPHINX), the same architecture but enhanced capabilities! 🔥🔥🔥
-- **[2023.10.17]** We release the demo, code, and model of [SPHINX](https://github.com/Alpha-VLLM/LLaMA2-Accessory/tree/main/SPHINX)!🔥🔥🔥
-- **[2023.09.15]** We now support Falcon 180B!🔥🔥🔥
-- **[2023.09.14]** [WeMix-LLaMA2-70B](https://github.com/Alpha-VLLM/WeMix-LLM) shows excellent performance on the [OpenCompass](https://opencompass.org.cn/leaderboard-llm) benchmark!🔥🔥🔥
-- **[2023.09.02]** We now support InternLM🔥🔥🔥
-- **[2023.08.28]** We release quantized LLM with [OmniQuant](https://github.com/OpenGVLab/OmniQuant), which is an efficient, accurate, and omnibearing (even extremely low bit) quantization algorithm. Multimodal version is coming soon🔥🔥
-- **[2023.08.27]** We now support CodeLLaMA and instruction finetuning on [evol-code-alpaca](https://huggingface.co/datasets/theblackcat102/evol-codealpaca-v1)🔥🔥
+- **[2023.10.17]** We release the demo, code, and model of [SPHINX](https://github.com/Alpha-VLLM/LLaMA2-Accessory/tree/main/SPHINX)!🔥🔥
+- **[2023.09.15]** We now support Falcon 180B!🔥🔥
+- **[2023.09.14]** [WeMix-LLaMA2-70B](https://github.com/Alpha-VLLM/WeMix-LLM) shows excellent performance on the [OpenCompass](https://opencompass.org.cn/leaderboard-llm) benchmark!🔥🔥
+- **[2023.09.02]** We now support InternLM🔥
+- **[2023.08.28]** We release quantized LLM with [OmniQuant](https://github.com/OpenGVLab/OmniQuant), which is an efficient, accurate, and omnibearing (even extremely low bit) quantization algorithm. Multimodal version is coming soon
+- **[2023.08.27]** We now support CodeLLaMA and instruction finetuning on [evol-code-alpaca](https://huggingface.co/datasets/theblackcat102/evol-codealpaca-v1)
 - **[2023.08.27]** We release our documentation in a webbook format 🔗[Check it out here](https://llama2-accessory.readthedocs.io/)
-- **[2023.08.21]** We release the Quantization codes and Evaluation result🔥
-- **[2023.08.05]** We release the multimodel finetuning codes and checkpoints🔥
+- **[2023.08.21]** We release the Quantization codes and Evaluation result
+- **[2023.08.05]** We release the multimodel finetuning codes and checkpoints
 - **[2023.07.23]** Initial release 📌
 
 ## Features
