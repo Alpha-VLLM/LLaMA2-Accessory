@@ -39,8 +39,8 @@
   - 💻 Fully Sharded Data Parallel ([FSDP](https://engineering.fb.com/2021/07/15/open-source/fsdp/)), [Flash Attention 2](https://github.com/Dao-AILab/flash-attention) and [QLoRA](https://github.com/artidoro/qlora).
 * **🏋️‍♀️Support More Visual Encoders and LLMs**
 
-  - 👁‍🗨 Visual Encoders: [CLIP](https://github.com/openai/CLIP), [Q-Former](https://github.com/salesforce/LAVIS) and [ImageBind](https://github.com/facebookresearch/ImageBind).
-  - 🧩 LLMs: LLaMA, LLaMA2, CodeLlama, Falcon and InternLM.
+  - 👁‍🗨 Visual Encoders: [CLIP](https://github.com/openai/CLIP), [Q-Former](https://github.com/salesforce/LAVIS), [ImageBind](https://github.com/facebookresearch/ImageBind) and [DINOv2](https://github.com/facebookresearch/dinov2).
+  - 🧩 LLMs: LLaMA, LLaMA2, CodeLlama, InternLM, Falcon and Mixtral-8x7B.
 
 ## Setup
 
