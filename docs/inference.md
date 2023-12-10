@@ -2,6 +2,8 @@
 ## Preparation
 Before running the inference code, users must ensure that they have correctly installed and configured all necessary environments according to the instructions in the [Installation Document](./install.md).
 
+For those who prefer not to delve into the extensive technical details, you can just execute `bash demos/start.sh` and enjoy.
+
 ### Prepare Checkpoints
 **Our checkpoints are released at [🤗Hugging Face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory)**
 
