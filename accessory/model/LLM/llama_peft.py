@@ -46,8 +46,8 @@ class ModelArgs:
     rope_scaling: Optional[float] = None
 
     lora_rank: int = -1 # lora
-
     bias_tuning: bool = True  # bias
+    norm_tuning: bool = True
 
 
 class Attention(nn.Module):
@@ -302,7 +302,9 @@ class Transformer(nn.Module):
         trainable = {}
         for name, para in self.named_parameters():
             if not name.startswith("clip."):
-                trainable_key_words = ['norm', 'bias', 'lora']
+                trainable_key_words = ['bias', 'lora']
+                if self.args.norm_tuning:
+                    trainable_key_words.append("norm")
                 if any([_ in name for _ in trainable_key_words]):
                     trainable[name] = para
 

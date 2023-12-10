@@ -1,1 +1,1 @@
-{"lora_rank": 16, "bias_tuning": true}
+{"lora_rank": 16, "bias_tuning": true, "norm_tuning":  true}

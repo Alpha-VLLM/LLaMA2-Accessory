@@ -50,6 +50,7 @@ class ModelArgs:
         "num_experts_per_tok": 2,
         "num_experts": 8
     })
+    load_balancing_weight: float = 0.1
 
     rope_scaling: Optional[float] = None
 
@@ -228,12 +229,14 @@ class ExpertFeedForward(nn.Module):
 
 
 class MoE(nn.Module):
+    LOAD_BALANCING_LOSSES = []
     def __init__(
         self,
         dim: int,
         hidden_dim: int,
         num_experts: int,
         num_experts_per_tok: int,
+        load_balancing_weight: float,
         args: ModelArgs
     ):
         super().__init__()
@@ -241,6 +244,7 @@ class MoE(nn.Module):
         mp_rank = fs_init.get_model_parallel_rank()
         assert num_experts % mp_size == 0
         n_local_experts = num_experts // mp_size
+        self.num_experts = num_experts
         self.local_experts = [str(i) for i in range(n_local_experts*mp_rank, n_local_experts*(mp_rank+1))]
         self.experts = nn.ModuleDict({
             i : ExpertFeedForward(dim, hidden_dim, args) for i in self.local_experts
@@ -254,6 +258,29 @@ class MoE(nn.Module):
             parameter.register_hook(gate_grad_hook)
 
         self.num_experts_per_tok = num_experts_per_tok
+        self.load_balancing_weight = load_balancing_weight
+
+    def _load_balancing_loss(self, expert_scores, flat_expert_indices):
+        """
+
+        Args:
+            expert_scores: size(n_tokens, num_experts), last dim sum to 1
+            flat_expert_indices: size(n_tokens * num_experts_per_tok)
+
+        Returns:
+
+        """
+        n_tokens = expert_scores.shape[0]
+        # tokens_per_expert.shape == (num_experts)
+        tokens_per_expert = torch.bincount(flat_expert_indices, minlength=self.num_experts).to(expert_scores)
+        assert not tokens_per_expert.requires_grad
+        scores = expert_scores.mean(dim=0)
+        scale = (self.load_balancing_weight * self.num_experts) / (n_tokens * self.num_experts_per_tok)
+        loss = scale * torch.dot(tokens_per_expert, scores)
+        if fs_init.get_model_parallel_rank() != 0:
+            loss = loss * 0  # gradient come from rank0 through all reduce
+        return loss
+
 
     def forward(self, x):
         x = copy_to_model_parallel_region(x)
@@ -264,6 +291,10 @@ class MoE(nn.Module):
         expert_weights, expert_indices = torch.topk(scores, self.num_experts_per_tok, dim=-1)
         expert_weights = expert_weights.softmax(dim=-1).to(x)
         flat_expert_indices = expert_indices.view(-1)
+
+        expert_scores = torch.scatter(torch.zeros_like(scores), 1, expert_indices, expert_weights)
+        if self.training:
+            MoE.LOAD_BALANCING_LOSSES.append(self._load_balancing_loss(expert_scores, flat_expert_indices))
 
         x = x.repeat_interleave(self.num_experts_per_tok, dim=0)
         y = torch.zeros_like(x)
@@ -287,6 +318,7 @@ class TransformerBlock(nn.Module):
             hidden_dim=args.hidden_dim,
             num_experts=args.moe['num_experts'],
             num_experts_per_tok=args.moe["num_experts_per_tok"],
+            load_balancing_weight=args.load_balancing_weight,
             args=args
         )
         self.layer_id = layer_id
@@ -401,6 +433,8 @@ class Transformer(nn.Module):
 
     def forward(self, examples, image=None):
         self._destroy_kv_cache()  # training always disables kv cache
+        MoE.LOAD_BALANCING_LOSSES.clear()
+
         _bsz, seqlen = examples.shape
         h = self.tok_embeddings(examples)
         self.freqs_cis = self.freqs_cis.to(h.device)
@@ -417,7 +451,9 @@ class Transformer(nn.Module):
             h = layer(h, start_pos=0, freqs_cis=freqs_cis, mask="causal")
         h = self.norm(h)
         output = self.output(h[:, image_words:, :])
-        return output
+
+        load_balancing_loss = sum(MoE.LOAD_BALANCING_LOSSES) / len(MoE.LOAD_BALANCING_LOSSES)
+        return output, {"load_balancing": load_balancing_loss}
 
 
     @torch.inference_mode()

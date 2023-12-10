@@ -51,6 +51,7 @@ class ModelArgs:
 
     lora_rank: int = -1 # lora
     bias_tuning: bool = False  # bias
+    norm_tuning: bool = True
 
     load_pretrained_visual_encoder: bool = False
 
@@ -359,7 +360,9 @@ class Transformer(nn.Module):
         for name, para in self.named_parameters():
             if any([_ in name for _ in no_train_key_words]):
                 continue
-            trainable_key_words = ['norm', 'bias', 'lora']
+            trainable_key_words = ['bias', 'lora']
+            if self.args.norm_tuning:
+                trainable_key_words.append("norm")
             if any([_ in name for _ in trainable_key_words]):
                 trainable[name] = para
 

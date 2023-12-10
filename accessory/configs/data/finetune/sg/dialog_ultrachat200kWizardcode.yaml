@@ -1,0 +1,7 @@
+META:
+  -
+    path: '../data/ultrachat_200k_train_sft.json'
+    type: 'text'
+  -
+    path: '../data/evol-codealpaca-v1/wizardCode.json'
+    type: 'text'

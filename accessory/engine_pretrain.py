@@ -40,8 +40,10 @@ def train_one_epoch(model: torch.nn.Module,
             "tf32": contextlib.nullcontext(),
         }[args.precision]
         with autocast_ctx:
-             c_loss = model(examples, labels)
+             c_loss, additional_loss_dict = model(examples, labels, images=imgs)
         loss = c_loss
+        for add_loss in additional_loss_dict.values():
+            loss = loss + add_loss
         loss_value = loss.item()
         c_loss_value = c_loss.item()
         if not math.isfinite(loss_value):
@@ -70,6 +72,7 @@ def train_one_epoch(model: torch.nn.Module,
         torch.cuda.synchronize()
 
         metric_logger.update(closs=c_loss_value)
+        metric_logger.update(**{key: val.item() for key, val in additional_loss_dict.items()})
 
         lr = optimizer.param_groups[0]["lr"]
         metric_logger.update(lr=lr)

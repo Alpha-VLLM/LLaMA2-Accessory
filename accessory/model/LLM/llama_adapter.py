@@ -56,8 +56,8 @@ class ModelArgs:
     v_mlp_ratio = 4.0
 
     lora_rank: int = -1 # lora
-
     bias_tuning: bool = True  # bias
+    norm_tuning: bool = True
 
     trainable_mode: str = "sg"  # options: ["sg", "mm_stage1", "mm_stage2"]
 
@@ -373,16 +373,22 @@ class Transformer(nn.Module):
         for name, para in self.named_parameters():
             if self.args.trainable_mode == "mm_stage2": # multi-modal stage2
                 exclude_prefix = ['clip.', 'clip_proj', 'visual_']
-                trainable_key_words = ['norm', 'bias', 'lora']
+                trainable_key_words = ['bias', 'lora']
+                if self.args.norm_tuning:
+                    trainable_key_words.append("norm")
             elif self.args.trainable_mode == "mm_stage1": # multi-modal stage1
                 exclude_prefix = ['clip.']
                 # according to the paper, lora and bias do not exist in this stage
                 # but if you add them in this stage, they will also be trained
-                trainable_key_words = ['clip_proj', 'visual_', 'norm', 'bias', 'prefix', 'lora']
+                trainable_key_words = ['clip_proj', 'visual_', 'bias', 'prefix', 'lora']
+                if self.args.norm_tuning:
+                    trainable_key_words.append("norm")
             elif self.args.trainable_mode == "sg":  # single-modal
                 # clip_proj and visual_ should not exist
                 exclude_prefix = ['clip.', 'clip_proj', 'visual_']
-                trainable_key_words = ['norm', 'bias', 'prefix', 'lora']
+                trainable_key_words = ['bias', 'prefix', 'lora']
+                if self.args.norm_tuning:
+                    trainable_key_words.append("norm")
             else:
                 raise ValueError(f"unknown trainable_mode: {self.args.trainable_mode}")
             if any([name.startswith(_) for _ in exclude_prefix]): # only tune those within real llama

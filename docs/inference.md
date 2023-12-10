@@ -268,7 +268,7 @@ if __name__ == "__main__":
     elif N_GPU > 1:
         # You can use whatever method, e.g. torchrun, slurm, etc. for distributed launch
         # Just be sure to initialize torch distributed (by invoking dist.init_process_group)
-        # before creating the SPHINX model if model parallel size > 1 is used
+        # before creating the model if model parallel size > 1 is used
         mp.set_start_method("spawn")
         for rank in range(N_GPU):
             process = mp.Process(target=main, args=(N_GPU, rank))
@@ -280,8 +280,8 @@ if __name__ == "__main__":
 ## Host Local Demos
 We provide a series of scripts to host local gradio demos for easier interaction with trained LLaMA2-Accessory models.
 
-:::{tip}
-As we have mentioned in [Prepare Pretrained Checkpoints](#prepare-pretrained-checkpoints), 
+:::{important}
+As we have mentioned in [Prepare Checkpoints](#prepare-checkpoints), 
 the `--llama_type``, --llama_config`, and `--tokenizer_path` arguments in the launching commands listed below can be
 omitted as long as files recording the corresponding information exist under the path `--pretrained_path` point to.
 :::

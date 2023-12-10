@@ -220,6 +220,10 @@ class MetaModel(nn.Module):
             labels = labels[:, :pos+1]
 
         output = self.llma(examples, images)
+        if isinstance(output, tuple):
+            output, additional_loss = output
+        else:
+            additional_loss = {}
         output = output[:, :-1, :]
         labels = labels[:, 1:]
 
@@ -227,7 +231,7 @@ class MetaModel(nn.Module):
            c_loss = output.mean() * 0
         else:
            c_loss = self.criterion(output.reshape(-1, self.tokenizer.n_words), labels.flatten())
-        return c_loss
+        return c_loss, additional_loss
 
 
     @ torch.inference_mode()

@@ -22,6 +22,13 @@ light-eval/index
 ```
 
 ```{toctree}
+:caption: Projects
+:maxdepth: 2
+
+projects/mixtral-8x7b
+```
+
+```{toctree}
 :caption: Help
 :maxdepth: 2
 
