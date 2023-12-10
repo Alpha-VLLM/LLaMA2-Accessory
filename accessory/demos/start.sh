@@ -1,9 +1,12 @@
 #!/bin/bash
+PYTHONPATH="../:$PYTHONPATH"
+export PYTHONPATH
 
 # ANSI escape codes for colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Optional: Interactive model downloading
@@ -27,8 +30,10 @@ while true; do
   echo -e "${GREEN}1) Single-turn Dialogue (Single-modal)${NC}"
   echo -e "${GREEN}2) Multi-turn Dialogue (Single-modal)${NC}"
   echo -e "${GREEN}3) Single-turn Dialogue (Multi-modal)${NC}"
-  echo -e "${GREEN}4) Multi-turn Dialogue (Multi-modal)${NC}"  # New option
-  echo -e "${GREEN}5) Multi-turn Dialogue (Multi-modal) Box Mode${NC}"  # New option
+  echo -e "${GREEN}4) Multi-turn Dialogue (Multi-modal)${NC}"  
+  echo -e "${GREEN}5) Multi-turn Dialogue (Multi-modal) Box Mode${NC}"
+  echo -e "${BLUE}6) Single-model Command Line Interface (CLI)${NC}"
+  echo -e "${BLUE}7) Multi-model Command Line Interface (CLI)${NC}"
   read -p "Please enter the option number: " SCENARIO
   case $SCENARIO in
     1|2)
@@ -39,6 +44,14 @@ while true; do
       OPTIONS=("llama_qformerv2" "llama_qformerv2_peft" "llama_ens" "llama_ens5" "llama_ens10" "llama_ens5p2" "llama_ens_peft")
       break
       ;;
+    6)
+  echo -e "${BLUE}Running Single-model CLI...${NC}"
+  python demos/single_model_cli.py
+  ;;
+    7)
+  echo -e "${BLUE}Running Multi-model CLI...${NC}"
+  python demos/multi_model_cli.py
+  ;;
     * ) echo -e "${RED}Invalid option. Please re-enter.${NC}";;
   esac
 done
