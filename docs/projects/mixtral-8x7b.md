@@ -129,14 +129,14 @@ supports the load balancing regularization loss. More advanced MoE support will 
 
 ### Data
 We use the following datasets to exemplify finetuning:
-+ [💾evol-codealpaca-v1](https://huggingface.co/datasets/theblackcat102/evol-codealpaca-v1)
-+ [💾ultrachat_200k](https://huggingface.co/datasets/HuggingFaceH4/ultrachat_200k)
++ [evol-codealpaca-v1](https://huggingface.co/datasets/theblackcat102/evol-codealpaca-v1)
++ [ultrachat_200k](https://huggingface.co/datasets/HuggingFaceH4/ultrachat_200k)
 
 The two files are referred to by the [dialog_ultrachat200kWizardcode.yaml](https://github.com/Alpha-VLLM/LLaMA2-Accessory/accessory/configs/data/finetune/sg/dialog_ultrachat200kWizardcode.yaml) 
 file, which is then used by the `*.sh` experiments shown below to define the data for fientuning. Note that the data need
-to be processed tp match the format usable by LLaMA2-Accessory. We provide the processed data files for 
-[evol-codealpaca-v1](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/data/evol-codealpaca-v1/wizardCode.json) and
-[ultrachat_200k](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/data/ultrachat_200k_train_sft.json).
+to be processed to match the format usable by LLaMA2-Accessory. For convenience, we provide the processed data files for 
+[💾evol-codealpaca-v1](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/data/evol-codealpaca-v1/wizardCode.json) and
+[💾ultrachat_200k](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/data/ultrachat_200k_train_sft.json).
 Please move them to the position specified by `dialog_ultrachat200kWizardcode.yaml`
 
 
