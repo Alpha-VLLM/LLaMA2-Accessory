@@ -343,17 +343,21 @@ python demos/multi_turn_mm.py <--some_flags> --quant
 ```
 ├── convert
 │   └── sg
+│       ├── mixtral-8x7b-32kseqlen
 │       ├── Falcon
 │       ├── Falcon_180b
 │       └── InternLM
 └── finetune
     ├── mm
-    │   ├── sphinx-sft
     │   ├── alpacaLlava_llamaQformerv2
     │   ├── alpacaLlava_llamaQformerv2_13b
     │   ├── alpacaLlava_llamaQformerv2Peft_13b
     │   ├── caption_llamaQformerv2
-    │   └── caption_llamaQformerv2_13b
+    │   ├── caption_llamaQformerv2_13b
+    │   └── SPHINX
+    │       ├── SPHINX
+    │       ├── SPHINX-1k
+    │       └── SPHINX-v2-1k
     └── sg
         ├── alpaca
         ├── alpaca_internLM_en
