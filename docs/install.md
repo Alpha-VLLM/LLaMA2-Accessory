@@ -21,7 +21,7 @@ pip install flash-attn --no-build-isolation
 *We highly recommend installing this package for efficiency*. However, if you have difficulty installing this package, LLaMA2-Accessory should still work smoothly without it.
 
 ## 3. Optional: Install Apex
-::: danger
+:::{danger}
 
 While Apex can bring some efficiency improvement, it is not necessary to make LLaMA2-Accessory work. 
 
