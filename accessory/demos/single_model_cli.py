@@ -1,6 +1,6 @@
 import sys
 import argparse
-sys.path.append('..')
+sys.path.append(os.path.abspath(__file__).rsplit('/', 3)[0])
 from accessory.model.meta import MetaModel
 from accessory.data.system_prompt import format_prompt
 
