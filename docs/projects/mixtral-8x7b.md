@@ -53,12 +53,29 @@ therein.
 
 #### 3. prepare other resources
 Finally, please download the following three files from [our HuggingFace repo](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/tree/main/converted):
-```bash
-config.json
-meta.json
-tokenizer.model
-```
+:::{card}
+[config.json](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/blob/main/converted/config.json)
+[meta.json](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/blob/main/converted/meta.json)
+[tokenizer.model](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/blob/main/converted/tokenizer.model)
+:::
 and put them under the `converted` directory, next to the weight files you obtained in the previous step.
+
+### Result
+No matter you have downloaded or converted the checkpoints on your own, you should finally get the following file structure:
+```
+path/to/converted
+# model weights
+├── consolidated.00-of-04.model.pth
+├── consolidated.01-of-04.model.pth
+├── consolidated.02-of-04.model.pth
+├── consolidated.03-of-04.model.pth
+# spm-format tokenizer 
+├── tokenizer.model
+# model configuration
+├── config.json
+# meta information, currently only contains model type
+└── meta.json
+```
 
 
 ## Inference
