@@ -111,12 +111,13 @@ def main(world_size, rank) -> None:
     prompt = "The best programming language in the world is"
 
     response = model.generate([prompt], images=None, max_gen_len=512)[0]
-    print(response)
+    if rank == 0:  # without this filter, the response will be printed for `world_size` times
+        print(response)
     # or if you want to generate the response token by token
     response = None
     for response_in_progress in model.stream_generate(prompt, image=None, max_gen_len=512):
         response = response_in_progress['text']
-        if rank == 0:  # without this filter, the response will be printed for `world_size` times
+        if rank == 0:
             print(response)
 
 
