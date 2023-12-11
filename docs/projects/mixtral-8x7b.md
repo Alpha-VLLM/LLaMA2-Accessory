@@ -6,7 +6,7 @@ tutorial, we will introduce how to inference with and to finetune the model.
 :::{admonition} Online Demo of Finetuned Model 🚀🚀🚀
 :class: tip
 
-We host a web demo at <https://5e1109637f49baae47.gradio.live/>, which shows a mixtral-8x7b model finetuned on 
+We host a web demo at [here](http://106.14.127.192/), which shows a mixtral-8x7b model finetuned on 
 [evol-codealpaca-v1](https://huggingface.co/datasets/theblackcat102/evol-codealpaca-v1) and 
 [ultrachat_200k](https://huggingface.co/datasets/HuggingFaceH4/ultrachat_200k), with LoRA and Bias tuning. 
 Please note that this is a temporary link, and we will update our official permanent link today.
