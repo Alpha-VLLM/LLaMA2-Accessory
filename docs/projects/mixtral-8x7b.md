@@ -133,6 +133,14 @@ torchrun --nproc-per-node=$N_GPUS_TO_USE --master-port=$PORT demos/single_turn.p
 As we have mentioned in the [Simple Inference](#simple-inference) section, `$N-GPUS-TO-USE` can be 1, 2, 4, or 8. 
 `$PATH_TO_CONVERTED` should be the directory containing the converted checkpoints, and `$PORT` can be any free port.
 
+:::{tip}
+
+The `demos/single_turn.py` file was designed to support both pretrained models and models finetuned with alpaca-style template. 
+For pretrained models, please set the `system_prompt` optional to `None` in the Web GUI. 
+See the LLaMA2-Accessory [document](https://llama2-accessory.readthedocs.io/en/latest/) to know more about
+[finetuning](https://llama2-accessory.readthedocs.io/en/latest/finetune/index.html) 
+and [inference](https://llama2-accessory-temp.readthedocs.io/en/latest/inference.html).
+:::
 
 ## Finetuning
 LLaMA2-Accessory supports both full-parameter and parameter-efficient finetuning of mixtral-8x7b. It also 
