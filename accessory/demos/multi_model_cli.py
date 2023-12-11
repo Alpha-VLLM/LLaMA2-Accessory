@@ -1,5 +1,5 @@
 import sys
-sys.path.append('..')
+sys.path.append(os.path.abspath(__file__).rsplit('/', 3)[0])
 import argparse
 from PIL import Image
 from accessory.model.meta import MetaModel
