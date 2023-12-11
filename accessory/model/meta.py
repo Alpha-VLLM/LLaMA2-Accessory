@@ -5,6 +5,7 @@ import torch.nn as nn
 import json
 from typing import List, Optional, Iterable
 from pathlib import Path
+import inspect
 import importlib
 
 from fairscale.nn.model_parallel import initialize as fs_init
@@ -37,13 +38,22 @@ class MetaModel(nn.Module):
         llama_args['max_seq_len'] = max_seq_len
         llama_args['max_batch_size'] = 32
 
-        self.tokenizer = Tokenizer(model_path=tokenizer_path)
-        llama_args['vocab_size'] = self.tokenizer.n_words
+        tokenizer = Tokenizer(model_path=tokenizer_path)
+        llama_args['vocab_size'] = tokenizer.n_words
 
         llama_args: ModelArgs = ModelArgs(**llama_args)
-        print("Model Args:\n", llama_args)
 
-        model = Transformer(llama_args, with_visual=with_visual)
+        if "tokenizer" in inspect.signature(Transformer.__init__).parameters:
+            # generally it means the inner llm modify change the tokenizer
+            model = Transformer(llama_args, tokenizer, with_visual=with_visual)
+            assert hasattr(model, "tokenizer")
+            self.tokenizer = model.tokenizer
+        else:
+            model = Transformer(llama_args, with_visual=with_visual)
+            self.tokenizer = tokenizer
+
+        print("Model Args:\n", model.args)
+
         self.llma = model
 
         self.criterion = torch.nn.CrossEntropyLoss(ignore_index=0)
