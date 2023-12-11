@@ -21,6 +21,21 @@ pip install flash-attn --no-build-isolation
 *We highly recommend installing this package for efficiency*. However, if you have difficulty installing this package, LLaMA2-Accessory should still work smoothly without it.
 
 ## 3. Optional: Install Apex
+::: danger
+
+While Apex can bring some efficiency improvement, it is not necessary to make LLaMA2-Accessory work. 
+
+Note that LLaMA2-Accessory works smoothly with either:
+1. Apex not installed at all; OR
+2. Apex successfully installed with CUDA and C++ extensions.
+
+However, it will fail when:
+1. A Python-only build of Apex is installed.
+
+Therefore, if errors like `No module named 'fused_layer_norm_cuda'` are reported, it generally means that you are 
+using a Python-only Apex build. Please run `pip uninstall apex` to remove the build, after which LLaMA2-Accessory
+should be able to work.
+:::
 
 LLaMA2-Accessory also utilizes [apex](https://github.com/NVIDIA/apex), which needs to be compiled from source. Please follow the [official instructions](https://github.com/NVIDIA/apex#from-source) for installation. 
 Here are some tips based on our experiences:
@@ -57,8 +72,6 @@ pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation -
 # otherwise
 pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation --global-option="--cpp_ext" --global-option="--cuda_ext" ./
 ```
-
-*We strongly advise installing this package for optimal performance*. However, if you have difficulty installing this package, LLaMA2-Accessory can operate smoothly without it.
 
 
 ## 4. Install LLaMA2-Accessory as Python Packege
