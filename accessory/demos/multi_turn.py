@@ -1,6 +1,8 @@
 import random
 import sys
 import os
+import traceback
+
 sys.path.append(os.path.abspath(__file__).rsplit('/', 3)[0])
 
 import argparse
@@ -21,6 +23,7 @@ from accessory.data.conversation import default_conversation
 
 
 class Ready: pass
+class ModelFailure: pass
 
 def model_worker(
     rank: int, args: argparse.Namespace, barrier: mp.Barrier,
@@ -79,6 +82,7 @@ def model_worker(
         model.cuda()
     model.eval()
     print(f"Model = {str(model)}")
+
     conv = default_conversation()
     conv_sep = conv.response_end_signal
 
@@ -87,36 +91,39 @@ def model_worker(
     while True:
         if response_queue is not None:
             response_queue.put(Ready())
-        chatbot, max_gen_len, temperature, top_p = request_queue.get()
-        conv.load_qas(chatbot)
-        prompt = conv.get_prompt()
+        try:
+            chatbot, max_gen_len, temperature, top_p = request_queue.get()
+            conv.load_qas(chatbot)
+            prompt = conv.get_prompt()
 
-        for stream_response in model.stream_generate(
-            prompt, None,
-            max_gen_len, temperature, top_p
-        ):
-            end_pos = stream_response["text"].find(conv_sep)
-            if end_pos != -1:
-                stream_response["text"] = (
-                    stream_response['text'][:end_pos].rstrip() + "\n"
-                )
-                stream_response["end_of_content"] = True
+            for stream_response in model.stream_generate(
+                prompt, None,
+                max_gen_len, temperature, top_p
+            ):
+                end_pos = stream_response["text"].find(conv_sep)
+                if end_pos != -1:
+                    stream_response["text"] = (
+                        stream_response['text'][:end_pos].rstrip() + "\n"
+                    )
+                    stream_response["end_of_content"] = True
 
-            # keep a few characters if not end_of_content to avoid sending
-            # part of conv_sep before all of it is generated.
-            if not stream_response["end_of_content"]:
-                if len(stream_response["text"]) < len(conv_sep):
-                    continue
-                stream_response["text"] = (
-                    stream_response["text"][:-len(conv_sep)]
-                )
+                # keep a few characters if not end_of_content to avoid sending
+                # part of conv_sep before all of it is generated.
+                if not stream_response["end_of_content"]:
+                    if len(stream_response["text"]) < len(conv_sep):
+                        continue
+                    stream_response["text"] = (
+                        stream_response["text"][:-len(conv_sep)]
+                    )
 
-            if response_queue is not None:
-                response_queue.put(stream_response)
+                if response_queue is not None:
+                    response_queue.put(stream_response)
 
-            if stream_response["end_of_content"]:
-                break
-
+                if stream_response["end_of_content"]:
+                    break
+        except Exception:
+            print(traceback.format_exc())
+            response_queue.put(ModelFailure())
 
 def gradio_worker(
     request_queues: List[mp.Queue], response_queue: mp.Queue,
@@ -146,6 +153,8 @@ def gradio_worker(
             queue.put((chatbot, max_gen_len, gen_t, top_p))
         while True:
             content_piece = response_queue.get()
+            if isinstance(content_piece, ModelFailure):
+                raise RuntimeError
             chatbot[-1][1] = content_piece["text"]
             yield chatbot
             if content_piece["end_of_content"]:
@@ -190,7 +199,7 @@ def gradio_worker(
         )
         undo_button.click(undo, chatbot, chatbot)
     barrier.wait()
-    demo.queue(api_open=True, concurrency_count=1).launch(share=True)
+    demo.queue(api_open=True).launch(share=True, server_name="0.0.0.0")
 
 
 if __name__ == "__main__":
