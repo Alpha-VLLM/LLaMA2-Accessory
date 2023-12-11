@@ -5,11 +5,11 @@ import torch.nn as nn
 import json
 from typing import List, Optional, Iterable
 from pathlib import Path
+import importlib
 
 from fairscale.nn.model_parallel import initialize as fs_init
 
 from .tokenizer import Tokenizer
-from . import LLM
 from accessory.util import misc, tensor_parallel
 from accessory.util.tensor_type import default_tensor_type
 
@@ -26,8 +26,9 @@ class MetaModel(nn.Module):
         self.llama_type = llama_type
         self.with_visual = with_visual
 
-        ModelArgs = LLM.__dict__[llama_type].ModelArgs
-        Transformer = LLM.__dict__[llama_type].Transformer
+        model_module = importlib.import_module(f"accessory.model.LLM.{llama_type}")
+        ModelArgs = model_module.ModelArgs
+        Transformer = model_module.Transformer
 
         llama_args = {}
         for _ in llama_config:
