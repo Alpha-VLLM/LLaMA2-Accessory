@@ -3,14 +3,25 @@
 [mixtral-8x7b](https://huggingface.co/someone13574/mixtral-8x7b-32kseqlen) is a Mixture-of-Expert (MoE) model. In this
 tutorial, we will introduce how to inference with and to finetune the model.
 
+:::{admonition} Online Demo of Finetuned Model 🚀🚀🚀
+:class: tip
+
+We host a web demo at <https://dfc02190724c71dd5b.gradio.live/>, which shows a mixtral-8x7b model finetuned on 
+[evol-codealpaca-v1](https://huggingface.co/datasets/theblackcat102/evol-codealpaca-v1) and 
+[ultrachat_200k](https://huggingface.co/datasets/HuggingFaceH4/ultrachat_200k), with LoRA and Bias tuning. 
+Please note that this is a temporary link, and we will update our official permanent link today.
+:::
+
 ## Features
 With LLaMA2-Accessory, mixtral-8x7b enjoys the following features:
 1. Distributed MoE (namely instantiating experts on multiple processes/gpus)
 2. Load Balancing Loss
 3. Tensor Parallel and FSDP for efficiently training
-
 4. Distributed and/or quantized inference
 
+## Model Implementation
+LLaMA2-Accessory implements mixtral-8x7b in {link2repo}`[mistral.py](accessory/model/LLM/mistral.py)`; it also 
+implements a PEFT version (supporting bias/norm/LoRA tuning) in {link2repo}`[mistral_peft.py](accessory/model/LLM/mistral_peft.py)`
 
 ## Install
 Please follow the [instructions here](https://llama2-accessory.readthedocs.io/en/latest/install.html) to install
@@ -172,3 +183,8 @@ python demos/multi_turn.py --n_gpus $N_GPUS_TO_USE --pretrained_path $PATH_TO_FI
 See the LLaMA2-Accessory [document](https://llama2-accessory.readthedocs.io/en/latest/) to know more about
 [finetuning](https://llama2-accessory.readthedocs.io/en/latest/finetune/index.html) 
 and [inference](https://llama2-accessory-temp.readthedocs.io/en/latest/inference.html).
+
+
+## Acknowledgement
++ [@dzhulgakov](https://github.com/dzhulgakov) for [llama-mistral](https://github.com/dzhulgakov/llama-mistral)
++ [@mistralai](https://github.com/mistralai) for [megablocks](https://github.com/mistralai/megablocks-public)
