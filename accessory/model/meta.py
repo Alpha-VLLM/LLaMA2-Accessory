@@ -365,12 +365,13 @@ class MetaModel(nn.Module):
                 stop_pos = generated.find(stop_symbol)
                 if stop_pos != -1:
                     generated = generated[:stop_pos]
-                    return {"text": generated, "end_of_content": True}
+                    yield {"text": generated, "end_of_content": True}
+                    return
 
             yield {"text": generated, "end_of_content": False}
 
         generated = self.tokenizer.decode(tokens[start_pos:generate_until].tolist())
-        return {"text": generated, "end_of_content": True}
+        yield {"text": generated, "end_of_content": True}
 
 
     def sample_top_p(self, probs, p):

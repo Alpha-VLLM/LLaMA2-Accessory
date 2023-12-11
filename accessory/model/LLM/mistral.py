@@ -277,13 +277,13 @@ class MoE(nn.Module):
         x = x.view(-1, x.shape[-1])
 
         scores = self.gate(x)
+        scores = scores.softmax(dim=-1).to(x)
         expert_weights, expert_indices = torch.topk(scores, self.num_experts_per_tok, dim=-1)
-        expert_weights = expert_weights.softmax(dim=-1).to(x)
+        expert_weights = expert_weights / expert_weights.sum(dim=-1, keepdim=True)
         flat_expert_indices = expert_indices.view(-1)
 
-        expert_scores = torch.scatter(torch.zeros_like(scores), 1, expert_indices, expert_weights)
         if self.training:
-            MoE.LOAD_BALANCING_LOSSES.append(self._load_balancing_loss(expert_scores, flat_expert_indices))
+            MoE.LOAD_BALANCING_LOSSES.append(self._load_balancing_loss(scores, flat_expert_indices))
 
         x = x.repeat_interleave(self.num_experts_per_tok, dim=0)
         y = torch.zeros_like(x)
