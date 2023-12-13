@@ -6,6 +6,9 @@
 </p>
 
 <p align="center">
+   📖 <a href="llama2-accessory.readthedocs.io/" target="_blank">Document</a>
+</p>
+<p align="center">
    🤗 <a href="https://huggingface.co/Alpha-VLLM/SPHINX" target="_blank">HF Repo</a> • 👋 join our <a href="docs/wechat.md" target="_blank">WeChat</a> • 🚀 <a href="http://imagebind-llm.opengvlab.com/" target="_blank">Demo</a>
 </p>
 
