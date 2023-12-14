@@ -197,7 +197,7 @@ exps/finetune/sg/dialog_ultrachat200kWizardcode_mistralPeft.sh \
 
 **Finetuned Model Release:**
 
-+ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/tree/main/finetuned/peft)
++ [🤗checkpoint](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/tree/main/finetuned/sg)
 
 **Host Local Demo**
 ```bash
