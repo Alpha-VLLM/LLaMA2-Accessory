@@ -239,12 +239,6 @@ class MoE(nn.Module):
             i : ExpertFeedForward(dim, hidden_dim) for i in self.local_experts
         })
         self.gate = nn.Linear(dim, num_experts, bias=False)
-        def gate_grad_hook(grad):
-            grad = grad.clone()
-            dist.all_reduce(grad, op=dist.ReduceOp.SUM, group=fs_init.get_model_parallel_group())
-            return grad
-        for parameter in self.gate.parameters():
-            parameter.register_hook(gate_grad_hook)
 
         self.num_experts_per_tok = num_experts_per_tok
         self.load_balancing_weight = load_balancing_weight
@@ -266,29 +260,34 @@ class MoE(nn.Module):
         scores = expert_scores.mean(dim=0)
         scale = (self.load_balancing_weight * self.num_experts) / (n_tokens * self.num_experts_per_tok)
         loss = scale * torch.dot(tokens_per_expert, scores)
-        if fs_init.get_model_parallel_rank() != 0:
-            loss = loss * 0  # gradient come from rank0 through all reduce
         return loss
 
 
     def forward(self, x):
-        x = copy_to_model_parallel_region(x)
         orig_shape = x.shape
         x = x.view(-1, x.shape[-1])
 
-        scores = self.gate(x)
-        scores = scores.softmax(dim=-1).to(x)
-        expert_weights, expert_indices = torch.topk(scores, self.num_experts_per_tok, dim=-1)
-        expert_weights = expert_weights / expert_weights.sum(dim=-1, keepdim=True)
-        flat_expert_indices = expert_indices.view(-1)
 
+        x_for_score, x_for_ffn = x, copy_to_model_parallel_region(x)
+
+        # compute score
+        scores = self.gate(x_for_score)
+        scores = scores.softmax(dim=-1).to(x_for_score)
+        expert_weights, expert_indices = torch.topk(scores, self.num_experts_per_tok, dim=-1)
+        flat_expert_indices = expert_indices.view(-1)
         if self.training:
             MoE.LOAD_BALANCING_LOSSES.append(self._load_balancing_loss(scores, flat_expert_indices))
+        expert_weights = expert_weights / expert_weights.sum(dim=-1, keepdim=True)
+        expert_weights = copy_to_model_parallel_region(expert_weights)
 
-        x = x.repeat_interleave(self.num_experts_per_tok, dim=0)
-        y = torch.zeros_like(x)
+
+        # compute ffn
+        x_for_ffn = x_for_ffn.repeat_interleave(self.num_experts_per_tok, dim=0)
+        y = torch.zeros_like(x_for_ffn)
         for str_i, expert in self.experts.items():
-            y[flat_expert_indices == int(str_i)] = expert(x[flat_expert_indices == int(str_i)])
+            y[flat_expert_indices == int(str_i)] = expert(x_for_ffn[flat_expert_indices == int(str_i)])
+
+        # score meet ffn_output
         y = (y.view(*expert_weights.shape, -1) * expert_weights.unsqueeze(-1)).sum(dim=1)
 
         y = reduce_from_model_parallel_region(y)

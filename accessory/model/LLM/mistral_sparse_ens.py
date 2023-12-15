@@ -211,6 +211,18 @@ class Attention(nn.Module):
         return causal_mask_bool
 
 
+def _sparse_expert_merge(weights_to_merge: List[torch.Tensor], num_experts: int) -> torch.Tensor:
+    weights_to_merge = [_.view(num_experts, -1, _.shape[-1]) for _ in weights_to_merge]
+    weights_to_merge = torch.cat(weights_to_merge, dim=1)
+    weights_to_merge = weights_to_merge.view(-1, weights_to_merge.shape[-1]).contiguous()
+    return weights_to_merge
+
+def _sparse_expert_split(weight_to_split: torch.Tensor, split_to: int, num_experts) -> List[torch.Tensor]:
+    weight_to_split = weight_to_split.view(num_experts, -1, weight_to_split.shape[-1])
+    l_split = list(torch.chunk(weight_to_split, split_to, dim=1))
+    return l_split
+
+
 class MoE(nn.Module):
     LOAD_BALANCING_LOSSES = []
     def __init__(
@@ -246,23 +258,17 @@ class MoE(nn.Module):
             torch.empty(self.hidden_dim_per_partition * self.num_experts,
                         self.dim))
         # set_weight_attrs(self.w3, {"weight_loader": self.moe_weight_loader})
-        default_linear_init(self.w1.data)
-        default_linear_init(self.w2.data)
-        default_linear_init(self.w3.data)
 
-        for param in [self.w1, self.w2, self.w3]:
+        for w in [self.w1, self.w2, self.w3]:
             # mark as model parallel parameters,
             # otherwise the params will be broadcast within model parallel group to ensure consistency among ranks
-            param.is_model_parallel = True
+            w.is_model_parallel = True
+            # to support loading checkpoints saved with different model parallel size
+            w.model_parallel_merge = functools.partial(_sparse_expert_merge, num_experts=self.num_experts)
+            w.model_parallel_split = functools.partial(_sparse_expert_split, num_experts=self.num_experts)
+            default_linear_init(w.data)
 
         self.gate = nn.Linear(dim, num_experts, bias=False)
-        # todo maybe move to optimizer hook can be more efficient
-        def gate_grad_hook(grad):
-            grad = grad.clone()
-            dist.all_reduce(grad, op=dist.ReduceOp.SUM, group=fs_init.get_model_parallel_group())
-            return grad
-        for parameter in self.gate.parameters():
-            parameter.register_hook(gate_grad_hook)
 
         # Calculate the number of bits needed to represent the expert indices
         # so that we can pass it to radix sort.
@@ -295,12 +301,10 @@ class MoE(nn.Module):
         scores = expert_scores.mean(dim=0)
         scale = (self.load_balancing_weight * self.num_experts) / (n_tokens * self.num_experts_per_tok)
         loss = scale * torch.dot(tokens_per_expert.to(scores), scores)
-        if fs_init.get_model_parallel_rank() != 0:
-            loss = loss * 0  # gradient come from rank0 through all reduce
         return loss
 
     def sparse_transpose(
-            self, size: int, row_indices,
+            self, size, row_indices,
             column_indices) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         block_columns = size[1] // self.blocking
 
@@ -410,42 +414,44 @@ class MoE(nn.Module):
         x: (bsz, per_item_sequence_length, model_dim)
         sequence_length == bsz * per_item_sequence_length
         """
-        x = copy_to_model_parallel_region(x)
-
-        # optional reshape
         input_shape = x.shape
         x = x.view(-1, input_shape[-1])
 
+        x_for_score, x_for_ffn = x, copy_to_model_parallel_region(x)
+
+        # <compute score>
         # gate_logits: (sequence_length, n_experts)
-        gate_logits = self.gate(x)
+        gate_logits = self.gate(x_for_score)
         # all_probs: (sequence_length, n_experts) and upcast for softmax
         all_probs = F.softmax(gate_logits, dim=1, dtype=torch.float)
         # weights, selected_experts: (sequence_length, top-k)
         weights, selected_experts = torch.topk(all_probs, self.num_experts_per_tok, dim=-1)
-        weights /= weights.sum(dim=-1, keepdim=True)
-        weights = weights.flatten().to(x.dtype)
         selected_experts = selected_experts.flatten()
-
         indices, bin_ids, bins, padded_bins, tokens_per_expert = self.indices_and_padded_bins(selected_experts)
         # todo maybe allreduce tokens_per_expert from data parallel group
         if self.training:
             MoE.LOAD_BALANCING_LOSSES.append(self._load_balancing_loss(all_probs, tokens_per_expert))
+        weights /= weights.sum(dim=-1, keepdim=True)
+        weights = weights.flatten().to(x_for_score.dtype)
+        weights = copy_to_model_parallel_region(weights)
 
+
+        # <compute ffn>
         # Permute tokens and pad to prepare expert computation
         # (top_k * sequence_length + padding, model_dim)
-        x = ops.padded_gather(x, indices, bin_ids, bins, padded_bins,
-                              self.num_experts_per_tok)
+        x_for_ffn = ops.padded_gather(x_for_ffn, indices, bin_ids, bins, padded_bins,
+                                      self.num_experts_per_tok)
 
         # Create the sparse matrix topology
         with torch.no_grad():
-            topo = self.topology(x, padded_bins)
+            topo = self.topology(x_for_ffn, padded_bins)
 
         # Perform the expert computation
         # First Dense x Dense -> Sparse for w1 and w3,
         # (top_k * sequence_length + padding, ffn_dim * n_experts)
-        x = stk.Matrix(
+        x_for_ffn = stk.Matrix(
             topo.size(),
-            F.silu(stk.ops.sdd(x, self.w1.t(), topo).data) * stk.ops.sdd(x, self.w3.t(), topo).data,
+            F.silu(stk.ops.sdd(x_for_ffn, self.w1.t(), topo).data) * stk.ops.sdd(x_for_ffn, self.w3.t(), topo).data,
             topo.row_indices,
             topo.column_indices,
             topo.offsets,
@@ -456,10 +462,10 @@ class MoE(nn.Module):
 
         # Then Sparse x Dense -> Dense for w2
         # (top_k * sequence_length + padding, model_dim)
-        x = stk.ops.dsd(x, self.w2)
+        x_for_ffn = stk.ops.dsd(x_for_ffn, self.w2)
 
         # todo why vllm code reduce at here? reduce after padded_scatter can cause lower communication
-        # y = reduce_from_model_parallel_region(x.clone())
+        # y = reduce_from_model_parallel_region(x_for_ffn.clone())
         # y = ops.padded_scatter(
         #     y,
         #     indices,
@@ -471,10 +477,11 @@ class MoE(nn.Module):
         #     self.quantize_scatter_num_bits,
         # )
 
+        # <score meet ffn_output>
         # Permute back and remove padding
         # (top_k * sequence_length, model_dim)
-        x = ops.padded_scatter(
-            x,
+        y = ops.padded_scatter(
+            x_for_ffn,
             indices,
             bin_ids,
             weights,
@@ -484,9 +491,9 @@ class MoE(nn.Module):
             self.quantize_scatter_num_bits,
         )
 
-        x = reduce_from_model_parallel_region(x)
+        y = reduce_from_model_parallel_region(y)
 
-        return x.view(*input_shape)
+        return y.view(*input_shape)
 
 
 class TransformerBlock(nn.Module):

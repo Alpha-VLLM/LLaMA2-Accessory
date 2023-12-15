@@ -45,6 +45,19 @@ FORMAT_FILENAME_PATTERNS: Dict[str, re.Pattern] = {
 }
 
 
+def get_weight_parallel_dim(model: nn.Module):
+    weight_parallel_dim = {}
+    for name, module in model.named_modules():
+        for class_, dict_ in _MODEL_PARALLEL_MODULES:
+            if isinstance(module, class_):
+                for leaf_name, dim in dict_.items():
+                    full_name = name + "." + leaf_name if name else leaf_name
+                    if dim >= 0:
+                        weight_parallel_dim[full_name] = dim
+                break
+    return weight_parallel_dim
+
+
 def _tensor_list_max_diff(tensors: List[torch.Tensor]) -> float:
     for tensor in tensors[1:]:
         assert (tensor.dtype is tensors[0].dtype
@@ -69,8 +82,11 @@ def _tensor_list_max_diff(tensors: List[torch.Tensor]) -> float:
 
 def _load_checkpoint_and_merge_ranks(
     model: nn.Module, ckpt_path: str, ckpt_mp_world_size: int,
-    weight_parallel_dim: Dict[str, int], verbose: bool, format: str,
+    verbose: bool, format: str,
 ) -> OrderedDict[str, torch.Tensor]:
+    weight_parallel_dim = get_weight_parallel_dim(model)
+    named_parameters = dict(model.named_parameters())
+
     mp_rank = fs_init.get_model_parallel_rank()
     mp_world_size = fs_init.get_model_parallel_world_size()
 
@@ -89,7 +105,11 @@ def _load_checkpoint_and_merge_ranks(
 
     for key in list(set([_ for shard in ckpt_shards for _ in shard.keys()])):
         param_shards = [shard[key] for shard in ckpt_shards if key in shard]
-        if key not in weight_parallel_dim:  # non tensor parallel parameter
+        if hasattr(named_parameters[key], "model_parallel_merge"):
+            merged_ckpt[key] = named_parameters[key].model_parallel_merge(param_shards)
+        elif key in weight_parallel_dim:
+            merged_ckpt[key] = torch.cat(param_shards, dim=weight_parallel_dim[key])
+        else:  # non tensor parallel parameter
             max_diff = _tensor_list_max_diff(param_shards)
             if max_diff > 0.:
                 print("WARNING! Found unequal replicas of non-tensor-parallel "
@@ -98,9 +118,6 @@ def _load_checkpoint_and_merge_ranks(
                       f"max_diff={max_diff}.",
                       force=True)
             merged_ckpt[key] = param_shards[0]
-        else:
-            merged_ckpt[key] = torch.cat(param_shards,
-                                         dim=weight_parallel_dim[key])
 
         # delete the original weights to avoid 2x memory usage.
         for shard in ckpt_shards:
@@ -112,51 +129,36 @@ def _load_checkpoint_and_merge_ranks(
 
 def _load_checkpoint_and_split_rank(
     model: nn.Module, ckpt_path: str, ckpt_mp_world_size: int,
-    weight_parallel_dim: Dict[str, int], verbose: bool, format: str,
+    verbose: bool, format: str,
 ) -> OrderedDict[str, torch.Tensor]:
+    weight_parallel_dim = get_weight_parallel_dim(model)
+    named_parameters = dict(model.named_parameters())
+
     mp_rank = fs_init.get_model_parallel_rank()
     mp_world_size = fs_init.get_model_parallel_world_size()
 
     assert mp_world_size % ckpt_mp_world_size  == 0
     shard_split_to = mp_world_size // ckpt_mp_world_size
     shard_id = mp_rank // shard_split_to
+    split_id = mp_rank % shard_split_to
     ori_ckpt = load_tensor_parallel_shard_state_dict(ckpt_path, format, shard_id, ckpt_mp_world_size)
     split_ckpt = OrderedDict()
 
     for key, ori_param in ori_ckpt.items():
-        if key in weight_parallel_dim:
-            split_ckpt[key] = torch.chunk(ori_param, shard_split_to, weight_parallel_dim[key])[mp_rank%shard_split_to]
-        # elif "experts." in key:
-        #     if key in split_ckpt:
-        #         continue
-        #     else:
-        #         parts = key.split(".experts.")
-        #         assert len(parts) == 2
-        #         parts[1] = parts[1].split(".", 1)[1]
-        #         pattern = re.escape(parts[0]) + r'\.experts\.\d+\.' + re.escape(parts[1])
-        #
-        #         temp_expert_names = []
-        #         for _key in ori_ckpt:
-        #             if re.match(pattern, _key):
-        #                 temp_expert_names.append(_key)
-        #
-        #         temp_expert_names.sort(key = lambda x: int(x.split(".experts.")[1].split(".")[0]))
-        #         assert len(temp_expert_names) % shard_split_to == 0
-        #         n_local_experts = len(temp_expert_names) // shard_split_to
-        #         local_expert_names = temp_expert_names[
-        #             (mp_rank % shard_split_to) * n_local_experts: (mp_rank % shard_split_to + 1) * n_local_experts
-        #         ]
-        #         for expert_name in local_expert_names:
-        #             split_ckpt[expert_name] = ori_param[expert_name]
-        elif key in model.state_dict():  # non tensor parallel parameter
-            split_ckpt[key] = ori_param
+        if key in named_parameters:
+            if hasattr(named_parameters[key], "model_parallel_split"):
+                split_ckpt[key] = named_parameters[key].model_parallel_split(ori_param, shard_split_to)[split_id]
+            elif key in weight_parallel_dim:
+                split_ckpt[key] = torch.chunk(ori_param, shard_split_to, weight_parallel_dim[key])[split_id]
+            else:  # non tensor parallel parameter
+                split_ckpt[key] = ori_param
 
     return split_ckpt
 
 
 def _load_checkpoint_and_redistribute_general(
     model: nn.Module, ckpt_path: str, ckpt_mp_world_size: int,
-    weight_parallel_dim: Dict[str, int], verbose: bool, format: str,
+    verbose: bool, format: str,
 ) -> OrderedDict[str, torch.Tensor]:
     raise NotImplementedError()
 
@@ -245,16 +247,6 @@ def load_tensor_parallel_model_state_dict(
         if verbose:
             print(*args, **kwargs)
 
-    weight_parallel_dim = {}
-    for name, module in model.named_modules():
-        for class_, dict_ in _MODEL_PARALLEL_MODULES:
-            if isinstance(module, class_):
-                for leaf_name, dim in dict_.items():
-                    full_name = name + "." + leaf_name if name else leaf_name
-                    if dim >= 0:
-                        weight_parallel_dim[full_name] = dim
-                break
-
     mp_world_size = fs_init.get_model_parallel_world_size()
 
     if format in ["meta_ori", "consolidated", "consolidated_diff"]:
@@ -282,15 +274,15 @@ def load_tensor_parallel_model_state_dict(
         # better user experience!
         if ckpt_mp_world_size % mp_world_size == 0:
             local_state_dict = _load_checkpoint_and_merge_ranks(
-                model, path, ckpt_mp_world_size, weight_parallel_dim, verbose, format
+                model, path, ckpt_mp_world_size, verbose, format
             )
         elif mp_world_size % ckpt_mp_world_size == 0:
             local_state_dict = _load_checkpoint_and_split_rank(
-                model, path, ckpt_mp_world_size, weight_parallel_dim, verbose, format
+                model, path, ckpt_mp_world_size, verbose, format
             )
         else:
             local_state_dict = _load_checkpoint_and_redistribute_general(
-                model, path, ckpt_mp_world_size, weight_parallel_dim, verbose, format
+                model, path, ckpt_mp_world_size, verbose, format
             )
 
         return local_state_dict
