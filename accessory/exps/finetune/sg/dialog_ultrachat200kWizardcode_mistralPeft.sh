@@ -2,7 +2,7 @@
 
 pretrained_path=$1
 pretrained_type=consolidated
-llama_config="$2 configs/model/finetune/sg/llamaPeft_biasLora.json"
+llama_config="$2 configs/model/finetune/sg/llamaPeft_normBiasLora.json"
 tokenizer_path="$3"
 data_config=configs/data/finetune/sg/dialog_ultrachat200kWizardcode.yaml
 

@@ -13,56 +13,138 @@ We host a web demo [💻here](http://106.14.127.192/), which shows a mixtral-8x7
 
 ## Features
 With LLaMA2-Accessory, mixtral-8x7b enjoys the following features:
-1. Distributed MoE (namely instantiating experts on multiple processes/gpus)
+1. [Two Implementations](#model-implementation)
 2. Load Balancing Loss
 3. Tensor Parallel and FSDP for efficiently training
 4. Distributed and/or quantized inference
+5. Multi-modal support
 
 ## Model Implementation
-LLaMA2-Accessory implements mixtral-8x7b in {link2repo}`[mistral.py](accessory/model/LLM/mistral.py)`; it also 
-implements a PEFT version (supporting bias/norm/LoRA tuning) in {link2repo}`[mistral_peft.py](accessory/model/LLM/mistral_peft.py)`
+There are generally two approaches to implement the Mixture of Experts (MoE) layers:
+1. The <span style="color: #00e0e0">Base </span> implementation (Distribute Different Experts to Different GPUs): For example, given 8 experts and 4 GPUs, each GPU will be allocated
+with two experts. This is the approach adopted by [DiscoResearch](https://huggingface.co/DiscoResearch/mixtral-7b-8expert)
+and [llama-mistral](https://github.com/dzhulgakov/llama-mistral).
+2. The <span style="color: #00e0e0">sparse </span> implementation (Distribute a Part of Each Expert to Every GPU): For example, given 8 experts and 4 GPUs, each GPUs will hold 1/4 of
+each expert. Such portioning of individual expert is achieved by splitting along the FFN hidden dim. This is the approach
+officially adopted by [MistralAI](https://huggingface.co/mistralai/Mixtral-8x7B-v0.1). We call it the *sparse* approach
+because it [reformulates MoE computation to block-sparse operations](https://arxiv.org/pdf/2211.15841.pdf).
+
+LLaMA2-Accessory supports **both** implementations. The two implementations are completely interchangeable. However, 
+Benefited from the meticulously designed operators and the desirable nature of balanced computation load among GPUs, 
+the second implementation is generally more efficient. On the other hand, the first one may be easier for beginners
+to understand, and is also easier to be combined with LoRA.
+
+The <span style="color: #00e0e0">base</span> implementation of Mixtral-8x7b is in {link2repo}`[mistral.py](accessory/model/LLM/mistral.py)`;
+a corresponding PEFT version (supporting bias/norm/LoRA tuning) is in {link2repo}`[mistral_peft.py](accessory/model/LLM/mistral_peft.py)`.
+For the <span style="color: #00e0e0">base</span> implementation, we prioritize simplicity over efficiency.
+
+
+The <span style="color: #00e0e0">sparse</span> implementation of Mixtral-8x7b is in {link2repo}`[mistral_sparse.py](accessory/model/LLM/mistral_sparse.py)`.
+Based on the implementation, {link2repo}`[mistral_sparse_ens.py](accessory/model/LLM/mistral_sparse_ens.py)` implements a
+multi-modal model, with similar architecture to [SPHINX](https://github.com/Alpha-VLLM/LLaMA2-Accessory/tree/main/SPHINX)
+but using mixtral-8x7b instead of LLaMA2 as LLM backbone. We are actively working on this multi-modal model and 
+the checkpoint will be released soon. For the sparse implementation, we place greater emphasis on 
+efficiency. Specifically, we have referred to the official implementation and introduced some efficient
+operators from [megablocks](https://github.com/stanford-futuredata/megablocks/)
+and [stk](https://github.com/stanford-futuredata/stk).
+
 
 ## Install
 Please follow the [instructions here](https://llama2-accessory.readthedocs.io/en/latest/install.html) to install
-LLaMA2-Accessory, which is an easy-to-use and comprehensive toolkit for LLM development.
+LLaMA2-Accessory, which is an easy-to-use and comprehensive toolkit for LLM development. If you want to use
+the <span style="color: #00e0e0">sparse</span> implementation of mixtral-8x7b, 
+please also install [megablocks](https://github.com/stanford-futuredata/megablocks/)
+and [stk](https://github.com/stanford-futuredata/stk) according their the official guides.
 
 ## Prepare Checkpoint
 Given the official mixtral-8x7b checkpoints, a step of format conversion is needed to make them usable by
 LLaMA2-Accessory. We have released the off-the-shelf converted checkpoints. Alternatively, you can convert them 
 by yourself according to the following guides.
+
+:::{important}
+
+Despite being two equivalent implementations of the same model, the checkpoints of the 
+<span style="color: #00e0e0">base</span> and the <span style="color: #00e0e0">sparse</span>
+implementations are not interchangeable. Please ensure to use the correct checkpoint.
+:::
+
 ### A. Download Converted Checkpoints
-The converted checkpoints are released at [HuggingFace](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/tree/main/converted),
-please download all files in the folder to your machine. 
+The converted checkpoints are released at 🤗HuggingFace. For the <span style="color: #00e0e0">base</span> implementation,
+the checkpoint is provided at [🤗base checkpoint](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/tree/main/converted); For
+the <span style="color: #00e0e0">sparse</span> implementation, the checkpoint is provided 
+at [🤗sparse checkpoint](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/tree/main/converted_sparse).
+please download all the files in the folders to your machine. 
 ### B. Convert by Yourself
 
 #### 1. prepare the original checkpoints
-The original checkpoints are available at https://huggingface.co/someone13574/mixtral-8x7b-32kseqlen, please first
-download the 10 splits and then cat them into one follow the official guides. After this step, you should have the 
-`consolidated.00.pth` file.
+The original checkpoints (torrent release) are available at https://huggingface.co/someone13574/mixtral-8x7b-32kseqlen, 
+please first download the 10 splits and then cat them into one follow the official guides. After this step, you should 
+have the `consolidated.00.pth` file.
 
 #### 2. convert
 
-Downlaod the [split.py](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/blob/main/converted/split.py) script and *put it in the same directory as `consolidated.00.pth`*. Run the following
-command to conduct conversion:
+::::{grid} 2
+:::{grid-item-card}
+
+For <span style="color: #00e0e0">base</span> implementation
+^^^
+Download the [split.py](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/blob/main/converted/split.py) script 
+and *put it in the same directory as `consolidated.00.pth`*. Run the following command to convert:
 ```bash
 python split.py
 ```
 After running, you should see a folder named `converted` created, with eight `consolidated.**-of-08.model.pth` files
 therein. 
+:::
+
+:::{grid-item-card}
+
+For <span style="color: #00e0e0">sparse</span> implementation
+^^^
+Download the [split_sparse.py](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/blob/main/converted_sparse/split_sparse.py)
+script and *put it in the same directory as `consolidated.00.pth`*. Run the following command to convert:
+```bash
+python split_sparse.py
+```
+After running, you should see a folder named `converted_sparse` created, with eight `consolidated.**-of-08.model.pth` 
+files therein.
+:::
+::::
+
 
 #### 3. prepare other resources
+
+::::{grid} 2
+:::{grid-item-card}
+
+For <span style="color: #00e0e0">base</span> implementation
+^^^
 Finally, please download the following three files from [our HuggingFace repo](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/tree/main/converted):
-:::{card}
-[config.json](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/blob/main/converted/config.json)
-[meta.json](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/blob/main/converted/meta.json)
-[tokenizer.model](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/blob/main/converted/tokenizer.model)
-:::
+
++ [config.json](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/blob/main/converted/config.json)
++ [meta.json](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/blob/main/converted/meta.json)
++ [tokenizer.model](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/blob/main/converted/tokenizer.model)
+
 and put them under the `converted` directory, next to the weight files you obtained in the previous step.
+:::
+:::{grid-item-card}
+
+For <span style="color: #00e0e0">sparse</span> implementation
+^^^
+Finally, please download the following three files from [our HuggingFace repo](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/tree/main/converted):
+
++ [config.json](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/blob/main/converted_sparse/config.json)
++ [meta.json](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/blob/main/converted_sparse/meta.json)
++ [tokenizer.model](https://huggingface.co/Alpha-VLLM/MoE-Mixtral-7B-8Expert/blob/main/converted_sparse/tokenizer.model)
+
+and put them under the `converted_sparse` directory, next to the weight files you obtained in the previous step.
+:::
+::::
 
 ### Result
 No matter you have downloaded or converted the checkpoints on your own, you should finally get the following file structure:
 ```
-path/to/converted
+path/to/converted OR path/to/converted_sparse
 # model weights
 ├── consolidated.00-of-04.model.pth
 ├── consolidated.01-of-04.model.pth
@@ -75,7 +157,6 @@ path/to/converted
 # meta information, currently only contains model type
 └── meta.json
 ```
-
 
 ## Inference
 ### Simple Inference
@@ -103,8 +184,9 @@ def main(world_size, rank) -> None:
     )
     torch.cuda.set_device(rank)
     
+    pretrained_path = "/path/to/converted"  # converted checkpoints of either base or sparse format
     # mp_group identifies which ranks will work collaboratively through model parallelism
-    model = MetaModel.from_pretrained("/path/to/converted", max_seq_len=2048,
+    model = MetaModel.from_pretrained(pretrained_path, max_seq_len=2048,
                                       mp_group=dist.new_group(ranks=list(range(dist.get_world_size()))))
 
     prompt = "The best programming language in the world is"
@@ -137,7 +219,13 @@ if __name__ == "__main__":
 ```
 
 A thorough tutorial over the inference with LLaMA2-Accessory can be found in the 
-[document](https://llama2-accessory-temp.readthedocs.io/en/latest/inference.html).
+[document](https://llama2-accessory-temp.readthedocs.io/en/latest/inference.html). In the above example, 
+`pretrained_path` should be replaced with the real path of the checkpoints prepared in the previous section. 
+The `from_pretrained` method will then probe the `meta.json` file in the given path to discern the type of 
+llm used, namely the `llama_type` argument for initializing a Meta model. For the 
+<span style="color: #00e0e0">base</span> implementation, `llama_type` is `mistral`; otherwise for the
+<span style="color: #00e0e0">sparse</span> implementation, `llama_type` is `mistral_sparse`.
+
 
 ### Host Local Demo
 LLaMA2-Accessory provides a series of gradio demos for efficient interaction with your model. To host a local demo
@@ -145,17 +233,19 @@ for the pretrained mixtral-8x7b model, follow the steps below:
 ```bash
 cd LLaMA2-Accessory/accessory
 torchrun --nproc-per-node=$N_GPUS_TO_USE --master-port=$PORT demos/single_turn.py \
---pretrained_path $PATH_TO_CONVERTED
+--pretrained_path $PRETRAINED_PATH
 ```
 As we have mentioned in the [Simple Inference](#simple-inference) section, `$N-GPUS-TO-USE` can be 1, 2, 4, or 8. 
-`$PATH_TO_CONVERTED` should be the directory containing the converted checkpoints, and `$PORT` can be any free port.
+`$PRETRAINED` should be the directory containing the converted 
+(<span style="color: #00e0e0">base</span> or <span style="color: #00e0e0">sparse</span>) checkpoints,
+and `$PORT` can be any free port.
 
 :::{tip}
 
-The `demos/single_turn.py` file was designed to support both pretrained models and models finetuned with alpaca-style template. 
-For pretrained models, please set the `system_prompt` optional to `None` in the Web GUI. 
+`demos/single_turn.py` file was designed to support both pretrained models and models finetuned with alpaca-style template. 
+For pretrained models, please set the `system_prompt` option to `None` in the Web GUI. 
 See the LLaMA2-Accessory [document](https://llama2-accessory.readthedocs.io/en/latest/) to know more about
-[finetuning](https://llama2-accessory.readthedocs.io/en/latest/finetune/index.html) 
+[finetune](https://llama2-accessory.readthedocs.io/en/latest/finetune/index.html) 
 and [inference](https://llama2-accessory-temp.readthedocs.io/en/latest/inference.html).
 :::
 
@@ -177,22 +267,26 @@ Please move them to the position specified by `dialog_ultrachat200kWizardcode.ya
 
 
 ### Full Finetune
+For the <span style="color: #00e0e0">base</span> implementation:
 ```bash
 cd LLaMA2-Accessory/accessory
 srun -n32 --gres=gpu:8 --ntasks-per-node=8 bash \
 exps/finetune/sg/dialog_ultrachat200kWizardcode_mistral.sh \
-/path/to/converted/mixtral-8x7b-32kseqlen \
-/path/to/converted/mixtral-8x7b-32kseqlen/config.json \
-/path/to/converted/mixtral-8x7b-32kseqlen/tokenizer.model
+/path/to/converted \
+/path/to/converted/config.json \
+/path/to/converted/tokenizer.model
 ```
+For the <span style="color: #00e0e0">sparse</span> implementation, change `dialog_ultrachat200kWizardcode_mistral.sh`
+to `dialog_ultrachat200kWizardcode_mistralSparse.sh` (where the only different is changing the `llama_type` argument
+from `mistral` to `mistral_sparse`), and `/path/to/converted` to `path/to/converted_sparse`.
 ### PEFT
 ```bash
 cd LLaMA2-Accessory/accessory
 srun -n16 --gres=gpu:8 --ntasks-per-node=8 bash \
 exps/finetune/sg/dialog_ultrachat200kWizardcode_mistralPeft.sh \
-/path/to/converted/mixtral-8x7b-32kseqlen \
-/path/to/converted/mixtral-8x7b-32kseqlen/config.json \
-/path/to/converted/mixtral-8x7b-32kseqlen/tokenizer.model
+/path/to/converted \
+/path/to/converted/config.json \
+/path/to/converted/tokenizer.model
 ```
 
 **Finetuned Model Release:**
