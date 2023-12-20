@@ -71,7 +71,7 @@
 
 ## Core Contributors
 
-[Chris Liu](https://github.com/ChrisLiu6), [Ziyi Lin](https://github.com/linziyi96), [Guian Fang](https://github.com/Enderfga), [Jiaming Han](https://github.com/csuhan), [Yijiang Liu](https://github.com/kriskrisliu), [Renrui Zhang](https://github.com/ZrrSkywalker)
+[Chris Liu](https://github.com/ChrisLiu6), [Ziyi Lin](https://github.com/linziyi96), [Guian Fang](https://github.com/Enderfga), [Jiaming Han](https://github.com/csuhan), [Yijiang Liu](https://github.com/kriskrisliu), [Renrui Zhang](https://github.com/ZrrSkywalker), [Longtian Qiu](https://github.com/Artanic30), [Siyuan Huang](https://github.com/SiyuanHuang95)
 
 ## Project Leader
 
