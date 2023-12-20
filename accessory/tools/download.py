@@ -52,7 +52,8 @@ def interactive_mode(args):
     models = model_list.get(args.train_type, {}).get(args.input_type, [])
     if models:
         args.model_name = args.model_name or ask_question("\nChoose a model:", models)
-    
+
+    args.model_size = args.model_size or ask_question("\nChoose a model size:", ['7B', '13B', '34B', '70B', '180B'])
     config_choice = ask_question("\nDownload which version of params.json and tokenizer.model?", ['LLaMA2', 'InterLM', 'CodeLlama', 'SPHINX', 'no'])
     if config_choice != 'no':
         args.down_config = True
@@ -69,6 +70,7 @@ def get_args_parser():
     parser = argparse.ArgumentParser('Download the weights of the model.', add_help=False)
     parser.add_argument('--train_type', default=None, choices=['finetune', 'convert'])
     parser.add_argument('--input_type', default=None, choices=['sg', 'mm'])
+    parser.add_argument('--model_size', default=None, choices=['7B', '13B', '34B', '70B','180B'])
     parser.add_argument('--model_name', default=None, type=str)
     parser.add_argument('--down_config', default=None, action="store_true")
     parser.add_argument('--down_diff', default=None, action="store_true")
