@@ -104,6 +104,9 @@ def _load_checkpoint_and_merge_ranks(
         )
 
     for key in list(set([_ for shard in ckpt_shards for _ in shard.keys()])):
+        if key not in named_parameters:
+            print(f"discard unexpected parameter: {key}")
+            continue
         param_shards = [shard[key] for shard in ckpt_shards if key in shard]
         if hasattr(named_parameters[key], "model_parallel_merge"):
             merged_ckpt[key] = named_parameters[key].model_parallel_merge(param_shards)
@@ -152,6 +155,8 @@ def _load_checkpoint_and_split_rank(
                 split_ckpt[key] = torch.chunk(ori_param, shard_split_to, weight_parallel_dim[key])[split_id]
             else:  # non tensor parallel parameter
                 split_ckpt[key] = ori_param
+        else:
+            print(f"discard unexpected parameter: {key}")
 
     return split_ckpt
 

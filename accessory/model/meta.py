@@ -3,14 +3,14 @@ import warnings
 import torch
 import torch.nn as nn
 import json
-from typing import List, Optional, Iterable
+from typing import List, Dict, Optional, Iterable
 from pathlib import Path
 import inspect
 import importlib
 
 from fairscale.nn.model_parallel import initialize as fs_init
 
-from .tokenizer import Tokenizer
+from .tokenizer import Tokenizer, probe_tokenizer_path_from_pretrained
 from accessory.util import misc, tensor_parallel
 from accessory.util.tensor_type import default_tensor_type
 
@@ -19,7 +19,7 @@ import torch.distributed as dist
 
 class MetaModel(nn.Module):
     def __init__(
-        self, llama_type: str, llama_config: List[str], tokenizer_path: str,
+        self, llama_type: str, llama_config: str|List[str], tokenizer_path: str,
         with_visual: bool = False, max_seq_len: int = 4096
     ) -> None:
         super().__init__()
@@ -32,6 +32,8 @@ class MetaModel(nn.Module):
         Transformer = model_module.Transformer
 
         llama_args = {}
+        if isinstance(llama_config, str):
+            llama_config = [llama_config]
         for _ in llama_config:
             with open(_, "r") as f:
                 llama_args.update(json.loads(f.read()))
@@ -83,7 +85,7 @@ class MetaModel(nn.Module):
                         tokenizer_path: Optional[str] = None,
                         with_visual: bool = False, max_seq_len: int = 4096,
                         mp_group: Optional[dist.ProcessGroup] = None,
-                        dtype=torch.bfloat16, device="cuda"):
+                        dtype=torch.bfloat16, device="cuda", quant=False):
         """
         Besides loading the `consolidated.*.pth` model weights, this function also tries to find tokenizer,
         'meta.json', and 'config.json' under `pretrained_path` to configure the `tokenizer_path`,
@@ -98,7 +100,7 @@ class MetaModel(nn.Module):
                 to a `*.json` configuration file. If not specified, this function will probe the `config.json`
                 file under `pretrained_path` to try to determine the value.
         :param tokenizer_path: LLaMA2-Accessory supports both spm tokenizers (provided by Meta, generally named
-                tokenizer.model) and huggingface tokenizers (composed of tokenizer.json and tokenizer_config.json).
+                `tokenizer.model`) and huggingface tokenizers (composed of tokenizer.json and tokenizer_config.json).
                 When using spm tokenizers, tokenizer_path should point to the `tokenizer.model` file;
                 when using huggingface tokenizers, tokenizer_path should point to the directory containing
                 tokenizer.json and tokenizer_config.json. If not specified, this function will probe the
@@ -112,6 +114,7 @@ class MetaModel(nn.Module):
                 within which compose a logically complete model.
         :param dtype: parameter data type
         :param device: parameter device
+        :param quant: whether to quantize the model to 4bit
 
         :return: An Accessory.model.MetaModel object with pretrained checkpoints loaded.
         """
@@ -129,11 +132,11 @@ class MetaModel(nn.Module):
                     "\n\n********************************\n"
                     "Warning: Torch distributed not initialized when invoking `MetaModel.from_pretrained`.\n"
                     "trying to init distributed mode within `from_pretrained` with a world size of 1.\n"
-                    "Note: Distrubuted functions like `get_world_size()` are used within Accessory's model implementations,\n"
+                    "Note: Distributed functions like `get_world_size()` are used within Accessory's model implementations,\n"
                     "Therefore, distributed initialization is required even when using a single GPU.\n"
-                    "This warning is normal if your program isn't designed for distributed computing.\n"
-                    "However, if your program is intended for distributed use,\n"
-                    "please initialize distributed mode before model creation"
+                    "This warning can be ignored if your program isn't designed for distributed computing.\n"
+                    "However, if your program also relies on the functionalities from `torch.distributed`,\n"
+                    "please initialize distributed mode before model creation\n"
                     "********************************\n")
                 torch.distributed.init_process_group(
                     backend="nccl", rank=0, world_size=1,
@@ -169,27 +172,15 @@ class MetaModel(nn.Module):
 
 
         # determine tokenizer_path
-        if tokenizer_path is None:  # first try setence-piece style
-            print(f"tokenizer_path not specified.")
-
-            print(f"trying to find sentencepiece-style tokenizer at {Path(pretrained_path[-1]) / 'tokenizer.model'}")
-            if (Path(pretrained_path[-1])/'tokenizer.model').exists():
-                print(f"Found {Path(pretrained_path[-1]) / 'tokenizer.model'}, use it.")
-                tokenizer_path = str(Path(pretrained_path[-1]) / 'tokenizer.model')
-            else:
-                print("Not Found")
-        if tokenizer_path is None:  # then try huggingface style
-            print(f"trying to find huggingface-style tokenizer at "
-                  f"{Path(pretrained_path[-1]) / '(tokenizer.json, tokenizer_config.json)'}")
-            if (Path(pretrained_path[-1])/'tokenizer.json').exists() and (Path(pretrained_path[-1])/'tokenizer_config.json').exists():
-                print(f"Found {Path(pretrained_path[-1]) / '(tokenizer.json, tokenizer_config.json)'}, use them.")
-                tokenizer_path = pretrained_path[-1]
-            else:
-                print("Not Found")
-        assert tokenizer_path is not None, "No usable tokenizer available"
+        if tokenizer_path is None:
+            print(f"tokenizer_path not specified, probe from pretrained path {pretrained_path[-1]}")
+            tokenizer_path = probe_tokenizer_path_from_pretrained(pretrained_path[-1])
+            if tokenizer_path is None:
+                raise FileNotFoundError("No tokenizer available")
+            print(f"Use tokenizer_path: {tokenizer_path}")
 
 
-        with default_tensor_type(dtype=dtype, device=device):
+        with default_tensor_type(dtype=dtype, device="cpu" if quant else device):
             model = cls(llama_type, llama_config, tokenizer_path, with_visual, max_seq_len)
         print(f"Loading pretrained weights from {pretrained_path} ...")
         load_result = tensor_parallel.load_tensor_parallel_model_list(model, pretrained_path)
@@ -197,21 +188,34 @@ class MetaModel(nn.Module):
             warnings.warn(f"checkpoint and model mismatch: \n{load_result}")
         else:
             print("all params match perfectly!")
+
+        if quant:
+            from accessory.util.quant import quantize
+            print("Quantizing model to 4bit!")
+            from transformers.utils.quantization_config import BitsAndBytesConfig
+            quantization_config = BitsAndBytesConfig.from_dict(
+                config_dict={
+                    "load_in_8bit": False,
+                    "load_in_4bit": True,
+                    "bnb_4bit_quant_type": "nf4",
+                },
+                return_unused_kwargs=False,
+            )
+            quantize(model, quantization_config)
+            model.to(device)
+
         model.eval()
         return model
-
 
     def get_trainable_params(self):
         llma_trainable = self.llma.get_trainable_params()
         return {"llma." + name: param for name, param in llma_trainable.items()}
-
 
     def _set_default_trainability(self):
         for key, value in self.named_parameters():
             value.requires_grad = False
         for key, value in self.get_trainable_params().items():
             value.requires_grad = True
-
 
     def forward(self, examples, labels, images=None):
         with torch.no_grad():
@@ -244,17 +248,130 @@ class MetaModel(nn.Module):
            c_loss = self.criterion(output.reshape(-1, self.tokenizer.n_words), labels.flatten())
         return c_loss, additional_loss
 
+    @ torch.inference_mode()
+    def compute_logits(self, examples: List[str|List[int]], images=None,
+                       bos=True, eos=False) -> List[torch.FloatTensor]:
+        """
+        Compute logits for a given list of text examples or token lists, optionally incorporating images.
+
+        :param examples: A list of text examples or their encoded token lists to be processed.
+        :param images: Optional; images to be included in the computation if applicable.
+        :param bos: Whether to include begin-of-sequence tokens for tokenization. Only effective when items
+         in `examples` are strings. Default is True.
+        :param eos: Whether to include end-of-sequence tokens for tokenization. Only effective when items
+         in `examples` are strings. Default is False.
+        :return: A list of `torch.FloatTensor` containing the computed logits for each example.
+        """
+        if isinstance(examples[0], str):
+            examples = [self.tokenizer.encode(_, bos, eos) for _ in examples]
+
+        l_seq_len = [len(_) for _ in examples]
+        bsz = len(examples)
+        max_length = max(l_seq_len)
+
+        token_tensor = torch.full((bsz, max_length), 0).cuda().long()
+        for i, item_tokens in enumerate(examples):
+            token_tensor[i, : len(item_tokens)] = torch.tensor(item_tokens).long()
+
+        output = self.llma(token_tensor, images)
+        if isinstance(output, tuple):
+            logits = output[0]
+        else:
+            logits = output
+
+        logits = [_[:seq_len] for _, seq_len in zip(logits, l_seq_len)]
+        return logits
+
+    @ torch.inference_mode()
+    def evaluate_examples(self, examples: List[str|List[int]], contexts: Optional[List[str|List[int]]] = None,
+                          images=None, bos=True, eos=False) -> Dict[str, List]:
+        """
+        Evaluate text examples with optional contexts and images, returning various evaluation metrics.
+
+
+        :param examples: A list of text examples or their encoded token lists.
+        :param contexts: Optional; a list of context strings or token lists. If not None, each item
+         should be the preceding part of the corresponding example and is considered as context.
+         The calculation of evaluation metrics will be conducted only on the remaining part
+         of the examples.
+        :param images: Optional; images to be used in conjunction with the text examples.
+        :param bos: Whether to include begin-of-sequence tokens for tokenization. Only effective when items
+         in `examples` are strings. Default is True.
+        :param eos: Whether to include end-of-sequence tokens for tokenization. Only effective when items
+         in `examples` are strings. Default is False.
+        :return: A dictionary containing evaluation metrics including log likelihood, perplexity, max_equal,
+        and non_content_logits.
+
+        :Examples:
+        >>> model = MetaModel(...)
+        >>> # evaluate on the entire examples
+        >>> model.evaluate_examples(["The best programming language is C", "The best programming language is Python"])
+        >>> # treat "The best programming language is" as context and only evaluate on " C" and " Python"
+        >>> model.evaluate_examples(
+        >>>     examples=["The best programming language is C", "The best programming language is Python"],
+        >>>     contexts=["The best programming language is", "The best programming language is"]
+        >>> )
+        """
+        if isinstance(examples[0], str):
+            examples = [self.tokenizer.encode(_, bos, eos) for _ in examples]
+            if contexts is not None:
+                contexts = [self.tokenizer.encode(_, bos, False) for _ in contexts]
+        if contexts is not None:
+            # when context is not None, `example == context + output` should hold,
+            # namely example should start with context
+            assert all([e[:len(c)] == c for e, c in zip(examples, contexts)])
+
+        logits = self.compute_logits(examples, images)
+
+        loss_func = torch.nn.CrossEntropyLoss(reduction='none', ignore_index=0)
+
+        result = {'log_likelihood': [], 'ppl': [], 'max_equal': [], 'non_context_logits': []}
+        for item_idx, item_logits in enumerate(logits):
+            if contexts is None:
+                logits_start = 0
+            else:
+                logits_start = len(contexts[item_idx]) - 1
+                assert logits_start >= 0
+
+            item_logits = item_logits[logits_start:-1]
+            item_labels = examples[item_idx][logits_start+1:]
+            item_labels = torch.tensor(item_labels, dtype=torch.long, device=item_logits.device)
+            loss = loss_func(item_logits, item_labels)
+
+            log_likelihood = -loss.sum().item()
+            ppl = loss.mean().item()
+            max_equal = (item_logits.argmax(dim=-1) == item_labels).all().item()
+
+            result['log_likelihood'].append(log_likelihood)
+            result['ppl'].append(ppl)
+            result['max_equal'].append(max_equal)
+            result['non_context_logits'].append(item_logits)
+        return result
 
     @ torch.inference_mode()
     def generate(
         self,
         prompts: List[str],
-        images: List,
-        max_gen_len: int,
-        temperature: float = 0.8,
+        images: Optional[List] = None,
+        max_gen_len: int = 512,
+        temperature: float = 0.0,
         top_p: float = 0.95,
-        return_logits: bool = False
+        return_logits: bool = False,
+        additional_stop_symbols: Iterable[str] = ()
     ) -> List[str]:
+        """
+        Generate text responses based on input prompts, optionally using images and controlling generation parameters.
+
+        :param prompts: A list of string prompts for text generation.
+        :param images: Optional; a list of images to be used alongside the prompts.
+        :param max_gen_len: Maximum generation length for the responses. Default is 512.
+        :param temperature: Controls randomness in generation. Higher values lead to more random outputs.
+         Default is 0.0, namely deterministic generation.
+        :param top_p: Top-p sampling probability for more diverse generation. Default is 0.95.
+        :param return_logits: If True, returns logits output by the last token instead of text. Default is False.
+        :param additional_stop_symbols: Iterable of additional symbols to stop generation.
+        :return: A list of generated text responses corresponding to each input prompt.
+        """
         bsz = len(prompts)
         args = self.llma.args
         assert bsz <= args.max_batch_size, (bsz, args.max_batch_size)
@@ -281,6 +398,11 @@ class MetaModel(nn.Module):
 
         if return_logits:
             return self.llma.forward_inference(tokens[:, :start_pos], prev_pos, images if prev_pos == 0 else None)
+
+        l_stop_tokens = [[self.tokenizer.eos_id]] + [self.tokenizer.encode_segment(_) for _ in additional_stop_symbols]
+        l_stop_tokens = [torch.tensor(_, dtype=tokens.dtype, device=tokens.device) for _ in l_stop_tokens]
+        stopped = torch.tensor([False for _ in range(bsz)], device=input_text_mask.device)
+        stop_pos = torch.tensor([start_pos + 1 for _ in range(bsz)], device=input_text_mask.device)
     
         for cur_pos in range(start_pos, total_len):
             logits = self.llma.forward_inference(tokens[:, prev_pos:cur_pos], prev_pos, images if prev_pos == 0 else None)
@@ -295,34 +417,48 @@ class MetaModel(nn.Module):
                 input_text_mask[:, cur_pos], tokens[:, cur_pos], next_token
             )
             tokens[:, cur_pos] = next_token
-            # trick: early stop if bsz==1
-            if bsz == 1 and next_token[0] == self.tokenizer.eos_id:
+
+            stop_pos = torch.where(stopped, stop_pos, cur_pos + 1)
+            for stop_token in l_stop_tokens:
+                if cur_pos + 1 - len(stop_token) >= 0:
+                    cond1 = (tokens[:, cur_pos+1-len(stop_token):cur_pos+1] == stop_token.unsqueeze(0)).all(dim=-1)
+                    cond2 = ~input_text_mask[:, cur_pos]
+                    new_stop_cond = cond1 * cond2 * (~stopped)
+                    stop_pos = torch.where(new_stop_cond, cur_pos+1-len(stop_token), stop_pos)
+                    stopped = torch.logical_or(new_stop_cond, stopped)
+            if stopped.all():
                 break
+
             prev_pos = cur_pos
 
         decoded = []
         for i, t in enumerate(tokens.tolist()):
-            # cut to max gen len
-            t = t[len(prompt_tokens[i]): len(prompt_tokens[i]) + max_gen_len]
-            # cut to eos tok if any
-            try:
-                t = t[: t.index(self.tokenizer.eos_id)]
-            except ValueError:
-                pass
+            t = t[len(prompt_tokens[i]):stop_pos[i].item()]
             decoded.append(self.tokenizer.decode(t))
         return decoded
-
 
     @ torch.inference_mode()
     def stream_generate(
         self,
         prompt: str,
-        image: Optional[torch.Tensor],
-        max_gen_len: int,
-        temperature: float = 0.8,
+        image: Optional[torch.Tensor] = None,
+        max_gen_len: int = 512,
+        temperature: float = 0.0,
         top_p: float = 0.95,
         additional_stop_symbols: Iterable[str] = ()
     ):
+        """
+        Generate text in a streaming manner for a single prompt, optionally using an image.
+
+        :param prompt: The input text prompt for generation.
+        :param image: Optional; an image tensor to be used in conjunction with the text prompt.
+        :param max_gen_len: Maximum length for the generated text. Default is 512.
+        :param temperature: Temperature for generation randomness. Default is 0.0,
+         namely deterministic generation.
+        :param top_p: Top-p sampling probability for diverse generation. Default is 0.95.
+        :param additional_stop_symbols: Iterable of additional symbols to stop generation.
+        :return: A generator yielding dictionaries with generated text and an end-of-content flag.
+        """
         args = self.llma.args
 
         prompt_tokens = self.tokenizer.encode(prompt, bos=True, eos=False)
@@ -373,8 +509,14 @@ class MetaModel(nn.Module):
         generated = self.tokenizer.decode(tokens[start_pos:generate_until].tolist())
         yield {"text": generated, "end_of_content": True}
 
-
     def sample_top_p(self, probs, p):
+        """
+        Sample a token based on the provided probability distribution using top-p sampling.
+
+        :param probs: The probability distribution for the next token.
+        :param p: The cumulative probability threshold for top-p sampling.
+        :return: The sampled next token.
+        """
         probs_sort, probs_idx = torch.sort(probs, dim=-1, descending=True)
         probs_sum = torch.cumsum(probs_sort, dim=-1)
         mask = probs_sum - probs_sort > p
@@ -383,7 +525,6 @@ class MetaModel(nn.Module):
         next_token = torch.multinomial(probs_sort, num_samples=1)
         next_token = torch.gather(probs_idx, -1, next_token)
         return next_token
-
 
     def get_image_words(self):
         return self.llma.image_words

@@ -1,9 +1,12 @@
 from sentencepiece import SentencePieceProcessor
 from transformers import AutoTokenizer
 from logging import getLogger
-from typing import List
+from typing import List, Optional
 import os
 from pathlib import Path
+
+
+__all__=['Tokenizer', 'probe_tokenizer_path_from_pretrained']
 
 
 logger = getLogger()
@@ -40,6 +43,8 @@ class Tokenizer:
             self.eos_id: int = self.tokenizer.eos_token_id
             assert self.eos_id is not None
 
+        self._probe_tokenizer_style()
+
         logger.info(
             f"#words: {self.n_words} - BOS ID: {self.bos_id} - EOS ID: {self.eos_id}"
         )
@@ -55,6 +60,38 @@ class Tokenizer:
         if eos:
             t = t + [self.eos_id]
         return t
+
+    def encode_segment(self, s:str):
+        s = s.lstrip(' ')
+        if self.need_space_before_segment:
+            return self.encode(" " + s, bos=False, eos=False)
+        else:
+            return self.encode(s, bos=False, eos=False)
+
+    def _probe_tokenizer_style(self):
+        """
+        Given a sentence, e.g. "Hi my darling", some tokenizers (e.g. LLaMA's) will pose the following behavior:
+        >>> # leading characters will be treated as if there were an " " in the beginning
+        >>> tokenizer.encode("Hi my darling") == tokenizer.encode("Hi") + tokenizer.encode("my darling")
+        >>> # leading space " " is redundant and should not be added
+        >>> tokenizer.encode("Hi my darling") != tokenizer.encode("Hi") + tokenizer.encode(" my darling")
+        >>> tokenizer.encode(" my darling") == tokenizer.encode(" ") + tokenizer.encode(" my darling")
+        However, some others (e.g. InternLM's) will behave differently:
+        >>> # leading space " " has to be explicitly added
+        >>> tokenizer.encode("Hi my darling") == tokenizer.encode("Hi") + tokenizer.encode(" my darling")
+        Knowing which style the tokenizer takes is necessary when tokenzing a segment cut from the complete
+        text, so that the result is the same as the corresponding part in the tokenized original text.
+        """
+        sentence1 = self.encode("Hi my darling",
+                                bos=False, eos=False)
+        sentence2 = self.encode("my darling",
+                                bos=False, eos=False)
+        if sentence1[-len(sentence2):] == sentence2:
+            self.need_space_before_segment = False
+        else:
+            sentence3 = self.encode(" my darling", bos=False, eos=False)
+            assert sentence1[-len(sentence3):] == sentence3
+            self.need_space_before_segment = True
 
     def decode(self, t: List[int]) -> str:
         return self.tokenizer.decode(t)
@@ -74,3 +111,28 @@ class Tokenizer:
             return len(self.tokenizer)
         else:
             raise RuntimeError
+
+
+def probe_tokenizer_path_from_pretrained(pretrained_path: str):
+    tokenizer_path = None
+
+    # try find spm-style tokenizer
+    print(f"trying to find sentencepiece-style tokenizer at {Path(pretrained_path) / 'tokenizer.model'}")
+    if (Path(pretrained_path)/'tokenizer.model').exists():
+        print(f"Found {Path(pretrained_path) / 'tokenizer.model'}, use it.")
+        tokenizer_path = str(Path(pretrained_path) / 'tokenizer.model')
+    else:
+        print("Not Found")
+
+    # then try huggingface style
+    if tokenizer_path is None:
+        print(f"trying to find huggingface-style tokenizer at "
+              f"{Path(pretrained_path) / '(tokenizer.json, tokenizer_config.json)'}")
+        if (Path(pretrained_path)/'tokenizer.json').exists() and (Path(pretrained_path)/'tokenizer_config.json').exists():
+            print(f"Found {Path(pretrained_path) / '(tokenizer.json, tokenizer_config.json)'}, use them.")
+            tokenizer_path = pretrained_path
+        else:
+            print("Not Found")
+    if tokenizer_path is None:
+        print("No usable tokenizer found")
+    return tokenizer_path
