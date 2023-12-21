@@ -1,5 +1,4 @@
 from typing import Optional, Tuple, Union, Dict, List
-from importlib import resources as impresources
 from dataclasses import dataclass, field
 import math
 import functools
@@ -20,10 +19,9 @@ from fairscale.nn.model_parallel.layers import (
 )
 
 from ..components import RMSNorm
-from transformers import Blip2Processor, Blip2Model, Blip2Config
 import open_clip
 
-import accessory
+from accessory.util.tensor_type import default_tensor_type
 from accessory.configs import global_configs
 if global_configs.USE_FLASH_ATTENTION:
     from flash_attn import flash_attn_func
@@ -68,8 +66,6 @@ class ModelArgs:
     load_balancing_weight: float = 0.1
 
     rope_scaling: Optional[float] = None
-
-    load_pretrained_visual_encoder: bool = False
 
 
 def promote_scalar(x: torch.Tensor) -> torch.Tensor:
@@ -231,7 +227,6 @@ class MoE(nn.Module):
         hidden_dim: int,
         num_experts: int,
         num_experts_per_tok: int,
-        load_balancing_weight: float
     ):
         super().__init__()
         mp_size = fs_init.get_model_parallel_world_size()
@@ -283,8 +278,6 @@ class MoE(nn.Module):
             int(np.ceil(np.log2(max_column_index))), 1)
 
         self.num_experts_per_tok = num_experts_per_tok
-        self.load_balancing_weight = load_balancing_weight
-
 
     def _load_balancing_loss(self, expert_scores, tokens_per_expert):
         """
@@ -299,7 +292,7 @@ class MoE(nn.Module):
         n_tokens = expert_scores.shape[0]
         assert not tokens_per_expert.requires_grad
         scores = expert_scores.mean(dim=0)
-        scale = (self.load_balancing_weight * self.num_experts) / (n_tokens * self.num_experts_per_tok)
+        scale = self.num_experts / (n_tokens * self.num_experts_per_tok)
         loss = scale * torch.dot(tokens_per_expert.to(scores), scores)
         return loss
 
@@ -508,7 +501,6 @@ class TransformerBlock(nn.Module):
             hidden_dim=args.hidden_dim,
             num_experts=args.moe['num_experts'],
             num_experts_per_tok=args.moe["num_experts_per_tok"],
-            load_balancing_weight=args.load_balancing_weight
         )
         self.layer_id = layer_id
         self.attention_norm = RMSNorm(args.dim, eps=args.norm_eps)
@@ -556,79 +548,26 @@ class Transformer(nn.Module):
         self.image_words = 0
         self.cache_image_words = 0 # for inference
         if with_visual:
-
-            default_dtype = torch.get_default_dtype()
-            torch.set_default_dtype(torch.float32)
-
-            print("build llama model with qformerv2")
-            if self.args.load_pretrained_visual_encoder:
-                self.qformer = Blip2Model.from_pretrained(
-                    "./blip2_opt2.7b", torch_dtype=self.norm.weight.dtype
-                )
-            else:
-                self.qformer = Blip2Model(Blip2Config.from_pretrained(
-                    str(impresources.files(accessory)/'resources/hf/Salesforce/blip2-opt-2.7b/config.json')))
-            self.qformer.language_projection = None
-            self.qformer.language_model = None
-            self.qformer.to(self.norm.weight)
-
             print("build llama model with clip")
-            if self.args.load_pretrained_visual_encoder:
+            with default_tensor_type(dtype=torch.half):
                 self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
-            else:
-                self.clip, _, _ = open_clip.create_model_and_transforms('ViT-L-14', pretrained=None)
-            self.clip.transformer = None
-            self.clip.to(self.norm.weight)
-
-            print("build llama model with openclip")
-            if self.args.load_pretrained_visual_encoder:
-                self.openclip_convnext_xxl, _, _ = open_clip.create_model_and_transforms(
-                    "convnext_xxlarge", pretrained="laion2b_s34b_b82k_augreg_soup"
-                )
-            else:
-                self.openclip_convnext_xxl, _, _ = open_clip.create_model_and_transforms(
-                    "convnext_xxlarge", pretrained=None
-                )
-            self.openclip_convnext_xxl = self.openclip_convnext_xxl.visual.trunk
-            self.openclip_convnext_xxl.head.global_pool = nn.Identity()
-            self.openclip_convnext_xxl.head.flatten = nn.Identity()
-            self.openclip_convnext_xxl.to(self.norm.weight)
-
-            print("build llama model with dinov2")
-            if self.args.load_pretrained_visual_encoder:
-                self.dinov2_vitg14 = torch.hub.load("/mnt/petrelfs/gaopeng/.cache/torch/hub/facebookresearch_dinov2_main",
-                                                    "dinov2_vitg14", source="local", pretrained=True)
-            else:
-                self.dinov2_vitg14 = torch.hub.load("/mnt/petrelfs/gaopeng/.cache/torch/hub/facebookresearch_dinov2_main",
-                                                    "dinov2_vitg14", source="local", pretrained=False)
-            self.dinov2_vitg14.to(self.norm.weight)
-            torch.set_default_dtype(default_dtype)
-
-            self.qformer_proj = nn.Sequential(
-                nn.Linear(768, args.dim),
-                nn.LayerNorm(args.dim)
-            )
-
-            self.visual_proj = nn.Sequential(
-                nn.Linear(3072 + 1024 + 1536, args.dim),
-                nn.LayerNorm(args.dim),
-            )
-
-            self.image_words = 32 + 257 + 2
-            self.image_size = 512
-            # add image tags
-            self.start_img = nn.Parameter(torch.rand(1, 1, args.dim))
-            self.end_img = nn.Parameter(torch.rand(1, 1, args.dim))
+            for name, param in self.clip.named_parameters():
+                param.requires_grad = False
+            in_dim = self.clip.visual.proj.shape[1]
+            # in_dim = 3
+            self.clip_proj = nn.Linear(in_dim, args.dim)
+            self.clip_proj_norm = nn.LayerNorm(args.dim)
+            self.image_words = 257
 
 
     def get_trainable_params(self):
         trainable = {}
-        no_train_prefix = ["qformer.", "openclip_convnext_xxl.", "clip.", "dinov2_vitg14."]
         for name, para in self.named_parameters():
-            if not any([name.startswith(_) for _ in no_train_prefix]):
+            if not name.startswith("clip."):
                 trainable[name] = para
 
         return trainable
+
 
     @torch.no_grad()
     def clip_encode_image(self, x):
@@ -638,9 +577,7 @@ class Transformer(nn.Module):
         x = x.reshape(x.shape[0], x.shape[1], -1)
         x = x.permute(0, 2, 1)  # shape = [*, grid ** 2, width]
         x = torch.cat([self.clip.visual.class_embedding.to(x.dtype) + torch.zeros(x.shape[0], 1,
-                                                                                  x.shape[-1], dtype=x.dtype,
-                                                                                  device=x.device), x],
-                      dim=1)  # shape = [*, grid ** 2 + 1, width]
+                      x.shape[-1], dtype=x.dtype, device=x.device), x], dim=1)  # shape = [*, grid ** 2 + 1, width]
         x = x + self.clip.visual.positional_embedding.to(x.dtype)
         x = self.clip.visual.ln_pre(x)
 
@@ -651,78 +588,20 @@ class Transformer(nn.Module):
         # preserve all spatial tokens
         x = self.clip.visual.ln_post(x[:, :, :])
 
-        # if self.clip.visual.proj is not None:
-        #    x = x @ self.clip.visual.proj
+        if self.clip.visual.proj is not None:
+            x = x @ self.clip.visual.proj
 
         return x
 
+
     def encode_image(self, image):
-        # [B, 32, 768]
-        self.clip.eval()
-        self.openclip_convnext_xxl.eval()
-        image_bs = image.size(0)
-        mp_world_size = fs_init.get_model_parallel_world_size()
-        mp_rank = fs_init.get_model_parallel_rank()
-        # assert image_bs % mp_world_size == 0
+        with torch.cuda.amp.autocast(enabled=False):
+            image = image.half()
+            image_tokens = self.clip_encode_image(image)
+            image = image.to(self.clip_proj.weight.dtype)
+        image_tokens = self.clip_proj_norm(self.clip_proj(image_tokens))
+        return image_tokens
 
-        n_pad_items = (mp_world_size - image_bs % mp_world_size) % mp_world_size
-        padded_image = torch.cat([image, image[:1].expand(n_pad_items, *image.size()[1:])], dim=0)
-        padded_image_bs = padded_image.shape[0]
-
-        local_image_bs = padded_image_bs // mp_world_size
-        local_image = padded_image[local_image_bs * mp_rank: local_image_bs * (mp_rank + 1)]
-        with torch.no_grad():
-            local_image_224 = F.interpolate(local_image.half(), size=(224,224), mode="bicubic").to(local_image)
-            local_image_feats = self.qformer.get_qformer_features(pixel_values=local_image_224).last_hidden_state
-            image_feats = torch.zeros([padded_image_bs, *local_image_feats.size()[1:]],
-                                      device=local_image_feats.device, dtype=local_image_feats.dtype)
-            dist.all_gather_into_tensor(image_feats, local_image_feats, group=fs_init.get_model_parallel_group())
-
-            local_clip_image_feats = self.clip_encode_image(local_image_224)
-            local_convnext_image_feats = self.openclip_convnext_xxl(
-                F.interpolate(local_image.half(), size=(512, 512)).to(local_image)
-            )
-            assert local_convnext_image_feats.size()[1:] == (3072, 16, 16)
-            local_convnext_image_feats = local_convnext_image_feats.flatten(-2).permute(0, 2, 1)  # (*, 256, 3072)
-            local_convnext_image_feats = torch.cat([
-                local_convnext_image_feats.mean(dim=1, keepdim=True),  # add gap as cls token
-                local_convnext_image_feats,
-            ], dim=1)  # (*, 257, 3072)
-
-            clip_mean = torch.Tensor([0.48145466, 0.4578275, 0.40821073])
-            clip_mean = clip_mean.to(local_image, non_blocking=True).view(3, 1, 1)
-            clip_std = torch.Tensor([0.26862954, 0.26130258, 0.27577711])
-            clip_std = clip_std.to(local_image, non_blocking=True).view(3, 1, 1)
-            dinov2_mean = torch.Tensor([0.485, 0.456, 0.406]).to(local_image, non_blocking=True).view(3, 1, 1)
-            dinov2_std = torch.Tensor([0.229, 0.224, 0.225]).to(local_image, non_blocking=True).view(3, 1, 1)
-            local_dinov2_image_feats = self.dinov2_vitg14.forward_features(
-                (local_image_224 * clip_std + clip_mean - dinov2_mean) / dinov2_std
-            )
-            local_dinov2_image_feats = torch.cat([
-                local_dinov2_image_feats["x_norm_clstoken"].unsqueeze(1),
-                local_dinov2_image_feats["x_norm_patchtokens"],
-            ], dim=1)
-            local_ens_image_feats = torch.cat([
-                local_clip_image_feats,
-                local_convnext_image_feats,
-                local_dinov2_image_feats,
-            ], dim=2)  # (*, 257, 5632)
-
-            ens_image_feats = torch.zeros([padded_image_bs, *local_ens_image_feats.size()[1:]],
-                                          device=local_ens_image_feats.device, dtype=local_ens_image_feats.dtype)
-            dist.all_gather_into_tensor(ens_image_feats, local_ens_image_feats,
-                                        group=fs_init.get_model_parallel_group())
-
-            ens_image_feats = ens_image_feats[:image_bs]
-            image_feats = image_feats[:image_bs]
-
-        image_feats = self.qformer_proj(image_feats)
-        ens_image_feats = self.visual_proj(ens_image_feats)
-        image_feats = torch.cat([image_feats, ens_image_feats], dim=1)
-        # image_feats = torch.zeros([image.size(0), 32, 768], dtype=torch.half, device=image.device)
-        # image_feats = self.qformer_proj(image_feats)
-
-        return image_feats
 
     def forward(self, examples, image=None):
         self._destroy_kv_cache()  # training always disables kv cache
@@ -734,10 +613,9 @@ class Transformer(nn.Module):
 
         image_words = 0
         if image is not None:
-            h_bos, h_caption = h[:, :1], h[:, 1:]
             image_tokens = self.encode_image(image)
-            h = torch.cat((h_bos, self.start_img.expand(_bsz, -1, -1), image_tokens, self.end_img.expand(_bsz, -1, -1), h_caption), dim=1)
-            image_words = image_tokens.shape[1] + 1 + 1
+            image_words = image_tokens.shape[1]
+            h = torch.cat((image_tokens, h), dim=1)
             seqlen = h.shape[1]
 
         freqs_cis = self.freqs_cis[:seqlen]
@@ -746,8 +624,11 @@ class Transformer(nn.Module):
         h = self.norm(h)
         output = self.output(h[:, image_words:, :])
 
-        load_balancing_loss = sum(MoE.LOAD_BALANCING_LOSSES) / len(MoE.LOAD_BALANCING_LOSSES)
-        return output, {"load_balancing": load_balancing_loss}
+        additional_loss_dict = {}
+        if self.training:
+            load_balancing_loss = sum(MoE.LOAD_BALANCING_LOSSES) / max(len(MoE.LOAD_BALANCING_LOSSES), 1)
+            additional_loss_dict['load_balancing'] = (load_balancing_loss, self.args.load_balancing_weight)
+        return output, additional_loss_dict
 
 
     @torch.inference_mode()
@@ -760,16 +641,9 @@ class Transformer(nn.Module):
 
         if image is not None:
             assert start_pos == 0
-            h_bos, h_caption = h[:, :1], h[:, 1:]
             image_tokens = self.encode_image(image)
-            self.cache_image_words = image_tokens.shape[1] + 1 + 1
-            h = torch.cat((
-                h_bos,
-                self.start_img.repeat(_bsz, 1, 1),
-                image_tokens,
-                self.end_img.repeat(_bsz, 1, 1),
-                h_caption,
-            ), dim=1).to(h_bos)
+            self.cache_image_words = image_tokens.shape[1]
+            h = torch.cat((image_tokens, h), dim=1)
             seqlen = h.shape[1]
             freqs_cis = self.freqs_cis[0: seqlen]
         else:
@@ -800,13 +674,4 @@ class Transformer(nn.Module):
         for layer in self.layers:
             layer.attention.destroy_kv_cache()
 
-    def get_quant_blocklist(self) -> List[str]:
-        vision_prefixes = [
-            "clip.", "openclip_convnext_xxl.", "dinov2_vitg14.", "qformer.",
-            "visual_proj.", "qformer_proj.",
-        ]
-        blocklist = []
-        for n, m in self.named_modules():
-            if any(n.startswith(x) for x in vision_prefixes):
-                blocklist.append(n)
-        return blocklist
+
