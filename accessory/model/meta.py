@@ -387,6 +387,8 @@ class MetaModel(nn.Module):
             max_seq_len -= self.llma.image_words
 
         total_len = min(max_seq_len, max_gen_len + max_prompt_size)
+        for k, t in enumerate(prompt_tokens):
+            prompt_tokens[k] = t[-(max_seq_len-max_gen_len):]
 
         tokens = torch.full((bsz, total_len), 0).cuda().long()
         input_text_mask = torch.full((bsz, total_len), False).cuda()

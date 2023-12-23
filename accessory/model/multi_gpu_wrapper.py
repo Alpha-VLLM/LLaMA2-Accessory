@@ -1,24 +1,19 @@
-from enum import Enum, auto
+import atexit
+import sys
+import os
+import warnings
 import random
 import numpy as np
 import builtins
-import multiprocessing as mp
-mp = mp.get_context("spawn")
 import traceback
+import subprocess
 import torch
 import torch.distributed as dist
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import accessory.util.misc
-from .meta import MetaModel
+from accessory.model.meta import MetaModel
 
-
-class ResponseSignal(Enum):
-    READY = auto()
-    SUCCESS = auto()
-    YIELDING = auto()
-    YIELD_END = auto()
-    FAIL = auto()
 
 REQUESTS_WITH_STREAM_RESPONSE = [
     "stream_generate",
@@ -34,66 +29,116 @@ def init_print(is_master):
         force = kwargs.pop('force', False)
         kwargs['flush'] = True # flush should always be true
         if is_master or force:
-            builtin_print('[model process]', end='')  # print with time stamp
+            builtin_print('[model process] ', end='')  # print with time stamp
             builtin_print(*args, **kwargs)
 
     builtins.print = _print
 
+class ResetException(Exception):
+    pass
 
-def model_worker(
-        from_pretrained_args, from_pretrained_kwargs,
-        world_size, rank, gpu_id, port,
-        barrier: mp.Barrier, request_queue: mp.Queue, response_queue: Optional[mp.Queue],
-):
+class TerminateException(Exception):
+    pass
+
+def process_special_request(request: str):
+    if request == "reset_status":
+        raise ResetException
+    elif request == "terminate":
+        raise TerminateException
+
+def model_worker(port: int, rank:int, world_size: int):
+
+    def put_response(response):
+        dist.gather_object(response, object_gather_list=None, dst=0)
+
+    def get_request() -> List:
+        _ = [[]]
+        dist.broadcast_object_list(_, src=0)
+        assert len(_) == 1
+        _ = _[0]
+        return _
+
     # specify random seed to ensure consistent token sampling among model parallel ranks
     random.seed(0)
     torch.random.manual_seed(0)
     np.random.seed(0)
-    torch.cuda.set_device(gpu_id)
-    dist.init_process_group(
-        backend="nccl", rank=rank, world_size=world_size,
-        init_method=f"tcp://127.0.0.1:{port}",
-    )
-    init_print(dist.get_rank()==0)
 
-    from_pretrained_kwargs['mp_group'] = dist.GroupMember.WORLD
+    store = dist.TCPStore("127.0.0.1", port, world_size, False)
+
+    dist.init_process_group(
+        backend="gloo", rank=rank, world_size=world_size,
+        # init_method=f"tcp://127.0.0.1:{port}",
+        store=store
+    )
+
+    size = dist.get_world_size()
+    rank = dist.get_rank()
+
+    gpu_ids, from_pretrained_args, from_pretrained_kwargs = get_request()
+    torch.cuda.set_device(gpu_ids[rank-1])
+
+    init_print(rank==1)
+    from_pretrained_kwargs['mp_group'] = dist.new_group(ranks=list(range(1, size)), backend="nccl")
     # mp_group identifies which ranks will work collaboratively through model parallelism
     model = MetaModel.from_pretrained(*from_pretrained_args, **from_pretrained_kwargs)
 
-    barrier.wait()
+    dist.barrier()
 
-    def put_response(response):
-        if response_queue is not None:
-            response_queue.put(response)
-        else:
-            pass
 
-    with torch.inference_mode():
-        while True:
-            try:
-                request_type, (request_args, request_kwargs) = request_queue.get()
-                if request_type == "reset_status":
-                    continue
-                if request_type not in REQUESTS_WITH_STREAM_RESPONSE:
-                    result = getattr(model, request_type)(*request_args, **request_kwargs)
-                    put_response((ResponseSignal.SUCCESS, result))
-                else:
-                    need_yield_end = True
-                    for stream_response in getattr(model, request_type)(*request_args, **request_kwargs):
-                        put_response((ResponseSignal.YIELDING, stream_response))
-                        yield_request, _ = request_queue.get()
-                        if yield_request == "continue_yield":
-                            continue
-                        elif yield_request in ["stop_yield", "reset_status"]:
-                            need_yield_end = False
-                            break
-                        else:
-                            raise ValueError(f"Unexpected request type during yield: {yield_request}")
-                    if need_yield_end:
-                        put_response((ResponseSignal.YIELD_END, None))  # todo if not rank0, dont put
-            except Exception as e:
-                put_response((ResponseSignal.FAIL, traceback.format_exc()))
+    while True:
+        try:
+            request_type, (request_args, request_kwargs) = get_request()
+            process_special_request(request_type)
 
+            if request_type not in REQUESTS_WITH_STREAM_RESPONSE:
+                result = getattr(model, request_type)(*request_args, **request_kwargs)
+                put_response(("SUCCESS", result))
+            else:
+                for stream_response in getattr(model, request_type)(*request_args, **request_kwargs):
+                    put_response(("YIELDING", stream_response))
+                    yield_request, _ = get_request()
+                    process_special_request(request_type)
+                    if yield_request == "continue_yield":
+                        continue
+                    elif yield_request == "stop_yield":
+                        raise ResetException
+                    else:
+                        raise ValueError(f"Unexpected request type during yield: {yield_request}")
+                put_response(("YIELD_END", None))
+        except ResetException:
+            continue
+        except TerminateException:
+            exit(0)
+        except Exception as e:
+            if isinstance(e, RuntimeError) and "connection closed by peer" in str(e).lower():
+                exit(0)
+            else:
+                put_response(("FAIL", traceback.format_exc()))
+
+
+def _reset_world():
+    for key in [
+        "_pg_map", "_pg_names", "_pg_group_ranks", "_pg_backend_config", "_pg_to_tag", "_tags_to_pg"
+    ]:
+        if hasattr(dist.distributed_c10d, key):
+            setattr(dist.distributed_c10d, key, {})
+    setattr(dist.distributed_c10d, "_group_count", 0)
+    dist.distributed_c10d._world = dist.distributed_c10d._World()
+
+def _save_world():
+    save_dict = {}
+    for key in [
+        "_pg_map", "_pg_names", "_pg_group_ranks", "_pg_backend_config", "_pg_to_tag", "_tags_to_pg"
+    ]:
+        if hasattr(dist.distributed_c10d, key):
+            save_dict[key] = getattr(dist.distributed_c10d, key)
+    save_world = dist.distributed_c10d._world
+    return save_dict, save_world
+
+def _load_world(load_dict, load_world):
+    for key, val in load_dict.items():
+        setattr(dist.distributed_c10d, key, val)
+    dist.distributed_c10d._world = load_world
 
 class MultiGpuWrapper:
     """
@@ -131,33 +176,38 @@ class MultiGpuWrapper:
         if gpus is None and gpu_ids is None:
             raise ValueError('You must specify either gpus or gpu_ids')
 
-        self.response_queue = mp.Queue()
-        self.request_queues = []
-        self.worker_processes = []
-
         if gpu_ids is None:
             gpu_ids = list(range(gpus))
-        world_size = len(gpu_ids)
-        barrier = mp.Barrier(world_size + 1)
-        port = accessory.util.misc.find_free_port(10000 + random.randint(-100, 100), 11000)
 
-        print(f"Launching {world_size} processes for hosting model with model parallel size {world_size}")
+        self.outer_world = _save_world()
+        _reset_world()
+
+        # launch model worker subprocesses and create inner world
+        port = accessory.util.misc.find_free_port(10000+int(os.getpid())%100*100, 10100+int(os.getpid())%100*100)
+        print(f"Launching {len(gpu_ids)} processes for hosting model with model parallel size {len(gpu_ids)}")
         print("Note that only the output from the FIRST model process will be printed")
-        for i, gpu_id in enumerate(gpu_ids):
-            request_queue_this_rank = mp.Queue()
-            process = mp.Process(
-                target=model_worker,
-                args=(from_pretrained_args, from_pretrained_kwargs, world_size, i, gpu_id, port,
-                      barrier, request_queue_this_rank, self.response_queue if i == 0 else None)
-            )
-            process.start()
-            self.request_queues.append(request_queue_this_rank)
-            self.worker_processes.append(process)
+        self.model_workers = []
+        for rank in range(1, len(gpu_ids) + 1):
+            p = subprocess.Popen([sys.executable, __file__, str(port), str(rank), str(len(gpu_ids)+1)])
+            self.model_workers.append(p)
 
-        barrier.wait()
+        atexit.register(self.on_exit)
+
+        store = dist.TCPStore("127.0.0.1", port, len(gpu_ids) + 1, True)
+        dist.init_process_group(
+            backend="gloo", rank=0, world_size=len(gpu_ids) + 1,
+            # init_method=f"tcp://127.0.0.1:{port}",
+            store=store
+        )
+        self.inner_world = _save_world()
 
 
-    @torch.inference_mode()
+        dist.broadcast_object_list([[gpu_ids, from_pretrained_args, from_pretrained_kwargs]], src=0)
+        dist.new_group(ranks=list(range(1, len(gpu_ids) + 1)), backend="nccl")
+        dist.barrier()
+
+        _load_world(*self.outer_world)
+
     def compute_logits(self, *args, **kwargs):
         """
         Wraps `accessory.model.MetaModel.compute_logits`
@@ -168,7 +218,6 @@ class MultiGpuWrapper:
         """
         return self.call_model_func("compute_logits", *args, **kwargs)
 
-    @torch.inference_mode()
     def evaluate_examples(self, *args, **kwargs):
         """
         Wraps `accessory.model.MetaModel.evaluate_examples`
@@ -179,7 +228,6 @@ class MultiGpuWrapper:
         """
         return self.call_model_func("evaluate_examples", *args, **kwargs)
 
-    @torch.inference_mode()
     def generate(self, *args, **kwargs):
         """
         Wraps `accessory.model.MetaModel.generate`
@@ -190,7 +238,6 @@ class MultiGpuWrapper:
         """
         return self.call_model_func("generate", *args, **kwargs)
 
-    @torch.inference_mode()
     def stream_generate(self, *args, **kwargs):
         """
         Wraps `accessory.model.MetaModel.stream_generate`
@@ -212,11 +259,11 @@ class MultiGpuWrapper:
 
     def call_model_func(self, request_name:str, *args, **kwargs):
         self.reset_status()
-        self.emit_request(request_name, *args, **kwargs)
-        response_signal, contents = self.response_queue.get()
-        if response_signal == ResponseSignal.SUCCESS:
+        self._emit_request(request_name, *args, **kwargs)
+        response_signal, contents = self._get_response()
+        if response_signal == "SUCCESS":
             return contents
-        elif response_signal == ResponseSignal.FAIL:
+        elif response_signal == "FAIL":
             trace = contents
             raise Exception(trace)
         else:
@@ -225,32 +272,53 @@ class MultiGpuWrapper:
     def call_model_stream_func(self, request_name:str, *args, **kwargs):
         self.reset_status()
         assert request_name in REQUESTS_WITH_STREAM_RESPONSE
-        self.emit_request(request_name, *args, **kwargs)
+        self._emit_request(request_name, *args, **kwargs)
         while True:
-            response_signal, contents = self.response_queue.get()
-            if response_signal == ResponseSignal.YIELDING:
+            response_signal, contents = self._get_response()
+            if response_signal == "YIELDING":
                 try:
-                    yield contents  # todo test here
+                    yield contents
                 except GeneratorExit:
-                    self.emit_request("stop_yield")
+                    self._emit_request("stop_yield")
                     raise
                 else:
-                    self.emit_request("continue_yield")
-            elif response_signal == ResponseSignal.YIELD_END:
+                    self._emit_request("continue_yield")
+            elif response_signal == "YIELD_END":
                 return
-            elif response_signal == ResponseSignal.FAIL:
+            elif response_signal == "FAIL":
                 trace = contents
                 raise Exception(trace)
             else:
                 raise ValueError("Unexpected response signal {}".format(response_signal))
 
-    def emit_request(self, request_name:str, *args, **kwargs):
-        for q in self.request_queues:
-            q.put((request_name, (args, kwargs)))
+    def _emit_request(self, request_name:str, *args, **kwargs):
+        self.outer_world = _save_world()
+        _load_world(*self.inner_world)
+
+        dist.broadcast_object_list([[request_name, (args, kwargs)]], src=0)
+
+        self.inner_world = _save_world()
+        _load_world(*self.outer_world)
+
+    def _get_response(self):
+        self.outer_world = _save_world()
+        _load_world(*self.inner_world)
+
+        response = [[] for _ in range(dist.get_world_size())]
+        dist.gather_object(None, response, dst=0)
+
+        self.inner_world = _save_world()
+        _load_world(*self.outer_world)
+        return response[1]
 
     def reset_status(self):
-        # clear response
-        while not self.response_queue.empty():
-            self.response_queue.get()
+        self._emit_request("reset_status")
 
-        self.emit_request("reset_status")
+    def on_exit(self):
+        self._emit_request("terminate")
+        for p in self.model_workers:
+            p.kill()
+
+
+if __name__ == '__main__':
+    model_worker(port=int(sys.argv[1]), rank=int(sys.argv[2]), world_size=int(sys.argv[3]))
