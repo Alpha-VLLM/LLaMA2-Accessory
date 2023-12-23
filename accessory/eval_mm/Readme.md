@@ -39,7 +39,7 @@ srun python inference_image_sphinx.py \
 --pretrained_path ${pretrained_path} \
 --batch_size 32 \
 --max_seq_length 4096 \
---model_parallel_size 4
+--model_parallel_size 2
 ```
 
 
