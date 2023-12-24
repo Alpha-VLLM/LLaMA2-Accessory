@@ -614,18 +614,18 @@ def print_param_status(model: torch.nn.Module) -> None:
         is_model_parallel = getattr(param, "is_model_parallel", False)
         print(f"Param {name}: requires_grad {param.requires_grad}, local_size {param.shape}, model_parallel {is_model_parallel}, dtype {param.dtype}")
 
-def cached_file(repo_id: str) -> str:
-    parts = repo_id.split("/")
+
+def cached_file_from_hf(hf_path: str) -> str:
+    parts = hf_path.split("/")
 
     if len(parts) > 2:
         repo_id = "/".join(parts[:2])
         subfolder = "/".join(parts[2:]).replace("tree/main/", "")
-
     elif len(parts) == 1:
         repo_id = "Alpha-VLLM/LLaMA2-Accessory"
         subfolder = '*/' + parts[0]
-
     else:
+        repo_id = hf_path
         subfolder = ""
 
     model_name = parts[-1]
@@ -633,9 +633,9 @@ def cached_file(repo_id: str) -> str:
 
     def download_files():
         if subfolder:
-            perform_download(repo_id, f"{subfolder}/*", cache_path)
+            hf_download(repo_id, f"{subfolder}/*", cache_path)
         else:
-            perform_download(repo_id, None, cache_path)
+            hf_download(repo_id, None, cache_path)
 
     if dist.is_initialized():
         rank = dist.get_rank()
@@ -645,12 +645,12 @@ def cached_file(repo_id: str) -> str:
     else:
         download_files()
 
-    return [cache_path]
+    return cache_path
 
-def perform_download(repo_id, allow_patterns, cache_path):
+def hf_download(repo_id, allow_patterns, cache_path):
     print(f"Downloading from huggingface repo: {repo_id}")
     snapshot_download_args = {
-        'repo_id': repo_id, 
+        'repo_id': repo_id,
         'repo_type': 'model', 
         'local_dir': cache_path, 
         'local_dir_use_symlinks': False, 

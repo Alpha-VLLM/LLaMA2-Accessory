@@ -118,13 +118,16 @@ class MetaModel(nn.Module):
         :return: An Accessory.model.MetaModel object with pretrained checkpoints loaded.
         """
         if isinstance(pretrained_path, str):
-            if os.path.isdir(pretrained_path):
-                pretrained_path = [pretrained_path]
-            else:
-                repo_id = pretrained_path
-                pretrained_path = misc.cached_file(repo_id)
+            pretrained_path = [pretrained_path]
         if pretrained_path is None or len(pretrained_path) == 0:
             raise ValueError("pretrained_path should be specified")
+
+        for i, path in enumerate(pretrained_path):
+            if os.path.isdir(path):  # else path on disk, directly load
+                pass
+            else:  # load from huggingface
+                path = misc.cached_file_from_hf(path)
+                pretrained_path[i] = path
 
         if mp_group is None:
             print(f"mp_group not provided. Load model with model parallel size == 1")
@@ -282,7 +285,7 @@ class MetaModel(nn.Module):
         else:
             logits = output
 
-        logits = [_[:seq_len] for _, seq_len in zip(logits, l_seq_len)]
+        logits = [_[:seq_len].float() for _, seq_len in zip(logits, l_seq_len)]
         return logits
 
     @ torch.inference_mode()
@@ -402,7 +405,9 @@ class MetaModel(nn.Module):
         prev_pos = 0
 
         if return_logits:
-            return self.llma.forward_inference(tokens[:, :start_pos], prev_pos, images if prev_pos == 0 else None)
+            return self.llma.forward_inference(
+                tokens[:, :start_pos], prev_pos, images if prev_pos == 0 else None
+            ).float()
 
         l_stop_tokens = [[self.tokenizer.eos_id]] + [self.tokenizer.encode_segment(_) for _ in additional_stop_symbols]
         l_stop_tokens = [torch.tensor(_, dtype=tokens.dtype, device=tokens.device) for _ in l_stop_tokens]
@@ -410,7 +415,9 @@ class MetaModel(nn.Module):
         stop_pos = torch.tensor([start_pos + 1 for _ in range(bsz)], device=input_text_mask.device)
     
         for cur_pos in range(start_pos, total_len):
-            logits = self.llma.forward_inference(tokens[:, prev_pos:cur_pos], prev_pos, images if prev_pos == 0 else None)
+            logits = self.llma.forward_inference(
+                tokens[:, prev_pos:cur_pos], prev_pos, images if prev_pos == 0 else None
+            ).float()
             if temperature > 0:
                 probs = torch.softmax(logits / temperature, dim=-1)
                 next_token = self.sample_top_p(probs, top_p)
@@ -486,7 +493,9 @@ class MetaModel(nn.Module):
         prev_pos = 0
         generate_until = start_pos
         for cur_pos in range(start_pos, total_len):
-            logits = self.llma.forward_inference(tokens[None, prev_pos:cur_pos], prev_pos, image if prev_pos == 0 else None)
+            logits = self.llma.forward_inference(
+                tokens[None, prev_pos:cur_pos], prev_pos, image if prev_pos == 0 else None
+            ).float()
             if temperature > 0:
                 probs = torch.softmax(logits / temperature, dim=-1)
                 next_token = self.sample_top_p(probs, top_p)
