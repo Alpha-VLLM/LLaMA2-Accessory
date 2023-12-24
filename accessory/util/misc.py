@@ -662,7 +662,8 @@ def perform_download(repo_id, allow_patterns, cache_path):
 
     snapshot_download(**snapshot_download_args)
 
-    process_downloaded_files(cache_path)
+    if allow_patterns:
+        process_downloaded_files(cache_path)
 
     print(f"Saved to {cache_path}")
 
