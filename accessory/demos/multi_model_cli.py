@@ -1,4 +1,5 @@
 import sys
+import os
 sys.path.append(os.path.abspath(__file__).rsplit('/', 3)[0])
 import argparse
 from PIL import Image
@@ -23,7 +24,7 @@ def main(model, image_path, instruction):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run multi-modal model CLI")
-    parser.add_argument("--path", help="Path to the pretrained model")
+    parser.add_argument("--path", help="Path to the pretrained model or hf_repo id")
     parser.add_argument("--image", help="Path to the image file")
     parser.add_argument("--prompt", help="Instruction prompt")
     args = parser.parse_args()

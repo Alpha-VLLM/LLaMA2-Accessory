@@ -1,5 +1,5 @@
 import warnings
-
+import os
 import torch
 import torch.nn as nn
 import json
@@ -13,9 +13,14 @@ from fairscale.nn.model_parallel import initialize as fs_init
 from .tokenizer import Tokenizer
 from accessory.util import misc, tensor_parallel
 from accessory.util.tensor_type import default_tensor_type
-
+from huggingface_hub import snapshot_download
 import torch.distributed as dist
 
+def cached_file(repo_id: str) -> str:
+    model_name = repo_id.split("/")[-1]
+    cache_path = os.path.join(os.path.expanduser('~'), '.cache', 'accessory', model_name)
+    snapshot_download(repo_id=repo_id,repo_type='model', local_dir=cache_path, local_dir_use_symlinks=False, resume_download=True)
+    return [cache_path]
 
 class MetaModel(nn.Module):
     def __init__(
@@ -90,7 +95,7 @@ class MetaModel(nn.Module):
         `llama_type`, and `llama_config` of the model. The automatically determined values will be
         overridden by user's exploit specification of the arguments.
         :param pretrained_path: Paths to directories containing `consolidated.*.pth` weight files. If multiple paths
-                are given, weights will be loaded sequentially.
+                are given, weights will be loaded sequentially. Now repo_id also can be specified as a path.
         :param llama_type: Type of the inner LLM. The corresponding model class definition should be found in
                 accessory/model/LLM/llama_type.py. If not specified, this function will probe the `meta.json`
                 file under `pretrained_path` to try to determine the value.
@@ -116,7 +121,11 @@ class MetaModel(nn.Module):
         :return: An Accessory.model.MetaModel object with pretrained checkpoints loaded.
         """
         if isinstance(pretrained_path, str):
-            pretrained_path = [pretrained_path]
+            if os.path.isdir(pretrained_path):
+                pretrained_path = [pretrained_path]
+            else:
+                repo_id = pretrained_path
+                pretrained_path = cached_file(repo_id)
         if pretrained_path is None or len(pretrained_path) == 0:
             raise ValueError("pretrained_path should be specified")
 

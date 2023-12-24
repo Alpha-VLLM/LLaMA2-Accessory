@@ -1,5 +1,6 @@
 import sys
 import argparse
+import os
 sys.path.append(os.path.abspath(__file__).rsplit('/', 3)[0])
 from accessory.model.meta import MetaModel
 from accessory.data.system_prompt import format_prompt
@@ -14,7 +15,7 @@ def main(pretrained_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run single model CLI")
-    parser.add_argument("--path", help="Path to the pretrained model", required=False)
+    parser.add_argument("--path", help="Path to the pretrained model or hf_repo id", required=False)
     parser.add_argument("--prompt", help="Instruction prompt", required=False)
     args = parser.parse_args()
 
