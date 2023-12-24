@@ -13,47 +13,7 @@ from fairscale.nn.model_parallel import initialize as fs_init
 from .tokenizer import Tokenizer, probe_tokenizer_path_from_pretrained
 from accessory.util import misc, tensor_parallel
 from accessory.util.tensor_type import default_tensor_type
-from huggingface_hub import snapshot_download
 import torch.distributed as dist
-
-def cached_file(repo_id: str) -> str:
-    parts = repo_id.split("/")
-
-    if len(parts) > 2:
-        repo_id = "/".join(parts[:2])
-        subfolder = "/".join(parts[2:]).replace("tree/main/", "")
-
-    elif len(parts) == 1:
-        repo_id = "Alpha-VLLM/LLaMA2-Accessory"
-        subfolder = '*/' + parts[0]
-
-    else:
-        subfolder = ""
-
-    model_name = parts[-1]
-    cache_path = os.path.join(os.path.expanduser('~'), '.cache', 'accessory', model_name)
-
-    if subfolder:
-        perform_download(repo_id, f"{subfolder}/*", cache_path)
-    else:
-        perform_download(repo_id, None, cache_path)
-
-    return [cache_path]
-
-def perform_download(repo_id, allow_patterns, cache_path):
-    snapshot_download_args = {
-        'repo_id': repo_id, 
-        'repo_type': 'model', 
-        'local_dir': cache_path, 
-        'local_dir_use_symlinks': False, 
-        'resume_download': True
-    }
-
-    if allow_patterns:
-        snapshot_download_args['allow_patterns'] = allow_patterns
-
-    snapshot_download(**snapshot_download_args)
-
 
 
 class MetaModel(nn.Module):
@@ -162,7 +122,7 @@ class MetaModel(nn.Module):
                 pretrained_path = [pretrained_path]
             else:
                 repo_id = pretrained_path
-                pretrained_path = cached_file(repo_id)
+                pretrained_path = misc.cached_file(repo_id)
         if pretrained_path is None or len(pretrained_path) == 0:
             raise ValueError("pretrained_path should be specified")
 

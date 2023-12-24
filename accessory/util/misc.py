@@ -1,6 +1,7 @@
 import builtins
 import datetime
 import os
+import shutil
 import socket
 import dataclasses
 import random
@@ -11,7 +12,7 @@ import subprocess
 from types import SimpleNamespace
 import json
 import numpy as np
-
+from huggingface_hub import snapshot_download
 import torch
 import torch.distributed as dist
 from torch.distributed.fsdp.sharded_grad_scaler import ShardedGradScaler
@@ -612,3 +613,70 @@ def print_param_status(model: torch.nn.Module) -> None:
     for name, param in no_grad_set:
         is_model_parallel = getattr(param, "is_model_parallel", False)
         print(f"Param {name}: requires_grad {param.requires_grad}, local_size {param.shape}, model_parallel {is_model_parallel}, dtype {param.dtype}")
+
+def cached_file(repo_id: str) -> str:
+    parts = repo_id.split("/")
+
+    if len(parts) > 2:
+        repo_id = "/".join(parts[:2])
+        subfolder = "/".join(parts[2:]).replace("tree/main/", "")
+
+    elif len(parts) == 1:
+        repo_id = "Alpha-VLLM/LLaMA2-Accessory"
+        subfolder = '*/' + parts[0]
+
+    else:
+        subfolder = ""
+
+    model_name = parts[-1]
+    cache_path = os.path.join(os.path.expanduser('~'), '.cache', 'accessory', model_name)
+
+    def download_files():
+        if subfolder:
+            perform_download(repo_id, f"{subfolder}/*", cache_path)
+        else:
+            perform_download(repo_id, None, cache_path)
+
+    if dist.is_initialized():
+        rank = dist.get_rank()
+        if rank == 0:
+            download_files()
+        dist.barrier()
+    else:
+        download_files()
+
+    return [cache_path]
+
+def perform_download(repo_id, allow_patterns, cache_path):
+    print(f"Downloading from huggingface repo: {repo_id}")
+    snapshot_download_args = {
+        'repo_id': repo_id, 
+        'repo_type': 'model', 
+        'local_dir': cache_path, 
+        'local_dir_use_symlinks': False, 
+        'resume_download': True
+    }
+
+    if allow_patterns:
+        snapshot_download_args['allow_patterns'] = allow_patterns
+
+    snapshot_download(**snapshot_download_args)
+
+    process_downloaded_files(cache_path)
+
+    print(f"Saved to {cache_path}")
+
+def process_downloaded_files(cache_path):
+    for root, dirs, files in os.walk(cache_path, topdown=True):
+        if files:
+            relative_path = os.path.relpath(root, cache_path)
+            print(f"Files originally in subdirectory: ./{relative_path}")
+            for file in files:
+                file_path = os.path.join(root, file)
+                shutil.move(file_path, cache_path)
+
+    for root, dirs, files in os.walk(cache_path, topdown=False):
+        for dir in dirs:
+            dir_path = os.path.join(root, dir)
+            if not os.listdir(dir_path):
+                os.rmdir(dir_path)
