@@ -109,7 +109,7 @@ def main():
         download_files(repo_id, configfolder, files_to_download, args.output_path)
 
 
-    snapshot_download(repo_id=repo_id, allow_patterns=f"{subfolder}/*",repo_type='model', local_dir=args.output_path, local_dir_use_symlinks=False, resume_download=True)
+    snapshot_download(repo_id=repo_id, allow_patterns=f"{subfolder}/*", repo_type='model', local_dir=args.output_path, local_dir_use_symlinks=False, resume_download=True)
  
 
 if __name__ == '__main__':

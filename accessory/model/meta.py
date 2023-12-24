@@ -17,10 +17,31 @@ from huggingface_hub import snapshot_download
 import torch.distributed as dist
 
 def cached_file(repo_id: str) -> str:
-    model_name = repo_id.split("/")[-1]
+    parts = repo_id.split("/")
+
+    if len(parts) > 2:
+        repo_id = "/".join(parts[:2])  
+        subfolder = "/".join(parts[2:]) 
+        subfolder = subfolder.replace("tree/main/", "")
+        sub = True
+    elif len(parts) == 1:
+        repo_id = "Alpha-VLLM/LLaMA2-Accessory"
+        subfolder = '*/'+parts[0]
+        sub = True
+    else:
+        sub = False
+        subfolder = ""
+
+    model_name = parts[-1]
     cache_path = os.path.join(os.path.expanduser('~'), '.cache', 'accessory', model_name)
-    snapshot_download(repo_id=repo_id,repo_type='model', local_dir=cache_path, local_dir_use_symlinks=False, resume_download=True)
+
+    if sub:
+        snapshot_download(repo_id=repo_id, allow_patterns=f"{subfolder}/*", repo_type='model', local_dir=cache_path, local_dir_use_symlinks=False, resume_download=True)
+    else:
+        snapshot_download(repo_id=repo_id, repo_type='model', local_dir=cache_path, local_dir_use_symlinks=False, resume_download=True)
+
     return [cache_path]
+
 
 class MetaModel(nn.Module):
     def __init__(
