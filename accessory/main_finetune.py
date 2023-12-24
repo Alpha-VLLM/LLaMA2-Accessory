@@ -15,6 +15,7 @@ from functools import partial
 
 import torch
 from torch.utils.data import Dataset
+import torch.distributed as dist
 import torch.backends.cudnn as cudnn
 from torch.utils.tensorboard import SummaryWriter
 from torch.distributed.fsdp import (
@@ -115,8 +116,6 @@ def get_args_parser():
                         help='number of iterations between within-epoch model saving')
     parser.add_argument('--only_save_trainable', default=False, action="store_true",
                         help='only save trainable model parameters')
-    parser.add_argument('--device', default='cuda',
-                        help='device to use for training / testing')
     parser.add_argument('--seed', default=0, type=int)
     parser.add_argument('--resume', default='',
                         help='resume from checkpoint')
@@ -151,8 +150,6 @@ def main(args):
     print('job dir: {}'.format(os.path.dirname(os.path.realpath(__file__))))
     print("{}".format(args).replace(', ', ',\n'))
 
-    device = torch.device(args.device)
-
     # fix the seed for reproducibility
     seed = args.seed + misc.get_rank()
     torch.manual_seed(seed)
@@ -183,20 +180,21 @@ def main(args):
                 print(f"## Processing on RANK {i}.", force=True)
                 with default_tensor_type(dtype=mixed_precision_dtype, device="cpu"):
                     model = MetaModel(args.llama_type, args.llama_config,
-                                    args.tokenizer_path, with_visual=not args.no_visual,
-                                    max_seq_len=args.max_words)
+                                      args.tokenizer_path, with_visual=not args.no_visual,
+                                      max_seq_len=args.max_words)
                 promote_trainable_params_to_fp32(model)
                 misc.print_param_status(model)
 
                 # load pretrained weights
-                print(f"## Load pretrained from {args.pretrained_path}", force=True)
-                load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
-                print("load result: ", load_result)
-                if args.pretrained_type is not None:
-                    warnings.warn(
-                        "The `--pretrained_type` argument has been deprecated and will be removed soon. "
-                        "The types of checkpoints are now automatically discerned by file names now"
-                    )
+                if fs_init.get_data_parallel_rank() == 0:
+                    print(f"## Load pretrained from {args.pretrained_path}", force=True)
+                    load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
+                    print("load result: ", load_result)
+                    if args.pretrained_type is not None:
+                        warnings.warn(
+                            "The `--pretrained_type` argument has been deprecated and will be removed soon. "
+                            "The types of checkpoints are now automatically discerned by file names now"
+                        )
 
                 print("## Quantizing model to 4bit!", force=True)
                 quantization_config = BitsAndBytesConfig.from_dict(
@@ -211,7 +209,7 @@ def main(args):
                 
                 # will (1) release CPU memory usage, and (2) occupy GPU memory.
                 model.cuda() 
-            torch.distributed.barrier()
+            dist.barrier()
     else:
         with default_tensor_type(dtype=mixed_precision_dtype, device="cuda"):
             model = MetaModel(args.llama_type, args.llama_config,
@@ -220,14 +218,15 @@ def main(args):
         print("Finish initialization.")
         promote_trainable_params_to_fp32(model)
         misc.print_param_status(model)
-        print(f"load pretrained from {args.pretrained_path}")
-        load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
-        print("load result: ", load_result)
-        if args.pretrained_type is not None:
-            warnings.warn(
-                "The `--pretrained_type` argument has been deprecated and will be removed soon. "
-                "The types of checkpoints are now automatically discerned by file names now"
-            )
+        if fs_init.get_data_parallel_rank() == 0:
+            print(f"load pretrained from {args.pretrained_path}")
+            load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
+            print("load result: ", load_result)
+            if args.pretrained_type is not None:
+                warnings.warn(
+                    "The `--pretrained_type` argument has been deprecated and will be removed soon. "
+                    "The types of checkpoints are now automatically discerned by file names now"
+                )
     print("Unwrapped Model = %s" % str(model))
 
     # resume stage1
@@ -235,8 +234,7 @@ def main(args):
         misc.resume_stage1(args, model_without_FSDP=model)
 
     TransformerBlock = type(model.llma.layers[0])
-    # ignored_named_parameters = {name: param for name, param in model.named_parameters() if not param.requires_grad}
-    # print(ignored_named_parameters.keys())
+    fsdp_ignored_parameters = [param for param in model.parameters() if not param.requires_grad]
     model = FSDP(
         model,
         process_group=fs_init.get_data_parallel_group(),
@@ -257,11 +255,14 @@ def main(args):
             "ddp": ShardingStrategy.NO_SHARD,
             "fsdp": ShardingStrategy.FULL_SHARD,
         }[args.data_parallel],
-        device_id=device,
-        ignored_parameters=[param for param in model.parameters() if not param.requires_grad]
+        device_id=torch.cuda.current_device(),
+        ignored_parameters=fsdp_ignored_parameters
     )
-
-    # broadcast nonmp parameters within model parallel group
+    # broadcast ignored params, which are not synchronized among data parallel ranks by the FSDP call
+    for param in fsdp_ignored_parameters:
+        dist.broadcast(param.data, src=dist.get_global_rank(fs_init.get_data_parallel_group(), 0),
+                       group=fs_init.get_data_parallel_group())
+    # broadcast non-model-parallel parameters within model parallel group
     misc.broadcast_nonmp_parameters(model)
 
     # gradient checkpointing

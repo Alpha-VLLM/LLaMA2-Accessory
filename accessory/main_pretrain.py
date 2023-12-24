@@ -71,7 +71,7 @@ def get_args_parser():
 
     # Optimizer parameters
     parser.add_argument('--weight_decay', type=float, default=0.02,
-                        help='weight decay (default: 0.05)')
+                        help='weight decay (default: 0.02)')
 
     parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
                         help='learning rate (absolute lr)')
@@ -102,8 +102,6 @@ def get_args_parser():
                         help='path where to tensorboard log')
     parser.add_argument('--save_freq', type=int, default=5000,
                         help='number of iterations between model saving')
-    parser.add_argument('--device', default='cuda',
-                        help='device to use for training / testing')
     parser.add_argument('--seed', default=0, type=int)
     parser.add_argument('--resume', default='',
                         help='resume from checkpoint')
@@ -136,8 +134,6 @@ def main(args):
     print('job dir: {}'.format(os.path.dirname(os.path.realpath(__file__))))
     print("{}".format(args).replace(', ', ',\n'))
 
-    device = torch.device(args.device)
-
     # fix the seed for reproducibility
     seed = args.seed + misc.get_rank()
     torch.manual_seed(seed)
@@ -157,13 +153,13 @@ def main(args):
         "bf16": torch.bfloat16,
         "tf32": torch.float32,
     }[args.precision]
-    with default_tensor_type(dtype=mixed_precision_dtype, device="cpu"):
+    with default_tensor_type(dtype=mixed_precision_dtype, device="cuda"):
         model = MetaModel(args.llama_type, args.llama_config,
                           args.tokenizer_path, with_visual=False,
                           max_seq_len=args.max_words)
     promote_trainable_params_to_fp32(model)
     misc.print_param_status(model)
-    if args.pretrained_path:
+    if args.pretrained_path and fs_init.get_data_parallel_rank() == 0:
         print(f"load pretrained from {args.pretrained_path}")
         load_result = load_tensor_parallel_model_list(model, args.pretrained_path)
         print("load result: ", load_result)
@@ -178,7 +174,6 @@ def main(args):
     if args.resume:
         misc.resume_stage1(args, model_without_FSDP=model)
 
-    
     TransformerBlock = type(model.llma.layers[0])
 
     model = FSDP(
@@ -201,7 +196,7 @@ def main(args):
             "ddp": ShardingStrategy.NO_SHARD,
             "fsdp": ShardingStrategy.FULL_SHARD,
         }[args.data_parallel],
-        device_id=device
+        device_id=torch.cuda.current_device(),
     )
 
     # broadcast nonmp parameters within model parallel group

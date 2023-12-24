@@ -34,13 +34,13 @@ Benefited from the meticulously designed operators and the desirable nature of b
 the second implementation is generally more efficient. On the other hand, the first one may be easier for beginners
 to understand, and is also easier to be combined with LoRA.
 
-The <span style="color: #00e0e0">base</span> implementation of Mixtral-8x7b is in {link2repo}`[mistral.py](accessory/model/LLM/mistral.py)`;
-a corresponding PEFT version (supporting bias/norm/LoRA tuning) is in {link2repo}`[mistral_peft.py](accessory/model/LLM/mistral_peft.py)`.
+The <span style="color: #00e0e0">base</span> implementation of Mixtral-8x7b is in {link2repo}`[mixtral.py](accessory/model/LLM/mixtral.py)`;
+a corresponding PEFT version (supporting bias/norm/LoRA tuning) is in {link2repo}`[mixtral_peft.py](accessory/model/LLM/mixtral_peft.py)`.
 For the <span style="color: #00e0e0">base</span> implementation, we prioritize simplicity over efficiency.
 
 
-The <span style="color: #00e0e0">sparse</span> implementation of Mixtral-8x7b is in {link2repo}`[mistral_sparse.py](accessory/model/LLM/mistral_sparse.py)`.
-Based on the implementation, {link2repo}`[mistral_sparse_ens.py](accessory/model/LLM/mistral_sparse_ens.py)` implements a
+The <span style="color: #00e0e0">sparse</span> implementation of Mixtral-8x7b is in {link2repo}`[mixtral_sparse.py](accessory/model/LLM/mixtral_sparse.py)`.
+Based on the implementation, {link2repo}`[mixtral_sparse_ens.py](accessory/model/LLM/mixtral_sparse_ens.py)` implements a
 multi-modal model, with similar architecture to [SPHINX](https://github.com/Alpha-VLLM/LLaMA2-Accessory/tree/main/SPHINX)
 but using mixtral-8x7b instead of LLaMA2 as LLM backbone. We are actively working on this multi-modal model and 
 the checkpoint will be released soon. For the sparse implementation, we place greater emphasis on 
@@ -223,8 +223,8 @@ A thorough tutorial over the inference with LLaMA2-Accessory can be found in the
 `pretrained_path` should be replaced with the real path of the checkpoints prepared in the previous section. 
 The `from_pretrained` method will then probe the `meta.json` file in the given path to discern the type of 
 llm used, namely the `llama_type` argument for initializing a Meta model. For the 
-<span style="color: #00e0e0">base</span> implementation, `llama_type` is `mistral`; otherwise for the
-<span style="color: #00e0e0">sparse</span> implementation, `llama_type` is `mistral_sparse`.
+<span style="color: #00e0e0">base</span> implementation, `llama_type` is `mixtral`; otherwise for the
+<span style="color: #00e0e0">sparse</span> implementation, `llama_type` is `mixtral_sparse`.
 
 
 ### Host Local Demo
@@ -271,19 +271,19 @@ For the <span style="color: #00e0e0">base</span> implementation:
 ```bash
 cd LLaMA2-Accessory/accessory
 srun -n32 --gres=gpu:8 --ntasks-per-node=8 bash \
-exps/finetune/sg/dialog_ultrachat200kWizardcode_mistral.sh \
+exps/finetune/sg/dialog_ultrachat200kWizardcode_mixtral.sh \
 /path/to/converted \
 /path/to/converted/config.json \
 /path/to/converted/tokenizer.model
 ```
-For the <span style="color: #00e0e0">sparse</span> implementation, change `dialog_ultrachat200kWizardcode_mistral.sh`
-to `dialog_ultrachat200kWizardcode_mistralSparse.sh` (where the only different is changing the `llama_type` argument
-from `mistral` to `mistral_sparse`), and `/path/to/converted` to `path/to/converted_sparse`.
+For the <span style="color: #00e0e0">sparse</span> implementation, change `dialog_ultrachat200kWizardcode_mixtral.sh`
+to `dialog_ultrachat200kWizardcode_mixtralSparse.sh` (where the only different is changing the `llama_type` argument
+from `mixtral` to `mixtral_sparse`), and `/path/to/converted` to `path/to/converted_sparse`.
 ### PEFT
 ```bash
 cd LLaMA2-Accessory/accessory
 srun -n16 --gres=gpu:8 --ntasks-per-node=8 bash \
-exps/finetune/sg/dialog_ultrachat200kWizardcode_mistralPeft.sh \
+exps/finetune/sg/dialog_ultrachat200kWizardcode_mixtralPeft.sh \
 /path/to/converted \
 /path/to/converted/config.json \
 /path/to/converted/tokenizer.model

@@ -10,5 +10,5 @@
 # from . import llama_ens_peft
 # from . import internlm
 # from . import falcon
-# from . import mistral
-# from . import mistral_peft
+# from . import mixtral
+# from . import mixtral_peft

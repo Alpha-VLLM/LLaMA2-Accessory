@@ -34,35 +34,6 @@ class ConversationGenerator:
         self.tokenizer = tokenizer
         # modify this assignment to change conversation template
         self.conv_func = conv_template_func
-        self._probe_tokenizer_style()
-
-    def _probe_tokenizer_style(self):
-        """
-        Given a sentence, e.g. "Hi my darling", some tokenizers (e.g. LLaMA's) will pose the following behavior:
-        >>> # leading characters will be treated as if there were an " " in the beginning
-        >>> tokenizer.encode("Hi my darling") == tokenizer.encode("Hi") + tokenizer.encode("my darling")
-        >>> # leading space " " is redundant and should not be added
-        >>> tokenizer.encode("Hi my darling") != tokenizer.encode("Hi") + tokenizer.encode(" my darling")
-        >>> tokenizer.encode(" my darling") == tokenizer.encode(" ") + tokenizer.encode(" my darling")
-        However, some others (e.g. InternLM's) will behave differently:
-        >>> # leading space " " has to be explicitly added
-        >>> tokenizer.encode("Hi my darling") == tokenizer.encode("Hi") + tokenizer.encode(" my darling")
-        Knowing which style the tokenizer takes is necessary for separeting the tokens that the model should learn
-        to predict (i.e. those corresponding to AI responses) from the whole conversation
-
-        """
-        conv = self.conv_func()
-        probe = "probe am I"
-        sentence1 = self.tokenizer.encode(conv.roles[1] + ": " + probe,
-                                          bos=False, eos=False)
-        sentence2 = self.tokenizer.encode(probe,
-                                          bos=False, eos=False)
-        if sentence1[-len(sentence2):] == sentence2:
-            self.space_before_to_predict = False
-        else:
-            sentence3 = self.tokenizer.encode(" " + probe, bos=False, eos=False)
-            assert sentence1[-len(sentence3):] == sentence3
-            self.space_before_to_predict = True
 
     def add_speaker_and_signal(self, source: List):
         """
@@ -89,8 +60,6 @@ class ConversationGenerator:
 
         processed = conv.process()
         conversation, to_predict_list = processed['conv'], processed['to_predict']
-        if self.space_before_to_predict:
-            to_predict_list = [" " + _ for _ in to_predict_list]
 
         return conversation, to_predict_list
 
@@ -265,7 +234,7 @@ class FinetuneDialogDataset(Dataset):
 
         check_pos = 0
         for value in to_predict_values:
-            tokenized_value = self.tokenizer.encode(value, bos=False, eos=False)
+            tokenized_value = self.tokenizer.encode_segment(value)
             value_pos = find_sublist(tokenized_conversation[check_pos:], tokenized_value) + check_pos
             if value_pos == -1:
                 print("a sentence mismatches the corresponding piece in the conversation")
