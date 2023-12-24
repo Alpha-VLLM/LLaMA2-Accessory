@@ -20,27 +20,40 @@ def cached_file(repo_id: str) -> str:
     parts = repo_id.split("/")
 
     if len(parts) > 2:
-        repo_id = "/".join(parts[:2])  
-        subfolder = "/".join(parts[2:]) 
-        subfolder = subfolder.replace("tree/main/", "")
-        sub = True
+        repo_id = "/".join(parts[:2])
+        subfolder = "/".join(parts[2:]).replace("tree/main/", "")
+
     elif len(parts) == 1:
         repo_id = "Alpha-VLLM/LLaMA2-Accessory"
-        subfolder = '*/'+parts[0]
-        sub = True
+        subfolder = '*/' + parts[0]
+
     else:
-        sub = False
         subfolder = ""
 
     model_name = parts[-1]
     cache_path = os.path.join(os.path.expanduser('~'), '.cache', 'accessory', model_name)
 
-    if sub:
-        snapshot_download(repo_id=repo_id, allow_patterns=f"{subfolder}/*", repo_type='model', local_dir=cache_path, local_dir_use_symlinks=False, resume_download=True)
+    if subfolder:
+        perform_download(repo_id, f"{subfolder}/*", cache_path)
     else:
-        snapshot_download(repo_id=repo_id, repo_type='model', local_dir=cache_path, local_dir_use_symlinks=False, resume_download=True)
+        perform_download(repo_id, None, cache_path)
 
     return [cache_path]
+
+def perform_download(repo_id, allow_patterns, cache_path):
+    snapshot_download_args = {
+        'repo_id': repo_id, 
+        'repo_type': 'model', 
+        'local_dir': cache_path, 
+        'local_dir_use_symlinks': False, 
+        'resume_download': True
+    }
+
+    if allow_patterns:
+        snapshot_download_args['allow_patterns'] = allow_patterns
+
+    snapshot_download(**snapshot_download_args)
+
 
 
 class MetaModel(nn.Module):
