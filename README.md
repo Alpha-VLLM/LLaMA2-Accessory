@@ -9,7 +9,7 @@
    📖 <a href="https://llama2-accessory.readthedocs.io" target="_blank">Document</a>
 </p>
 <p align="center">
-   🤗 <a href="https://huggingface.co/Alpha-VLLM/SPHINX" target="_blank">HF Repo</a> • 👋 join our <a href="docs/wechat.md" target="_blank">WeChat</a> • 🚀 <a href="http://imagebind-llm.opengvlab.com/" target="_blank">Demo</a>
+   🤗 <a href="https://huggingface.co/Alpha-VLLM/SPHINX" target="_blank">HF Repo</a> • 👋 join our <a href="http://imagebind-llm.opengvlab.com/qrcode/" target="_blank">WeChat</a> • 🚀 <a href="http://imagebind-llm.opengvlab.com/" target="_blank">Demo</a>
 </p>
 
 🚀**LLaMA2-Accessory** is an open-source toolkit for pretraining, finetuning and deployment of **Large Language Models (LLMs)** and **multimodal LLMs**. This repo is mainly inherited from [LLaMA-Adapter](https://github.com/OpenGVLab/LLaMA-Adapter) with more advanced features.🧠
