@@ -179,3 +179,77 @@ usage on each GPU through model parallelism. `1,2,4,8` are supported.
 > However, now LLaMA2-Accessory will automatically investigate the files under `pretrained_path` to probe these
 > information. If your program raises an error, please make sure that your `pretrained_path` contain all the files
 > mentioned [here](#weights).
+
+
+## Finetune SPHINX
+Here we show an example of using LLaMA2-Accessory to finetune SPHINX on ImageNet-1k. 
+
+### Data
+We transform the image classification problem into single-turn conversation, with 
+"Classify the image." as instruction and "This is a [CLASS]" as response. We provide
+the preprocessed training data at 
+[🤗accessory_imagenet_train.json](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/data/imagenet/accessory_imagenet_train.json).
+Note that you still need to prepare the ImageNet-1k images by yourself.
+
+Since LLaMA2-Accessory is designed to support the joint finetuning on multiple datasets, 
+you need to additionally prepare a `data_config.yaml` file, which specifies which data
+will be used for finetuning. The following shows the contents of `data_config.yaml`:
+```yaml
+META:
+  -
+    path: 'path/to/accessory_imagenet_train.json'
+    type: 'text'
+    root: 'path/to/imagenet/images'  # optional
+    ratio: 1.0  # optional
+```
+Since we only use one dataset for this example,  the `META` field in `data_config.yaml` contains only 1 item. For this
+item, the four keys has the following meanings:
++ `path`: specifies the path to data annotation file.
++ `type`: when multiple datasets are used for finetuning, LLaMA2-Accessory guarantees that in each global batch
+(batch size per GPU * data parallel size * accumulate grad iterations), all data samples are from datasets of the 
+same `type`. For example, when the training set consists of both text-only and image-text datasets, the two kind 
+of datasets should have different `type` values.
++ `root`: optional; when specified, the image paths in the dataset will be considered as relative path to `root`.
++ `ratio`: optional; when specified, before training the dataset will be randomly sampled by the ratio.
+
+If you are interested, please refer to [dataset.py](../accessory/data/conversation/dataset.py)
+for the underlying implementation.
+
+### Finetuning
+Suppose you have prepared [SPHINX-v2-1k](#weights) at `/path/to/sphinx-v2-1k`, and `data_config.yaml` at 
+`path/to/data_config.yaml`, you can now start finetuning with the following script:
+```bash
+#!/bin/bash
+#SBATCH --gres=gpu:8
+#SBATCH -n 16
+#SBATCH --ntasks-per-node 8
+#SBATCH --cpus-per-task=16
+
+llama_type=llama_ens5  # llama_ens5 for sphinx-v2-1k and sphinx-1k, llama_ens for sphinx
+pretrained_path=/path/to/sphinx-v2-1k
+llama_config=/path/to/sphinx-v2-1k/params.json
+tokenizer_path=/path/to/sphinx-v2-1k/tokenizer.model
+data_config=path/to/data_config.yaml
+
+data_parallel=sdp
+model_parallel=2
+exp_name=finetune/imagenet/sphinx-v2-1k/
+echo "exp name: $exp_name"
+mkdir -p output/"$exp_name"
+
+srun python -u main_finetune.py \
+--output_dir output/"$exp_name" --epochs 1 --warmup_epochs 0.03 \
+--batch_size 4 --accum_iter 4 --num_workers 2 \
+--max_words 512 \
+--lr 0.00002 --min_lr 0 --clip_grad 8 --weight_decay 0 \
+--data_parallel "$data_parallel" --model_parallel_size "$model_parallel" --checkpointing \
+--llama_type llama_ens5 --llama_config $llama_config --tokenizer_path "$tokenizer_path" \
+--pretrained_path "$pretrained_path" --pretrained_type="$pretrained_type" \
+--data_config $data_config --dialog \
+--image_transform padded_resize \
+2>&1 | tee -a output/"$exp_name"/output.log
+
+echo "exp name: $exp_name"
+```
+
+Note that the working directory for running the script should be `LLaMA2-Accessory/accessory`.
