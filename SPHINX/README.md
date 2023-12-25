@@ -170,8 +170,8 @@ python demos/multi_turn_mm_box.py --n_gpus=2 \
 ```
 Explanation of each argument:
 
-+ `--n_gpus`: Number of gpus to use. Utilizing more GPUs will alleviate memory 
-usage on each GPU through model parallelism. `1,2,4,8` are supported.
++ `--n_gpus`: Number of gpus to use. More GPUs alleviate the memory and computation
+load on each GPU through model parallelism. `1,2,4,8` are supported.
 + `--pretrained_path`: The path to pretrained checkpoint
 
 > [!NOTE]
@@ -192,8 +192,8 @@ the preprocessed training data at
 Note that you still need to prepare the ImageNet-1k images by yourself.
 
 Since LLaMA2-Accessory is designed to support the joint finetuning on multiple datasets, 
-you need to additionally prepare a `data_config.yaml` file, which specifies which data
-will be used for finetuning. The following shows the contents of `data_config.yaml`:
+you need to additionally prepare a `data_config.yaml` file, which specifies the collection
+of datasets used for finetuning. The following shows the contents of `data_config.yaml`:
 ```yaml
 META:
   -
