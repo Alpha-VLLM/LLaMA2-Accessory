@@ -255,19 +255,23 @@ class MetaModel(nn.Module):
         return c_loss, additional_loss
 
     @ torch.inference_mode()
-    def compute_logits(self, examples: List[str|List[int]], images=None,
+    def compute_logits(self, examples: List[str|List[int]], images:Optional[torch.FloatTensor]=None,
                        bos=True, eos=False) -> List[torch.FloatTensor]:
         """
         Compute logits for a given list of text examples or token lists, optionally incorporating images.
 
-        :param examples: A list of text examples or their encoded token lists to be processed.
-        :param images: Optional; images to be included in the computation if applicable.
+        :param examples: A batched list of text examples or their encoded token lists to be processed.
+        :param images: Optional; batched image tensor to be used in conjunction with the text examples.
+         Shape: (bsz, channel, h, w).
         :param bos: Whether to include begin-of-sequence tokens for tokenization. Only effective when items
          in `examples` are strings. Default is True.
         :param eos: Whether to include end-of-sequence tokens for tokenization. Only effective when items
          in `examples` are strings. Default is False.
         :return: A list of `torch.FloatTensor` containing the computed logits for each example.
         """
+        if isinstance(examples, str):
+            raise ValueError(f"{self.__class__}.generate expects a batched LIST of prompts, but str is given")
+
         if isinstance(examples[0], str):
             examples = [self.tokenizer.encode(_, bos, eos) for _ in examples]
 
@@ -290,17 +294,18 @@ class MetaModel(nn.Module):
 
     @ torch.inference_mode()
     def evaluate_examples(self, examples: List[str|List[int]], contexts: Optional[List[str|List[int]]] = None,
-                          images=None, bos=True, eos=False) -> Dict[str, List]:
+                          images:Optional[torch.FloatTensor]=None, bos=True, eos=False) -> Dict[str, List]:
         """
         Evaluate text examples with optional contexts and images, returning various evaluation metrics.
 
 
-        :param examples: A list of text examples or their encoded token lists.
+        :param examples: A batched list of text examples or their encoded token lists.
         :param contexts: Optional; a list of context strings or token lists. If not None, each item
          should be the preceding part of the corresponding example and is considered as context.
          The calculation of evaluation metrics will be conducted only on the remaining part
          of the examples.
-        :param images: Optional; images to be used in conjunction with the text examples.
+        :param images: Optional; batched image tensor to be used in conjunction with the text examples.
+         Shape: (bsz, channel, h, w).
         :param bos: Whether to include begin-of-sequence tokens for tokenization. Only effective when items
          in `examples` are strings. Default is True.
         :param eos: Whether to include end-of-sequence tokens for tokenization. Only effective when items
@@ -318,6 +323,9 @@ class MetaModel(nn.Module):
         >>>     contexts=["The best programming language is", "The best programming language is"]
         >>> )
         """
+        if isinstance(examples, str):
+            raise ValueError(f"{self.__class__}.generate expects a batched LIST of prompts, but str is given")
+
         if isinstance(examples[0], str):
             examples = [self.tokenizer.encode(_, bos, eos) for _ in examples]
             if contexts is not None:
@@ -358,7 +366,7 @@ class MetaModel(nn.Module):
     def generate(
         self,
         prompts: List[str],
-        images: Optional[List] = None,
+        images: Optional[torch.FloatTensor] = None,
         max_gen_len: int = 512,
         temperature: float = 0.0,
         top_p: float = 0.95,
@@ -368,8 +376,9 @@ class MetaModel(nn.Module):
         """
         Generate text responses based on input prompts, optionally using images and controlling generation parameters.
 
-        :param prompts: A list of string prompts for text generation.
-        :param images: Optional; a list of images to be used alongside the prompts.
+        :param prompts: A batched list of string prompts for text generation.
+        :param images: Optional; batched image tensor to be used in conjunction with the text examples.
+         Shape: (bsz, channel, h, w).
         :param max_gen_len: Maximum generation length for the responses. Default is 512.
         :param temperature: Controls randomness in generation. Higher values lead to more random outputs.
          Default is 0.0, namely deterministic generation.
@@ -378,6 +387,10 @@ class MetaModel(nn.Module):
         :param additional_stop_symbols: Iterable of additional symbols to stop generation.
         :return: A list of generated text responses corresponding to each input prompt.
         """
+
+        if isinstance(prompts, str):
+            raise ValueError(f"{self.__class__}.generate expects a batched LIST of prompts, but str is given")
+
         bsz = len(prompts)
         args = self.llma.args
         assert bsz <= args.max_batch_size, (bsz, args.max_batch_size)
@@ -453,7 +466,7 @@ class MetaModel(nn.Module):
     def stream_generate(
         self,
         prompt: str,
-        image: Optional[torch.Tensor] = None,
+        image: Optional[torch.FloatTensor] = None,
         max_gen_len: int = 512,
         temperature: float = 0.0,
         top_p: float = 0.95,
@@ -464,6 +477,7 @@ class MetaModel(nn.Module):
 
         :param prompt: The input text prompt for generation.
         :param image: Optional; an image tensor to be used in conjunction with the text prompt.
+         Shape: (channel, h, w) or (1, channel, h, w).
         :param max_gen_len: Maximum length for the generated text. Default is 512.
         :param temperature: Temperature for generation randomness. Default is 0.0,
          namely deterministic generation.
@@ -478,6 +492,11 @@ class MetaModel(nn.Module):
         max_seq_len = args.max_seq_len
         if image is not None:
             max_seq_len -= self.llma.image_words
+            if len(image.shape) == 4:
+                assert image.shape[0] == 1
+            else:
+                assert len(image.shape) == 3
+                image = image.unsqueeze(0)
 
         max_prompt_size = max_seq_len - max_gen_len
         prompt_tokens = prompt_tokens[-max_prompt_size:]
