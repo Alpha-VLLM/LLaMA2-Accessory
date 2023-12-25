@@ -155,7 +155,8 @@ torchrun --master_port=1112 --nproc_per_node=2 inference.py
 
 
 ### Host Local Demo
-For thoes who want to host a demo like [our official one](http://imagebind-llm.opengvlab.com/) locally, this section provides a step-by-step guide. 
+For thoes who want to host a demo like [our official one](http://imagebind-llm.opengvlab.com/) locally, 
+this section provides a step-by-step guide. 
 + [SAM](https://github.com/facebookresearch/segment-anything.git) should be installed to enable segmentation. 
 + *If you're already familiar with the LLAMA2-Accessory toolkit, note that hosting a SPHINX demo follows the same pipeline as hosting demos for the other models supported by LLAMA2-Accessory.*
 
@@ -165,23 +166,16 @@ Execute the following command for demo hosting:
 ``` bash
 cd LLaMA2-Accessory/accessory
 python demos/multi_turn_mm_box.py --n_gpus=2 \
---tokenizer_path=/path/to/tokenizer.model --llama_type=llama_ens \
 --pretrained_path /path/to/checkpoint/
 ```
 Explanation of each argument:
 
-+ `--n_gpus`: Number of gpus to use. Utilizing more GPUs will alleviate memory usage on each GPU through model parallelism. Currently, this argument should be set to either 1 or 2, as support for *consolidated ckpt num < gpu num* is not yet available.
-+ `--tokenizer_path`: Path to the official LLaMA2 tokenizer. Note that the tokenizer file is the same for both LLaMA and LLaMA2. You may download it from [here](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/blob/main/config/tokenizer.model).
-+ `--llama_type`: The model architecture of SPHINX is defined in [accessory/model/LLM/llama_ens.py](../accessory/model/LLM/llama_ens.py),  and specifying `--llama_type=llama_ens` tells the demo program to use this architecture.
-+ `--pretrained_path`: The path to pretrained checkpoint.
++ `--n_gpus`: Number of gpus to use. Utilizing more GPUs will alleviate memory 
+usage on each GPU through model parallelism. `1,2,4,8` are supported.
++ `--pretrained_path`: The path to pretrained checkpoint
 
-#### SPHINX-1k & SPHINX-v2-1k
-Execute the following command for demo hosting:
-``` bash
-cd LLaMA2-Accessory/accessory
-python demos/multi_turn_mm_box.py --n_gpus=2 \
---tokenizer_path=/path/to/tokenizer.model --llama_type=llama_ens5 \
---pretrained_path /path/to/checkpoint/
-```
-Explanation:
-+ `--llama_type`: The model architecture of SPHINX-1k is defined in [accessory/model/LLM/llama_ens5.py](../accessory/model/LLM/llama_ens5.py), and specifying `--llama_type=llama_ens5` tells the demo program to use this architecture.
+> [!NOTE]
+> In the past we required users to manually specify the `llama_type`, `llama_config` and `tokenizer_path` arguments. 
+> However, now LLaMA2-Accessory will automatically investigate the files under `pretrained_path` to probe these
+> information. If your program raises an error, please make sure that your `pretrained_path` contain all the files
+> mentioned [here](#weights).

@@ -8,7 +8,7 @@ from accessory.data.transform import get_transform
 from accessory.data.conversation import default_conversation
 
 class SPHINXModel(MetaModel):
-    def generate_reponse(self, qas: List[List[str]], image: Optional[Image.Image],
+    def generate_response(self, qas: List[List[str]], image: Optional[Image.Image],
                          max_gen_len=512, temperature=0.1, top_p=0.5, seed=0) -> str:
         """
 
@@ -31,7 +31,8 @@ class SPHINXModel(MetaModel):
         if image is not None:
             image = image.convert("RGB")
             target_size = getattr(self.llma, 'image_size', 224)  # 448 for SPHINX-1k, 224 for SPHINX
-            image = get_transform("padded_resize", target_size)(image).unsqueeze(0).to(list(self.parameters())[0])
+            transform = get_transform("padded_resize", target_size)
+            image = transform(image).to(list(self.parameters())[0])
 
         conv = default_conversation()
         assert qas[-1][1] is None
@@ -43,14 +44,15 @@ class SPHINXModel(MetaModel):
         # each turn of response ends with `conv_seq`
         conv_sep = conv.response_end_signal
 
-        for stream_response in self.stream_generate(
-            prompt, image, max_gen_len=max_gen_len, temperature=temperature, top_p=top_p
-        ):
-            end_pos = stream_response["text"].find(conv_sep)
-            if end_pos != -1:  # response ends
-                stream_response["text"] = (
-                        stream_response['text'][:end_pos].rstrip() + "\n"
-                )
-                break
+        # since MetaModel.generate is originally designed for batched inference,
+        # we need to form a batch of size 1 here
+        response = self.generate(
+            prompts=[prompt],
+            images=image.unsqueeze(0) if image is not None else None,
+            max_gen_len=max_gen_len,
+            temperature=temperature,
+            top_p=top_p,
+            additional_stop_symbols=[conv_sep]
+        )[0]
 
-        return stream_response['text']
+        return response
