@@ -430,8 +430,12 @@ class Transformer(nn.Module):
         h = self.norm(h)
         output = self.output(h[:, image_words:, :])
 
-        load_balancing_loss = sum(MoE.LOAD_BALANCING_LOSSES) / len(MoE.LOAD_BALANCING_LOSSES)
-        return output, {"load_balancing": load_balancing_loss}
+        additional_loss_dict = {}
+        if self.training:
+            load_balancing_loss = sum(MoE.LOAD_BALANCING_LOSSES) / max(len(MoE.LOAD_BALANCING_LOSSES), 1)
+            additional_loss_dict['load_balancing'] = (load_balancing_loss, self.args.load_balancing_weight)
+        return output, additional_loss_dict
+
 
 
     @torch.inference_mode()
