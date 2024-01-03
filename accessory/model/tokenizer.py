@@ -68,6 +68,25 @@ class Tokenizer:
         else:
             return self.encode(s, bos=False, eos=False)
 
+    def encode_wo_prefix_space(self, s:str):
+        if self.need_space_before_segment:
+            return self.encode(s, bos=False, eos=False)
+        else:
+            # prefix chars that, when preceding other strings without seperator in between,
+            # are relatively more likely to be tokenized independently rather than getting
+            # merged into the following strings.
+            l_prefix = ["@", "\n", "\\", "=", ">", "`"]
+            for prefix in l_prefix:
+                prefix_tokens = self.encode(prefix, bos=False, eos=False)
+                cat_tokens = self.encode(prefix+s, bos=False, eos=False)
+                if cat_tokens[:len(prefix_tokens)] == prefix_tokens:
+                    return cat_tokens[len(prefix_tokens):]
+
+            raise NotImplementedError(
+                f"All prefixes are merged into {s} during tokenization,"
+                f"This is wierd behavior, please open an issue to report this problem",
+            )
+
     def _probe_tokenizer_style(self):
         """
         Given a sentence, e.g. "Hi my darling", some tokenizers (e.g. LLaMA's) will pose the following behavior:
@@ -75,7 +94,6 @@ class Tokenizer:
         >>> tokenizer.encode("Hi my darling") == tokenizer.encode("Hi") + tokenizer.encode("my darling")
         >>> # leading space " " is redundant and should not be added
         >>> tokenizer.encode("Hi my darling") != tokenizer.encode("Hi") + tokenizer.encode(" my darling")
-        >>> tokenizer.encode(" my darling") == tokenizer.encode(" ") + tokenizer.encode(" my darling")
         However, some others (e.g. InternLM's) will behave differently:
         >>> # leading space " " has to be explicitly added
         >>> tokenizer.encode("Hi my darling") == tokenizer.encode("Hi") + tokenizer.encode(" my darling")

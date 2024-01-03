@@ -370,7 +370,6 @@ class MetaModel(nn.Module):
         max_gen_len: int = 512,
         temperature: float = 0.0,
         top_p: float = 0.95,
-        return_logits: bool = False,
         additional_stop_symbols: Iterable[str] = ()
     ) -> List[str]:
         """
@@ -383,7 +382,6 @@ class MetaModel(nn.Module):
         :param temperature: Controls randomness in generation. Higher values lead to more random outputs.
          Default is 0.0, namely deterministic generation.
         :param top_p: Top-p sampling probability for more diverse generation. Default is 0.95.
-        :param return_logits: If True, returns logits output by the last token instead of text. Default is False.
         :param additional_stop_symbols: Iterable of additional symbols to stop generation.
         :return: A list of generated text responses corresponding to each input prompt.
         """
@@ -417,12 +415,9 @@ class MetaModel(nn.Module):
         start_pos = min_prompt_size
         prev_pos = 0
 
-        if return_logits:
-            return self.llma.forward_inference(
-                tokens[:, :start_pos], prev_pos, images if prev_pos == 0 else None
-            ).float()
-
-        l_stop_tokens = [[self.tokenizer.eos_id]] + [self.tokenizer.encode_segment(_) for _ in additional_stop_symbols]
+        l_stop_tokens = [[self.tokenizer.eos_id]]
+        l_stop_tokens += [self.tokenizer.encode_segment(_) for _ in additional_stop_symbols]
+        l_stop_tokens += [self.tokenizer.encode_wo_prefix_space(_) for _ in additional_stop_symbols]
         l_stop_tokens = [torch.tensor(_, dtype=tokens.dtype, device=tokens.device) for _ in l_stop_tokens]
         stopped = torch.tensor([False for _ in range(bsz)], device=input_text_mask.device)
         stop_pos = torch.tensor([start_pos + 1 for _ in range(bsz)], device=input_text_mask.device)
