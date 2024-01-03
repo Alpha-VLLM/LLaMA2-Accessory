@@ -135,9 +135,10 @@ def main(world_size, rank) -> None:
 
 if __name__ == "__main__":
     N_GPU = 2
+    assert N_GPU in [1, 2, 4, 8]
     if N_GPU == 1:
         main(world_size=1, rank=0)
-    elif N_GPU == 2:
+    else:
         # You can use whatever method, e.g. torchrun, slurm, etc. for distributed launch
         # Just be sure to initialize torch distributed (by invoking dist.init_process_group)
         # before creating the SPHINX model if model parallel size > 1 is used
@@ -145,8 +146,6 @@ if __name__ == "__main__":
         for rank in range(N_GPU):
             process = mp.Process(target=main, args=(N_GPU, rank))
             process.start()
-    else:
-        raise ValueError("Currently only 1 or 2 is supported for MODEL_PARALLEL_SIZE")
 ```
 If torchrun is preferred, an example is [inference.py](inference.py):
 ```bash
