@@ -294,7 +294,7 @@ class FinetuneDistSampler(Sampler):
             indices = [_ for batch_indices in global_batched_indices for _ in batch_indices]
         else:
             group_indices = copy.deepcopy(self.group_indices)
-            indices = [_ for batch_indices in group_indices for _ in batch_indices]
+            indices = [_ for indices_in_group in group_indices for _ in indices_in_group]
 
         assert len(indices) == self.total_size
 

@@ -92,7 +92,7 @@ class Conversation:
     @ property
     def response_end_signal(self):
         return (
-            self.sep
+            "\n" + self.sep
             if self.sep_style == SeparatorStyle.SINGLE
             else self.sep2
         )
