@@ -12,6 +12,7 @@ from utils.metric import relaxed_correctness, evaluate_relaxed_accuracy, evaluat
 import sys
 import os
 import re
+from utils.math_utils import compare_both_string_and_number_format
 import multiprocessing as mp
 
 sys.path.append(os.path.abspath(__file__).rsplit('/', 2)[0])
@@ -274,8 +275,23 @@ class Evaluator:
                 })
             json.dump(format_result, open(results_file, 'w'),
                       ensure_ascii=False)
+
+        elif self.config[ds]['metric'] == 'mmmu_save':
+            base_mmmu_dir = f'{base_result_dir}/MMMU_results'
+            os.makedirs(base_mmmu_dir, exist_ok=True)
+            format_result = {}
+            for pred in outputs:
+                ans = pred['answer']
+                if ans.endswith('.'):
+                    ans = ans[:-1]
+                format_result[pred['question_id'].split('||')[0]] = ans
+
+            json.dump(format_result, open(os.path.join(base_mmmu_dir, f'{ds}.json'), 'w'),
+                      ensure_ascii=False)
             
         elif self.config[ds]['metric'] == 'ureader':
+            base_ureader_dir = f'{base_result_dir}/Ureader_results'
+            os.makedirs(base_ureader_dir, exist_ok=True)
             format_result = []
             for pred in outputs:
                 format_result.append({
@@ -286,8 +302,10 @@ class Evaluator:
                     "name": pred.get('image_path', None),
                 })
             print(f'{ds} results saved to {results_file}')
-            json.dump(format_result, open(results_file, 'w'),
+            save_path = f'{base_ureader_dir}/{ds}.json'
+            json.dump(format_result, open(save_path, 'w'),
                       ensure_ascii=False)
+            save_result(args, f'python ureader_eval/tools.py --eval_file_folder {base_ureader_dir}', self.prompt, self.global_config, self.config, results_file, ds)
 
         elif self.config[ds]['metric'] == 'miou0.5':
             json.dump(outputs, open(results_file, 'w'),
@@ -334,4 +352,25 @@ class Evaluator:
             save_result(args, {'miou0.5 acc:': correct / total_cnt}, self.prompt,
                         self.global_config,
                         self.config, results_file, ds)
+        elif self.config[ds]['metric'] == 'MATH':
+            correct, wrong = 0, 0
+            for pred in outputs:
+                answer = pred['answer']
+                groundtruth = json.loads(pred['gt_answers'])
+
+                groundtruth_str, groundtruth_num = groundtruth
+                if compare_both_string_and_number_format(answer, groundtruth_str, groundtruth_num):
+                    correct += 1
+                else:
+                    wrong += 1
+
+            json.dump(outputs, open(results_file, 'w'),
+                      ensure_ascii=False)
+
+            print({'accuracy': correct / (correct + wrong)})
+            save_result(args, {'accuracy': correct / (correct + wrong)}, self.prompt,
+                        self.global_config,
+                        self.config, results_file, ds)
+            
+            
 

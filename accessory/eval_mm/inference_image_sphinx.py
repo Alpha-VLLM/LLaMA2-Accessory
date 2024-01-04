@@ -1,14 +1,6 @@
-import itertools
 import random
-import time
-from functools import partial
-from typing import Optional, List, Tuple
+from typing import List
 from tqdm import tqdm
-from utils.vqa import VQA
-from utils.vqa_eval import VQAEval
-from utils.utils import save_result
-from utils.metric import relaxed_correctness, evaluate_relaxed_accuracy, evaluate_exact_match_accuracy, \
-    compute_mme_metric, parse_pred_ans
 import sys
 import os
 import multiprocessing as mp
@@ -18,8 +10,6 @@ sys.path.append(os.path.abspath(__file__).rsplit('/', 3)[0])
 from evaluate import Evaluator
 from sphinx import SPHINXModel
 
-from util.tensor_type import default_tensor_type
-from model.meta import MetaModel
 from data.conversation.lib import conv_templates, SeparatorStyle
 import argparse
 import torch
@@ -38,6 +28,7 @@ try:
     BICUBIC = InterpolationMode.BICUBIC
 except ImportError:
     BICUBIC = Image.BICUBIC
+
 
 def collate_fn(batches):
     questions = [_['question'] for _ in batches]
@@ -121,16 +112,10 @@ class VQADataset(torch.utils.data.Dataset):
             # for traditional VQA
             input_text = input_prompt.format(question)
 
-        # print(f'input_text: {input_text}')
-        # print(f'output_prompt: {output_prompt}')
-
         conv.append_message(conv.roles[0], input_text)
         conv.append_message(conv.roles[1], None)
         question = conv.get_prompt()
         question = question + output_prompt
-        # print('-'*20)
-        # print(question)
-        # print('-' * 20)
 
         return {
             'question': question,
@@ -144,7 +129,7 @@ class VQADataset(torch.utils.data.Dataset):
 
 def get_local_indices(rank: int, world_size: int, dataset_len: int) -> List[int]:
     indices = list(range(dataset_len))
-    # there exits duplication in
+    # there exist duplication in data
     while len(indices) % world_size != 0:
         indices.extend(indices[: world_size - len(indices) % world_size])
     indices = indices[rank::world_size]
@@ -162,13 +147,6 @@ def main(args, rank: int, world_size: int, master_port: int, master_addr: str,
     setup_for_distributed(dist.get_rank() == 0)
     fs_init.initialize_model_parallel(model_parallel_size)
     torch.cuda.set_device(dist.get_rank() % torch.cuda.device_count())
-
-    # print(fs_init.get_data_parallel_world_size(), force=True)
-    #
-    # print(
-    #     f'\nrank: {rank} mp rank: {fs_init.get_model_parallel_rank()}', force=True)
-    #
-    # exit(-1)
 
     # define the model
     model = SPHINXModel.from_pretrained(
@@ -197,8 +175,6 @@ def main(args, rank: int, world_size: int, master_port: int, master_addr: str,
     with open('./annotations/annotation_config.json', 'r') as f:
         ds_collections = json.loads(f.read())
 
-    # print("Model = %s" % str(model))
-
     if args.dataset[0] == 'all':
         dataset_names = ds_collections.keys()
     else:
@@ -214,8 +190,6 @@ def main(args, rank: int, world_size: int, master_port: int, master_addr: str,
                 print(f'Dataset: {ds} is tested, skip here.')
                 continue
 
-
-
         if 'prompt' in ds_collections[ds]:
             prompt = ds_collections[ds]['prompt']
         else:
@@ -230,7 +204,6 @@ def main(args, rank: int, world_size: int, master_port: int, master_addr: str,
             prompt=prompt,
             img_size=getattr(model.llma, 'image_size', 224)
         )
-        # print(f'\nrank: {rank} mp rank: {fs_init.get_model_parallel_rank()} mp size: {fs_init.get_data_parallel_world_size()} dist.get_rank() // model_parallel_size: {dist.get_rank() // model_parallel_size} dataset: {len(dataset)}\n', force=True)
 
         dataloader = torch.utils.data.DataLoader(
             dataset=dataset,
@@ -257,9 +230,8 @@ def main(args, rank: int, world_size: int, master_port: int, master_addr: str,
             'max_gen_len': max_gen_len
         }
         with torch.no_grad():
-            for image, question_ids, _prompt, annotations, image_path, raw_question in tqdm(dataloader, desc=f'{ds}: {len(dataset)} samples'):
-                # print(f'\nrank: {rank} mp rank: {fs_init.get_model_parallel_rank()} input: {_prompt[0]}\n', force=True)
-
+            for image, question_ids, _prompt, annotations, image_path, raw_question in tqdm(dataloader,
+                                                                                            desc=f'{ds}: {len(dataset)} samples'):
                 if dist.get_rank() % model_parallel_size == 0:
                     dist.barrier()
                     dist.broadcast_object_list([_prompt, image, max_gen_len, gen_t, top_p],
@@ -273,7 +245,7 @@ def main(args, rank: int, world_size: int, master_port: int, master_addr: str,
 
                     with torch.cuda.amp.autocast(dtype=torch.bfloat16):
                         results = model.generate(_prompt, image, max_gen_len=max_gen_len, temperature=gen_t,
-                                                 top_p=top_p)
+                                                 top_p=top_p, additional_stop_symbols=['###'])
 
                     for question_id, answer, annotation, img_path, r_ques in zip(question_ids, results,
                                                                                  annotations, image_path, raw_question):
@@ -300,17 +272,15 @@ def main(args, rank: int, world_size: int, master_port: int, master_addr: str,
                     image = image.cuda(non_blocking=True)
 
                     with torch.cuda.amp.autocast(dtype=torch.bfloat16):
-                        _ = model.generate(_prompt, image, max_gen_len=max_gen_len, temperature=gen_t, top_p=top_p)
+                        _ = model.generate(_prompt, image, max_gen_len=max_gen_len, temperature=gen_t, top_p=top_p,
+                                           additional_stop_symbols=['###'])
 
         torch.distributed.barrier()
         if fs_init.get_data_parallel_world_size() > 1:
-            # print(f'rank: {rank} mp rank: {fs_init.get_model_parallel_rank()} before gather output: {len(outputs)}',
-            #       force=True)
             outputs_allgather = [None for _ in range(fs_init.get_data_parallel_world_size())]
             dist.all_gather_object(outputs_allgather, outputs, fs_init.get_data_parallel_group())
             outputs = list(sum(zip(*outputs_allgather), ()))
-            # print(f'rank: {rank} mp rank: {fs_init.get_model_parallel_rank()} after gather output: {len(outputs)}',
-            #       force=True)
+
 
         if torch.distributed.get_rank() == 0:
             # remove duplication from padded data sampler
@@ -319,11 +289,6 @@ def main(args, rank: int, world_size: int, master_port: int, master_addr: str,
                 key = f'{p_i["image_path"]}_{p_i["question"]}_{p_i["question_id"]}'
                 if key not in cleaned_output:
                     cleaned_output[key] = p_i
-                # else:
-                #     print('-' * 20)
-                #     print(p_i)
-                #     print(cleaned_output[key])
-                #     print('-' * 20)
 
             outputs = list(cleaned_output.values())
 

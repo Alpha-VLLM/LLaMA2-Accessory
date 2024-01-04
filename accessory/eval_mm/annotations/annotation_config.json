@@ -1,0 +1,264 @@
+{
+    "mme": {
+        "test": "annotations/MME_benchmark.json",
+        "metric": "mme_score",
+        "max_new_tokens": 10,
+        "prompt": {
+            "input": "{}\nAnswer the question using a single word or phrase.",
+            "output": ""
+        }
+    },
+    "okvqa_val": {
+        "test": "annotations/okvqa_val.json",
+        "question": "data/okvqa/OpenEnded_mscoco_val2014_questions.json",
+        "annotation": "data/okvqa/mscoco_val2014_annotations.json",
+        "metric": "vqa_score",
+        "max_new_tokens": 10,
+        "prompt": {
+            "input": "{}\nAnswer the question using a single word or phrase.",
+            "output": ""
+        }
+    },
+    "gqa_testdev": {
+        "test": "annotations/gqa_testdev_balanced.json",
+        "metric": "accuracy",
+        "max_new_tokens": 10,
+        "prompt": {
+            "input": "{}\nAnswer the question using a single word or phrase.",
+            "output": ""
+        }
+    },
+    "vqav2_val": {
+        "test": "annotations/vqav2_val.json",
+        "question": "data/vqav2/v2_OpenEnded_mscoco_val2014_questions.json",
+        "annotation": "data/vqav2/v2_mscoco_val2014_annotations.json",
+        "metric": "vqa_score",
+        "max_new_tokens": 10,
+        "prompt": {
+            "input": "{}\nAnswer the question using a single word or phrase.",
+            "output": ""
+        }
+    },
+    "textvqa_val": {
+        "test": "annotations/textvqa_val.json",
+        "question": "data/textvqa/textvqa_val_questions.json",
+        "annotation": "data/textvqa/textvqa_val_annotations.json",
+        "metric": "vqa_score",
+        "max_new_tokens": 10,
+        "prompt": {
+            "input": "{}\nAnswer the question using a single word or phrase.",
+            "output": ""
+        }
+    },
+    "vsr_val": {
+        "test": "annotations/vsr_val.json",
+        "metric": "accuracy",
+        "max_new_tokens": 10,
+        "prompt": {
+            "input": "{}",
+            "output": ""
+        }
+    },
+    "vizwiz_val": {
+        "test": "annotations/vizwiz_val.json",
+        "question": "data/vizwiz/vizwiz_val_questions.json",
+        "annotation": "data/vizwiz/vizwiz_val_annotations.json",
+        "metric": "vqa_score",
+        "max_new_tokens": 10,
+        "prompt": {
+            "input": "{} When the provided information is insufficient, respond with 'Unanswerable'.\nAnswer the question using a single word or phrase.",
+            "output": ""
+        }
+    },
+    "docvqa_val": {
+        "test": "annotations/docvqa_val.json",
+        "annotation": "data/docvqa/val/val_v1.0.json",
+        "metric": "anls",
+        "max_new_tokens": 32,
+        "prompt": {
+            "input": "{}\nAnswer the question using a single word or phrase.",
+            "output": ""
+        }
+    },
+    "chartqa_test_human": {
+        "test": "annotations/chartqa_test_human.json",
+        "metric": "relaxed_accuracy",
+        "max_new_tokens": 10,
+        "prompt": {
+            "input": "{}\nAnswer the question using a single word or phrase.",
+            "output": ""
+        }
+    },
+    "chartqa_test_augmented": {
+        "test": "annotations/chartqa_test_augmented.json",
+        "metric": "relaxed_accuracy",
+        "max_new_tokens": 10,
+        "prompt": {
+            "input": "{}\nAnswer the question using a single word or phrase.",
+            "output": ""
+        }
+    },
+
+    "ocrvqa_val": {
+        "test": "annotations/ocrvqa_val.json",
+        "metric": "accuracy",
+        "max_new_tokens": 20,
+        "prompt": {
+            "input": "{}\nAnswer the question using a single word or phrase.",
+            "output": ""
+        }
+    },
+    "ai2diagram": {
+        "test": "annotations/ai2diagram_test.json",
+        "metric": "accuracy",
+        "max_new_tokens": 10,
+        "prompt": {
+            "input": "{}\nAnswer the question using a single word or phrase.",
+            "output": ""
+        }
+    },
+    "Qbench_dev": {
+        "test": "annotations/Qbench_dev.json",
+        "metric": "accuracy",
+        "max_new_tokens": 10,
+        "prompt": {
+            "input": "{}",
+            "output": ""
+        }
+    },
+    "scienceqa_test": {
+        "test": "annotations/scienceqa_test_img.json",
+        "metric": "accuracy",
+        "max_new_tokens": 10,
+        "prompt": {
+            "input": "{}",
+            "output": " The answer is"
+        }
+    },
+    "refcoco_testA": {
+        "test": "annotations/refcoco_testA.json",
+        "metric": "miou0.5",
+        "max_new_tokens": 30,
+        "prompt": {
+            "input": "Please provide the bounding box coordinate of the region this sentence describes: {}.",
+            "output": ""
+        }
+    },
+    "refcoco_testB": {
+        "test": "annotations/refcoco_testB.json",
+        "metric": "miou0.5",
+        "max_new_tokens": 30,
+        "prompt": {
+            "input": "Please provide the bounding box coordinate of the region this sentence describes: {}.",
+            "output": ""
+        }
+    },
+    "refcoco_val": {
+        "test": "annotations/refcoco_val.json",
+        "metric": "miou0.5",
+        "max_new_tokens": 30,
+        "prompt": {
+            "input": "Please provide the bounding box coordinate of the region this sentence describes: {}.",
+            "output": ""
+        }
+    },
+    "refcoco+_testA": {
+        "test": "annotations/refcoco+_testA.json",
+        "metric": "miou0.5",
+        "max_new_tokens": 30,
+        "prompt": {
+            "input": "Please provide the bounding box coordinate of the region this sentence describes: {}.",
+            "output": ""
+        }
+    },
+    "refcoco+_testB": {
+        "test": "annotations/refcoco+_testB.json",
+        "metric": "miou0.5",
+        "max_new_tokens": 30,
+        "prompt": {
+            "input": "Please provide the bounding box coordinate of the region this sentence describes: {}.",
+            "output": ""
+        }
+    },
+    "refcoco+_val": {
+        "test": "annotations/refcoco+_val.json",
+        "metric": "miou0.5",
+        "max_new_tokens": 30,
+        "prompt": {
+            "input": "Please provide the bounding box coordinate of the region this sentence describes: {}.",
+            "output": ""
+        }
+    },
+    "refcocog_test": {
+        "test": "annotations/refcocog_test.json",
+        "metric": "miou0.5",
+        "max_new_tokens": 30,
+        "prompt": {
+            "input": "Please provide the bounding box coordinate of the region this sentence describes: {}.",
+            "output": ""
+        }
+    },
+    "refcocog_val": {
+        "test": "annotations/refcocog_val.json",
+        "metric": "miou0.5",
+        "max_new_tokens": 30,
+        "prompt": {
+            "input": "Please provide the bounding box coordinate of the region this sentence describes: {}.",
+            "output": ""
+        }
+    },
+     "DeepForm": {
+        "test": "annotations/test_DeepForm.json",
+        "metric": "ureader",
+        "max_new_tokens": 20,
+        "prompt": {
+            "input": "{}",
+            "output": ""
+        }
+    },
+    "InfographicsVQA": {
+        "test": "annotations/test_InfographicsVQA.json",
+        "metric": "ureader",
+        "max_new_tokens": 25,
+        "prompt": {
+            "input": "{}\nAnswer the question using a single word or phrase.",
+            "output": ""
+        }
+    },
+    "KleisterCharity": {
+        "test": "annotations/test_KleisterCharity.json",
+        "metric": "ureader",
+        "max_new_tokens": 25,
+        "prompt": {
+            "input": "{}",
+            "output": ""
+        }
+    },
+    "TabFact": {
+        "test": "annotations/test_TabFact.json",
+        "metric": "ureader",
+        "max_new_tokens": 10,
+        "prompt": {
+            "input": "{}\nAnswer the question using a single word or phrase.",
+            "output": ""
+        }
+    },
+    "VisualMRC": {
+        "test": "annotations/test_VisualMRC.json",
+        "max_new_tokens": 35,
+        "metric": "ureader",
+        "prompt": {
+            "input": "{}",
+            "output": ""
+        }
+    },
+    "WikiTableQuestions": {
+        "test": "annotations/test_WikiTableQuestions.json",
+        "metric": "ureader",
+        "max_new_tokens": 20,
+        "prompt": {
+            "input": "{}\nAnswer the question using a single word or phrase.",
+            "output": ""
+        }
+    }
+}
