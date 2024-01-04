@@ -3,7 +3,7 @@
 ## Dependencies
 
 ```bash
-pip install pycocoevalcap tqdm icecream textdistance editdistance
+pip install pycocoevalcap tqdm icecream textdistance editdistance nltk scikit-learn
 ```
 
 ## Annotation
@@ -30,12 +30,23 @@ We provide the processed officials annotations and convert them into unified for
 ```
 ## Run scripts
 
+
 ```bash
 # download model weight from https://github.com/Alpha-VLLM/LLaMA2-Accessory/tree/main/SPHINX
 pretrained_path=[PATH_TO_PRETRAINED_MODEL]
 
+# evaluate all benchmarks
 srun python inference_image_sphinx.py \
 --dataset all \
+--pretrained_path ${pretrained_path} \
+--batch_size 32 \
+--max_seq_length 4096 \
+--model_parallel_size 2
+
+
+# only evaluate mme and okvqa benchmarks
+srun python inference_image_sphinx.py \
+--dataset mme okvqa \
 --pretrained_path ${pretrained_path} \
 --batch_size 32 \
 --max_seq_length 4096 \
