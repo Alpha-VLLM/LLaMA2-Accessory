@@ -18,8 +18,8 @@
 
 ## News
 
-
-- **[2024-1-2]** We release the [SPHINX-MoE](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX), a MLLM based on Mixtral-8x7B-MoE.
+- **[2024-1-5]** [OpenCompass](https://github.com/open-compass/opencompass) now supports seamless evaluation of all LLaMA2-Accessory models. 🔥🔥🔗[Doc](https://llama2-accessory.readthedocs.io/en/latest/evaluation.html)
+- **[2024-1-2]** We release the [SPHINX-MoE](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX), a MLLM based on Mixtral-8x7B-MoE. 🔥🔥🔥
 - **[2023-12-12]** [SPHINX-V2](https://github.com/Alpha-VLLM/LLaMA2-Accessory/tree/main/SPHINX) achieve outstanding results in [InfiMM-Eval](https://paperswithcode.com/sota/visual-question-answering-vqa-on-core-mm), ranking just below GPT4-V! 🔥🔥🔥
 - **[2023-12-11]** We now support [mixtral-8x7b](https://llama2-accessory.readthedocs.io/en/latest/projects/mixtral-8x7b.html) inference and finetuning! 🔥🔥🔥
 - **[2023-12-08]** We release [OneLLM](https://github.com/csuhan/OneLLM) which aligns **eight** modalities to language using a unified framework!🔥🔥🔥
