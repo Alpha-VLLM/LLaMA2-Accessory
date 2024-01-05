@@ -43,7 +43,7 @@ LLaMA2-Accessory itself supports model parallelism (which, within the current sc
 to tensor parallelism) and Fully Sharded Data Parallel (FSDP). Both of these involve the partitioning of the model, 
 but it is important to note that they are **very different and orthogonal** (i.e., they can be used simultaneously) 
 technologies. A brief understanding of these two technologies is very helpful for better utilizing LLaMA2-Accessory. 
-[This blog from Microsoft]((https://www.microsoft.com/en-us/research/blog/deepspeed-extreme-scale-model-training-for-everyone/))
+[This blog from Microsoft](https://www.microsoft.com/en-us/research/blog/deepspeed-extreme-scale-model-training-for-everyone/)
 is an excellent learning resource.
 
 :::
