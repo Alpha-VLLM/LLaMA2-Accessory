@@ -18,6 +18,7 @@ install
 pretrain
 finetune/index
 inference
+evaluation
 light-eval/index
 ```
 
