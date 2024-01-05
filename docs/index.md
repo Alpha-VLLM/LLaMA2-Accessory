@@ -26,6 +26,7 @@ light-eval/index
 :caption: Projects
 :maxdepth: 2
 
+projects/SPHINX
 projects/mixtral-8x7b
 ```
 
