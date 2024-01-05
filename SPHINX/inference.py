@@ -29,15 +29,13 @@ def main() -> None:
     image = Image.open("examples/1.jpg")
     qas = [["What's in the image?", None]]
 
-    with torch.cuda.amp.autocast(dtype=torch.float16):
-        response = model.generate_reponse(qas, image, max_gen_len=1024, temperature=0.9, top_p=0.5, seed=0)
+    response = model.generate_reponse(qas, image, max_gen_len=1024, temperature=0.9, top_p=0.5, seed=0)
     print(response)
 
     # if you wanna continue
     qas[-1][-1] = response
     qas.append(["Then how does it look like?", None])
-    with torch.cuda.amp.autocast(dtype=torch.float16):
-        response2 = model.generate_reponse(qas, image, max_gen_len=1024, temperature=0.9, top_p=0.5, seed=0)
+    response2 = model.generate_reponse(qas, image, max_gen_len=1024, temperature=0.9, top_p=0.5, seed=0)
     print(response2)
 
 

@@ -124,10 +124,9 @@ def main() -> None:
                 src=fs_init.get_model_parallel_src_rank(),
                 group=fs_init.get_model_parallel_group(),
             )
-        
-        with torch.cuda.amp.autocast(dtype=torch.bfloat16):
-            generated = model.generate([prompt] * image.size(0), image,
-                                       args.max_gen_len, args.temperature, args.top_p)
+
+        generated = model.generate([prompt] * image.size(0), image,
+                                   args.max_gen_len, args.temperature, args.top_p)
         
         truncated = []
         for cap in generated:

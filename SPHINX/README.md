@@ -8,7 +8,8 @@ Try out our [web demo 🚀](http://imagebind-llm.opengvlab.com/) here!
 </p>
 
 ## News
-* **[2023-11-17]** We release SPHINX-V2, featuring the same architecture but with enhanced and broader capabilities! 🔥🔥🔥
+* **[2024-1-5]** We release SPHINX-MoE supercharged with the powerful Mixtral 8x7B Backbone! 🔥🔥🔥
+* **[2023-11-17]** We release SPHINX-V2, the same architecture but enhanced capabilities! 🔥🔥
 * **[2023-11-09]** We release the [technical report](https://github.com/Alpha-VLLM/LLaMA2-Accessory/blob/main/SPHINX/SPHINX_paper.pdf) of SPHINX 🔥.
 * **[2023-10-17]** We release the demo, code, and model of SPHINX 🎉.
 
@@ -50,11 +51,13 @@ On top of SPHINX, we propose to further mix visual scales and sub-images for bet
 
 We release the following checkpoints:
 
-| Name         | Architecture                                      | Checkpoint                                                   |
-| ------------ | ------------------------------------------------- | ------------------------------------------------------------ |
-| SPHINX       | [llama_ens](../accessory/model/LLM/llama_ens.py)  | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX)/[Baidu](https://pan.baidu.com/s/1HE6NoF1ZawhMgJxeh9r2kQ?pwd=46s7)(提取码：46s7) |
-| SPHINX-1K    | [llama_ens5](../accessory/model/LLM/llama_ens.py) | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-1k)/[Baidu](https://pan.baidu.com/s/1SRfyFGJdapaUTgYZOAdXyg?pwd=pua9)(提取码：pua9) |
-| SPHINX-v2-1k | [llama_ens5](../accessory/model/LLM/llama_ens.py) | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-v2-1k)/[Baidu](https://pan.baidu.com/s/1PKCf515EGmSnSZ8teERHjQ?pwd=88z0)(提取码：88z0) |
+| Name          | Architecture                                                         | Checkpoint                                                   |
+|---------------|----------------------------------------------------------------------| ------------------------------------------------------------ |
+| SPHINX        | [llama_ens](../accessory/model/LLM/llama_ens.py)                     | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX)/[Baidu](https://pan.baidu.com/s/1HE6NoF1ZawhMgJxeh9r2kQ?pwd=46s7)(提取码：46s7) |
+| SPHINX-1K     | [llama_ens5](../accessory/model/LLM/llama_ens.py)                    | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-1k)/[Baidu](https://pan.baidu.com/s/1SRfyFGJdapaUTgYZOAdXyg?pwd=pua9)(提取码：pua9) |
+| SPHINX-v2-1k  | [llama_ens5](../accessory/model/LLM/llama_ens.py)                    | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-v2-1k)/[Baidu](https://pan.baidu.com/s/1PKCf515EGmSnSZ8teERHjQ?pwd=88z0)(提取码：88z0) |
+| SPHINX-MoE    | [mixtral_sparse_ens](../accessory/model/LLM/mixtral_sparse_ens.py)   | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-MoE) |
+| SPHINX-MoE-1k | [mixtral_sparse_ens5](../accessory/model/LLM/mixtral_sparse_ens5.py) | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-MoE-1k) |
 
 *Note that SPHINX-1K was previously called Long-SPHINX*
 
@@ -86,16 +89,14 @@ model = SPHINXModel.from_pretrained(pretrained_path="path/to/checkpoint", with_v
 image = Image.open("examples/1.jpg")
 qas = [["What's in the image?", None]]
 
-with torch.cuda.amp.autocast(dtype=torch.float16):
-    response = model.generate_response(qas, image, max_gen_len=1024, temperature=0.9, top_p=0.5, seed=0)
+response = model.generate_response(qas, image, max_gen_len=1024, temperature=0.9, top_p=0.5, seed=0)
 
 print(response)
 
 # if you wanna continue
 qas[-1][-1] = response
 qas.append(["Then how does it look like?", None])
-with torch.cuda.amp.autocast(dtype=torch.float16):
-    response2 = model.generate_response(qas, image, max_gen_len=1024, temperature=0.9, top_p=0.5, seed=0)
+response2 = model.generate_response(qas, image, max_gen_len=1024, temperature=0.9, top_p=0.5, seed=0)
 
 print(response2)
 ```
@@ -129,8 +130,7 @@ def main(world_size, rank) -> None:
     image = Image.open("examples/1.jpg")
     qas = [["What's in the image?", None]]
 
-    with torch.cuda.amp.autocast(dtype=torch.float16):
-        response = model.generate_response(qas, image, max_gen_len=1024, temperature=0.9, top_p=0.5, seed=0)
+    response = model.generate_response(qas, image, max_gen_len=1024, temperature=0.9, top_p=0.5, seed=0)
 
 
 if __name__ == "__main__":
