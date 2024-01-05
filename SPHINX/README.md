@@ -232,6 +232,9 @@ data_config=path/to/data_config.yaml
 
 data_parallel=sdp
 model_parallel=2
+
+lr=0.00002  # We recommend 5e-6 for SPHINX-MoE and SPHINX-MoE-1k, and 2e-5 for others
+
 exp_name=finetune/imagenet/sphinx-v2-1k/
 echo "exp name: $exp_name"
 mkdir -p output/"$exp_name"
@@ -240,7 +243,7 @@ srun python -u main_finetune.py \
 --output_dir output/"$exp_name" --epochs 1 --warmup_epochs 0.03 \
 --batch_size 4 --accum_iter 4 --num_workers 2 \
 --max_words 512 \
---lr 0.00002 --min_lr 0 --clip_grad 8 --weight_decay 0 \
+--lr "$lr" --min_lr 0 --clip_grad 8 --weight_decay 0 \
 --data_parallel "$data_parallel" --model_parallel_size "$model_parallel" --checkpointing \
 --llama_type llama_ens5 --llama_config $llama_config --tokenizer_path "$tokenizer_path" \
 --pretrained_path "$pretrained_path" --pretrained_type="$pretrained_type" \
