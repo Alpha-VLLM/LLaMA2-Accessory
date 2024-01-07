@@ -592,11 +592,9 @@ class Transformer(nn.Module):
 
             print("build llama model with dinov2")
             if self.args.load_pretrained_visual_encoder:
-                self.dinov2_vitg14 = torch.hub.load("/mnt/petrelfs/gaopeng/.cache/torch/hub/facebookresearch_dinov2_main",
-                                                    "dinov2_vitg14", source="local", pretrained=True)
+                self.dinov2_vitg14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14", pretrained=True)
             else:
-                self.dinov2_vitg14 = torch.hub.load("/mnt/petrelfs/gaopeng/.cache/torch/hub/facebookresearch_dinov2_main",
-                                                    "dinov2_vitg14", source="local", pretrained=False)
+                self.dinov2_vitg14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14", pretrained=False)
             self.dinov2_vitg14.to(self.norm.weight)
             torch.set_default_dtype(default_dtype)
 

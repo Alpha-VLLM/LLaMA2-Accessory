@@ -275,6 +275,9 @@ class MetaModel(nn.Module):
         if isinstance(examples[0], str):
             examples = [self.tokenizer.encode(_, bos, eos) for _ in examples]
 
+        if images is not None:
+            images = images.to(list(self.parameters())[0].device)
+
         l_seq_len = [len(_) for _ in examples]
         bsz = len(examples)
         max_length = max(l_seq_len)
@@ -335,6 +338,9 @@ class MetaModel(nn.Module):
             # namely example should start with context
             assert all([e[:len(c)] == c for e, c in zip(examples, contexts)])
 
+        if images is not None:
+            images = images.to(list(self.parameters())[0].device)
+
         logits = self.compute_logits(examples, images)
 
         loss_func = torch.nn.CrossEntropyLoss(reduction='none', ignore_index=0)
@@ -388,6 +394,9 @@ class MetaModel(nn.Module):
 
         if isinstance(prompts, str):
             raise ValueError(f"{self.__class__}.generate expects a batched LIST of prompts, but str is given")
+
+        if images is not None:
+            images = images.to(list(self.parameters())[0].device)
 
         bsz = len(prompts)
         args = self.llma.args
@@ -492,6 +501,7 @@ class MetaModel(nn.Module):
             else:
                 assert len(image.shape) == 3
                 image = image.unsqueeze(0)
+            image = image.to(list(self.parameters())[0].device)
 
         max_prompt_size = max_seq_len - max_gen_len
         prompt_tokens = prompt_tokens[-max_prompt_size:]

@@ -198,7 +198,9 @@ class Attention(nn.Module):
             if prefix is not None:
                 prefix_k = prefix_k.transpose(1, 2)
                 prefix_v = prefix_v.transpose(1, 2)
-                prefix_delta = F.scaled_dot_product_attention(xq, prefix_k, prefix_v, dropout_p=0.0, causal=False)
+                prefix_delta = F.scaled_dot_product_attention(
+                    xq, prefix_k, prefix_v, dropout_p=0.0, is_causal=False
+                )
                 prefix_delta = prefix_gate.view(1, -1, 1, 1).tanh() * prefix_delta
                 if prefix_new_gate is not None:
                     prefix_delta = prefix_new_gate * prefix_delta
