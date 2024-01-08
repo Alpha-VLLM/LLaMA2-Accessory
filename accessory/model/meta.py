@@ -123,11 +123,11 @@ class MetaModel(nn.Module):
             raise ValueError("pretrained_path should be specified")
 
         for i, path in enumerate(pretrained_path):
-            if os.path.isdir(path):  # else path on disk, directly load
-                pass
-            else:  # load from huggingface
-                path = misc.cached_file_from_hf(path)
-                pretrained_path[i] = path
+            if path.startswith("hf://"):
+                print(f"load {path} from huggingface...")
+                cached_path = misc.cached_file_from_hf(path)
+                pretrained_path[i] = cached_path
+                print(f"{path} cached to {cached_path}")
 
         if mp_group is None:
             print(f"mp_group not provided. Load model with model parallel size == 1")

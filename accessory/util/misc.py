@@ -615,7 +615,6 @@ def print_param_status(model: torch.nn.Module) -> None:
         print(f"Param {name}: requires_grad {param.requires_grad}, local_size {param.shape}, model_parallel {is_model_parallel}, dtype {param.dtype}")
 
 
-
 def cached_file_from_hf(hf_path: str) -> str:
     def hf_download(repo_id, allow_patterns, cache_path):
         print(f"Downloading from huggingface repo: {repo_id}")
@@ -642,17 +641,20 @@ def cached_file_from_hf(hf_path: str) -> str:
         else:
             hf_download(repo_id, None, cache_path)
 
+    if hf_path.startswith("hf://"):
+        hf_path = hf_path[len("hf://"):]
+
     parts = hf_path.split("/")
-    model_name = parts[-1]
-    cache_path = os.path.join(os.path.expanduser('~'), '.cache', 'accessory', model_name)
-    
-    if len(parts) > 2:
+    if len(parts) == 2:  # owner/repo_name
+        repo_id = hf_path
+        subfolder = ""
+    elif len(parts) > 2:  # owner/repo_name/path/within/repo
         repo_id = "/".join(parts[:2])
         subfolder = "/".join(parts[2:]).replace("tree/main/", "")
     else:
-        repo_id = hf_path
-        subfolder = ""
+        raise ValueError(f"illegal hf_path: {hf_path}")
 
+    cache_path = os.path.join(os.path.expanduser('~'), '.cache', 'accessory', "hf", repo_id)
 
     if dist.is_initialized():
         rank = dist.get_rank()
@@ -662,5 +664,5 @@ def cached_file_from_hf(hf_path: str) -> str:
     else:
         download_files()
 
-    return cache_path+"/"+subfolder
+    return os.path.join(cache_path, subfolder)
 
