@@ -235,6 +235,11 @@ def main(args):
 
     TransformerBlock = type(model.llma.layers[0])
     fsdp_ignored_parameters = [param for param in model.parameters() if not param.requires_grad]
+    # broadcast ignored params, which are not synchronized among data parallel ranks by the FSDP call
+    for param in fsdp_ignored_parameters:
+        dist.broadcast(param.data, src=dist.get_global_rank(fs_init.get_data_parallel_group(), 0),
+                       group=fs_init.get_data_parallel_group())
+
     model = FSDP(
         model,
         process_group=fs_init.get_data_parallel_group(),
@@ -258,10 +263,6 @@ def main(args):
         device_id=torch.cuda.current_device(),
         ignored_parameters=fsdp_ignored_parameters
     )
-    # broadcast ignored params, which are not synchronized among data parallel ranks by the FSDP call
-    for param in fsdp_ignored_parameters:
-        dist.broadcast(param.data, src=dist.get_global_rank(fs_init.get_data_parallel_group(), 0),
-                       group=fs_init.get_data_parallel_group())
     # broadcast non-model-parallel parameters within model parallel group
     misc.broadcast_nonmp_parameters(model)
 
