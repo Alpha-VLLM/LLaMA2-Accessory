@@ -616,26 +616,45 @@ def print_param_status(model: torch.nn.Module) -> None:
 
 
 def cached_file_from_hf(hf_path: str) -> str:
-    parts = hf_path.split("/")
+    def hf_download(repo_id, allow_patterns, cache_path):
+        print(f"Downloading from huggingface repo: {repo_id}")
+        snapshot_download_args = {
+            'repo_id': repo_id,
+            'repo_type': 'model', 
+            'local_dir': cache_path, 
+            'local_dir_use_symlinks': False, 
+            'resume_download': True
+        }
 
-    if len(parts) > 2:
-        repo_id = "/".join(parts[:2])
-        subfolder = "/".join(parts[2:]).replace("tree/main/", "")
-    elif len(parts) == 1:
-        repo_id = "Alpha-VLLM/LLaMA2-Accessory"
-        subfolder = '*/' + parts[0]
-    else:
-        repo_id = hf_path
-        subfolder = ""
+        if allow_patterns:
+            snapshot_download_args['allow_patterns'] = allow_patterns
+            print(f"File from {allow_patterns} will be downloaded")
 
-    model_name = parts[-1]
-    cache_path = os.path.join(os.path.expanduser('~'), '.cache', 'accessory', model_name)
+        snapshot_download(**snapshot_download_args)
+
+
+        print(f"Saved to {cache_path}")
 
     def download_files():
         if subfolder:
             hf_download(repo_id, f"{subfolder}/*", cache_path)
         else:
             hf_download(repo_id, None, cache_path)
+
+    if hf_path.startswith("hf://"):
+        hf_path = hf_path[len("hf://"):]
+
+    parts = hf_path.split("/")
+    if len(parts) == 2:  # owner/repo_name
+        repo_id = hf_path
+        subfolder = ""
+    elif len(parts) > 2:  # owner/repo_name/path/within/repo
+        repo_id = "/".join(parts[:2])
+        subfolder = "/".join(parts[2:]).replace("tree/main/", "")
+    else:
+        raise ValueError(f"illegal hf_path: {hf_path}")
+
+    cache_path = os.path.join(os.path.expanduser('~'), '.cache', 'accessory', "hf", repo_id)
 
     if dist.is_initialized():
         rank = dist.get_rank()
@@ -645,39 +664,5 @@ def cached_file_from_hf(hf_path: str) -> str:
     else:
         download_files()
 
-    return cache_path
+    return os.path.join(cache_path, subfolder)
 
-def hf_download(repo_id, allow_patterns, cache_path):
-    print(f"Downloading from huggingface repo: {repo_id}")
-    snapshot_download_args = {
-        'repo_id': repo_id,
-        'repo_type': 'model', 
-        'local_dir': cache_path, 
-        'local_dir_use_symlinks': False, 
-        'resume_download': True
-    }
-
-    if allow_patterns:
-        snapshot_download_args['allow_patterns'] = allow_patterns
-
-    snapshot_download(**snapshot_download_args)
-
-    if allow_patterns:
-        process_downloaded_files(cache_path)
-
-    print(f"Saved to {cache_path}")
-
-def process_downloaded_files(cache_path):
-    for root, dirs, files in os.walk(cache_path, topdown=True):
-        if files:
-            relative_path = os.path.relpath(root, cache_path)
-            print(f"Files originally in subdirectory: ./{relative_path}")
-            for file in files:
-                file_path = os.path.join(root, file)
-                shutil.move(file_path, cache_path)
-
-    for root, dirs, files in os.walk(cache_path, topdown=False):
-        for dir in dirs:
-            dir_path = os.path.join(root, dir)
-            if not os.listdir(dir_path):
-                os.rmdir(dir_path)
