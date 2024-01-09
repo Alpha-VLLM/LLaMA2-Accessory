@@ -151,13 +151,12 @@ class FalconIterator:
         ann = self._curr_contents[self._curr_idx]
         input_data = torch.tensor(ann, dtype=torch.int64)
         output_data = copy.deepcopy(input_data)
-        example_mask = copy.deepcopy(input_data)
 
         item_state = {"_curr_idx": self._curr_idx, "_file_idx": self._file_idx, "worker_id": self.worker_id}
 
         self._curr_idx = self._curr_idx + 1
 
-        return input_data, output_data, example_mask, item_state
+        return input_data, output_data, item_state
 
 
 
@@ -185,6 +184,5 @@ class FalconVal(Dataset):
         ann = self.contents[idx]
         input_data = torch.tensor(ann, dtype=torch.int64)
         output_data = copy.deepcopy(input_data)
-        example_mask = copy.deepcopy(input_data)
 
-        return input_data, output_data, example_mask
+        return input_data, output_data

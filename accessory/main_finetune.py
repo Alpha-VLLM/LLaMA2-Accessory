@@ -108,8 +108,6 @@ def get_args_parser():
 
     parser.add_argument('--output_dir', default='./output_dir',
                         help='path where to save, empty for no saving')
-    parser.add_argument('--log_dir', default='./output_dir',
-                        help='path where to tensorboard log')
     parser.add_argument('--save_interval', default=1, type=int,
                         help='number of epochs between model saving')
     parser.add_argument('--save_iteration_interval', default=5000, type=int,
@@ -299,15 +297,15 @@ def main(args):
         cache_on_disk=args.cache_ann_on_disk, rank=global_rank)
     print(dataset_train)
 
-    if global_rank == 0 and args.log_dir is not None:
-        os.makedirs(args.log_dir, exist_ok=True)
-        log_writer = SummaryWriter(log_dir=args.log_dir)
+    if global_rank == 0 and args.output_dir is not None:
+        os.makedirs(args.output_dir, exist_ok=True)
+        log_writer = SummaryWriter(log_dir=args.output_dir)
     else:
         log_writer = None
 
     sampler_train = FinetuneDistSampler(
         dataset_train, num_replicas=dp_world_size, rank=dp_rank, shuffle=True, batch_size=args.batch_size,
-        acc_grad=args.accum_iter
+        acc_grad=args.accum_iter, seed=args.seed
     )
     data_loader_train = torch.utils.data.DataLoader(
         dataset_train,
