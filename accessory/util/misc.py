@@ -68,16 +68,16 @@ def is_dist_avail_and_initialized():
     return True
 
 
-def get_world_size():
+def get_world_size(group=None):
     if not is_dist_avail_and_initialized():
         return 1
-    return dist.get_world_size()
+    return dist.get_world_size(group=group)
 
 
-def get_rank():
+def get_rank(group=None):
     if not is_dist_avail_and_initialized():
         return 0
-    return dist.get_rank()
+    return dist.get_rank(group=group)
 
 
 def is_main_process():
@@ -526,14 +526,14 @@ def resume_stage2(args, model, optimizer, loss_scaler, dataset_train):
         return epoch_iter
 
 
-def all_reduce_mean(x):
-    world_size = get_world_size()
+def all_reduce_mean(x, group=None):
+    world_size = get_world_size(group=group)
     if world_size > 1:
         if isinstance(x, torch.Tensor):
             x_reduce = x.clone().cuda()
         else:
             x_reduce = torch.tensor(x).cuda()
-        dist.all_reduce(x_reduce)
+        dist.all_reduce(x_reduce, group=group)
         x_reduce /= world_size
         return x_reduce.item()
     else:

@@ -8,6 +8,9 @@ import torch
 import accessory.util.misc as misc
 import accessory.util.lr_sched as lr_sched
 
+from fairscale.nn.model_parallel import initialize as fs_init
+
+
 def train_one_epoch(model: torch.nn.Module,
                     data_loader, val_loader, optimizer: torch.optim.Optimizer,
                     epoch: int, start_iter, loss_scaler,
@@ -27,7 +30,7 @@ def train_one_epoch(model: torch.nn.Module,
 
     if log_writer is not None:
         print('log_dir: {}'.format(log_writer.log_dir))
-    for data_iter_step, (examples, labels, example_mask, item_states) in enumerate(
+    for data_iter_step, (examples, labels, item_states) in enumerate(
         metric_logger.log_every(data_loader, print_freq, header, start_iter), start=start_iter
     ):
 
@@ -40,10 +43,10 @@ def train_one_epoch(model: torch.nn.Module,
             "tf32": contextlib.nullcontext(),
         }[args.precision]
         with autocast_ctx:
-             c_loss, additional_loss_dict = model(examples, labels, images=imgs)
+             c_loss, additional_loss_dict = model(examples, labels)
         loss = c_loss
-        for add_loss in additional_loss_dict.values():
-            loss = loss + add_loss
+        for (add_loss, weight) in additional_loss_dict.values():
+            loss = loss + add_loss * weight
         loss_value = loss.item()
         c_loss_value = c_loss.item()
         if not math.isfinite(loss_value):
@@ -72,7 +75,7 @@ def train_one_epoch(model: torch.nn.Module,
         torch.cuda.synchronize()
 
         metric_logger.update(closs=c_loss_value)
-        metric_logger.update(**{key: val.item() for key, val in additional_loss_dict.items()})
+        metric_logger.update(**{key: val[0].item() for key, val in additional_loss_dict.items()})
 
         lr = optimizer.param_groups[0]["lr"]
         metric_logger.update(lr=lr)
@@ -95,18 +98,17 @@ def train_one_epoch(model: torch.nn.Module,
 
         # validation
         if (data_iter_step + 1) % 10000 == 0:
-            val_one_epoch(model, val_loader, epoch, log_writer=log_writer, args=args)
+            val_metrics = val_one_epoch(model, val_loader, epoch, args=args)
+            if log_writer is not None:
+                for metric_name, metric_value in val_metrics.items():
+                    log_writer.add_scalar("val"+metric_name, metric_value, data_iter_step)
             model.train(True)
 
-        loss_value_reduce = misc.all_reduce_mean(loss_value)
-        c_loss_value_reduce = misc.all_reduce_mean(c_loss_value)
-        if update_grad:
-            grad_norm_reduce = misc.all_reduce_mean(grad_norm)
-        if log_writer is not None and update_grad:
-            log_writer.add_scalar('c_train_loss', c_loss_value_reduce, data_iter_step)
-            if update_grad:
-                log_writer.add_scalar('grad_norm', grad_norm_reduce, data_iter_step)
-            log_writer.add_scalar('lr', lr, data_iter_step)
+        for metric_name, metric in metric_logger.meters.items():
+            metric_value = metric.value
+            metric_value = misc.all_reduce_mean(metric_value, group=fs_init.get_data_parallel_group())
+            if log_writer is not None:
+                log_writer.add_scalar(metric_name, metric_value, data_iter_step)
 
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
@@ -116,7 +118,6 @@ def train_one_epoch(model: torch.nn.Module,
 @ torch.no_grad()
 def val_one_epoch(model: torch.nn.Module,
                   data_loader: Iterable, epoch: int,
-                  log_writer=None,
                   args=None):
     print("!!!start validation!!!")
     model.eval()
@@ -124,21 +125,17 @@ def val_one_epoch(model: torch.nn.Module,
     header = 'Epoch: [{}]'.format(epoch)
     print_freq = 10
 
-    if log_writer is not None:
-        print('log_dir: {}'.format(log_writer.log_dir))
-    for data_iter_step, (examples, labels, example_mask) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
-
-        with torch.cuda.amp.autocast(dtype=torch.bfloat16):
-             c_loss = model(examples, labels)
-        loss = c_loss
-        loss_value = loss.item()
+    for data_iter_step, (examples, labels) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+        autocast_ctx = {
+            "bf16": torch.cuda.amp.autocast(dtype=torch.bfloat16),
+            "fp16": torch.cuda.amp.autocast(dtype=torch.float16),
+            "tf32": contextlib.nullcontext(),
+        }[args.precision]
+        with autocast_ctx:
+             c_loss, additional_loss_dict = model(examples, labels)
         c_loss_value = c_loss.item()
-        if not math.isfinite(loss_value):
-            print("Loss is {}, stopping training".format(loss_value))
-            sys.exit(1)
 
         metric_logger.update(closs=c_loss_value)
-
 
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()

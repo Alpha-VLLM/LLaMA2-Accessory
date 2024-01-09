@@ -7,6 +7,9 @@ import torch
 import accessory.util.misc as misc
 import accessory.util.lr_sched as lr_sched
 
+from fairscale.nn.model_parallel import initialize as fs_init
+
+
 def train_one_epoch(model: torch.nn.Module,
                     data_loader, optimizer: torch.optim.Optimizer,
                     epoch: int, start_iter: int, loss_scaler,
@@ -77,20 +80,11 @@ def train_one_epoch(model: torch.nn.Module,
         lr = optimizer.param_groups[0]["lr"]
         metric_logger.update(lr=lr)
 
-        loss_value_reduce = misc.all_reduce_mean(loss_value)
-        c_loss_value_reduce = misc.all_reduce_mean(c_loss_value)
-        if update_grad:
-            grad_norm_reduce = misc.all_reduce_mean(grad_norm)
-        if log_writer is not None and update_grad:
-            """ We use epoch_1000x as the x-axis in tensorboard.
-            This calibrates different curves when batch size changes.
-            """
-            epoch_1000x = int((data_iter_step / len(data_loader) + epoch) * 1000)
-            log_writer.add_scalar('c_train_loss', c_loss_value_reduce, epoch_1000x)
-            if update_grad:
-                log_writer.add_scalar('grad_norm', grad_norm_reduce, epoch_1000x)
-            log_writer.add_scalar('lr', lr, epoch_1000x)
-
+        for metric_name, metric in metric_logger.meters.items():
+            metric_value = metric.value
+            metric_value = misc.all_reduce_mean(metric_value, group=fs_init.get_data_parallel_group())
+            if log_writer is not None:
+                log_writer.add_scalar(metric_name, metric_value, data_iter_step + len(data_loader) * epoch)
 
         # save within epoch
         n_update_per_save = args.save_iteration_interval // accum_iter
