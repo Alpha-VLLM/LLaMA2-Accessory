@@ -17,7 +17,7 @@
 ✨Within this toolkit, we present **SPHINX**, a versatile multimodal large language model (MLLM) that combines a diverse array of training tasks, data domains, and visual embeddings.
 
 ## News
-
+- **[2024-1-12]** We release SPHINX-Tiny built on the compact 1.1B [TinyLlama](https://huggingface.co/TinyLlama/TinyLlama-1.1B-intermediate-step-1195k-token-2.5T) that everyone can play with! 🔥🔥🔥
 - **[2024-1-5]** [OpenCompass](https://github.com/open-compass/opencompass) now supports seamless evaluation of all LLaMA2-Accessory models. 🔥🔥🔗[Doc](https://llama2-accessory.readthedocs.io/en/latest/evaluation.html)
 - **[2024-1-2]** We release the [SPHINX-MoE](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX), a MLLM based on Mixtral-8x7B-MoE. 🔥🔥🔥
 - **[2023-12-12]** [SPHINX-V2](https://github.com/Alpha-VLLM/LLaMA2-Accessory/tree/main/SPHINX) achieve outstanding results in [InfiMM-Eval](https://paperswithcode.com/sota/visual-question-answering-vqa-on-core-mm), ranking just below GPT4-V! 🔥🔥🔥
