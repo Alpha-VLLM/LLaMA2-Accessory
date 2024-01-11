@@ -21,7 +21,7 @@ With LLaMA2-Accessory, mixtral-8x7b enjoys the following features:
 
 ## Model Implementation
 There are generally two approaches to implement the Mixture of Experts (MoE) layers:
-1. The <span style="color: #00e0e0">Base </span> implementation (Distribute Different Experts to Different GPUs): For example, given 8 experts and 4 GPUs, each GPU will be allocated
+1. The <span style="color: #00e0e0">base </span> implementation (Distribute Different Experts to Different GPUs): For example, given 8 experts and 4 GPUs, each GPU will be allocated
 with two experts. This is the approach adopted by [DiscoResearch](https://huggingface.co/DiscoResearch/mixtral-7b-8expert)
 and [llama-mistral](https://github.com/dzhulgakov/llama-mistral).
 2. The <span style="color: #00e0e0">sparse </span> implementation (Distribute a Part of Each Expert to Every GPU): For example, given 8 experts and 4 GPUs, each GPUs will hold 1/4 of

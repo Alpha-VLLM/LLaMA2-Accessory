@@ -8,7 +8,8 @@ Try out our [web demo 🚀](http://imagebind-llm.opengvlab.com/) here!
 </p>
 
 ## News
-* **[2024-1-5]** We release SPHINX-MoE supercharged with the powerful Mixtral 8x7B Backbone! 🔥🔥🔥
+* **[2024-1-12]** We release SPHINX-Tiny built on the compact 1.1B [TinyLlama](https://huggingface.co/TinyLlama/TinyLlama-1.1B-intermediate-step-1195k-token-2.5T) that everyone can play with! 🔥🔥🔥
+* **[2024-1-5]** We release SPHINX-MoE supercharged with the powerful [Mixtral 8x7B](https://llama2-accessory.readthedocs.io/en/latest/projects/mixtral-8x7b.html) Backbone! 🔥🔥🔥
 * **[2023-11-17]** We release SPHINX-V2, the same architecture but enhanced capabilities! 🔥🔥
 * **[2023-11-09]** We release the [technical report](https://github.com/Alpha-VLLM/LLaMA2-Accessory/blob/main/SPHINX/SPHINX_paper.pdf) of SPHINX 🔥.
 * **[2023-10-17]** We release the demo, code, and model of SPHINX 🎉.
@@ -42,6 +43,7 @@ On top of SPHINX, we propose to further mix visual scales and sub-images for bet
   pip install -e .
   ```
   After this, you will be able to invoke `import accessory` or `import SPHINX` without the restriction of working directory.
++ For SPHINX-MoE, [megablocks](https://github.com/stanford-futuredata/megablocks/) and [stk](https://github.com/stanford-futuredata/stk) should be additionally installed according their the official guides.
 + To enable the segmentation ability shown in our official demo, SAM is also needed:
     ``` bash
     pip install git+https://github.com/facebookresearch/segment-anything.git
@@ -51,13 +53,15 @@ On top of SPHINX, we propose to further mix visual scales and sub-images for bet
 
 We release the following checkpoints:
 
-| Name          | Architecture                                                         | Checkpoint                                                   |
-|---------------|----------------------------------------------------------------------| ------------------------------------------------------------ |
-| SPHINX        | [llama_ens](../accessory/model/LLM/llama_ens.py)                     | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX)/[Baidu](https://pan.baidu.com/s/1HE6NoF1ZawhMgJxeh9r2kQ?pwd=46s7)(提取码：46s7) |
-| SPHINX-1K     | [llama_ens5](../accessory/model/LLM/llama_ens.py)                    | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-1k)/[Baidu](https://pan.baidu.com/s/1SRfyFGJdapaUTgYZOAdXyg?pwd=pua9)(提取码：pua9) |
-| SPHINX-v2-1k  | [llama_ens5](../accessory/model/LLM/llama_ens.py)                    | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-v2-1k)/[Baidu](https://pan.baidu.com/s/1PKCf515EGmSnSZ8teERHjQ?pwd=88z0)(提取码：88z0) |
-| SPHINX-MoE    | [mixtral_sparse_ens](../accessory/model/LLM/mixtral_sparse_ens.py)   | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-MoE) |
-| SPHINX-MoE-1k | [mixtral_sparse_ens5](../accessory/model/LLM/mixtral_sparse_ens5.py) | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-MoE-1k) |
+| Name           | Architecture                                                      | Checkpoint                                                                                                                                                                               |
+|----------------|-------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| SPHINX         | [llama_ens](../accessory/model/LLM/llama_ens.py)                  | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX)/[Baidu](https://pan.baidu.com/s/1HE6NoF1ZawhMgJxeh9r2kQ?pwd=46s7)(提取码：46s7)       |
+| SPHINX-1K      | [llama_ens5](../accessory/model/LLM/llama_ens.py)                 | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-1k)/[Baidu](https://pan.baidu.com/s/1SRfyFGJdapaUTgYZOAdXyg?pwd=pua9)(提取码：pua9)    |
+| SPHINX-v2-1k   | [llama_ens5](../accessory/model/LLM/llama_ens.py)                 | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-v2-1k)/[Baidu](https://pan.baidu.com/s/1PKCf515EGmSnSZ8teERHjQ?pwd=88z0)(提取码：88z0) |
+| SPHINX-MoE     | [mixtral_sparse_ens](../accessory/model/LLM/mixtral_sparse_ens.py) | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-MoE)                                                                               |
+| SPHINX-MoE-1k  | [mixtral_sparse_ens5](../accessory/model/LLM/mixtral_sparse_ens5.py) | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-MoE-1k)                                                                            |
+| SPHINX-Tiny    | [llama_ens_light.py](../accessory/model/LLM/llama_ens_light.py)   | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-Tiny)                                                                              |
+| SPHINX-Tiny-1k | [llama_ens5_light.py](../accessory/model/LLM/llama_ens5_light.py) | [Hugging face](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX/SPHINX-Tiny-1k)                                                                           |
 
 *Note that SPHINX-1K was previously called Long-SPHINX*
 
