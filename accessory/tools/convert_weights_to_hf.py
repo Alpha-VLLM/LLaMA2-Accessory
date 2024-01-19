@@ -19,23 +19,41 @@ make the conversion process much slower.
 
 Example usage::
 
-    # The folders to prepare:
-    #
-    # /path/to/llama-2-70b: Path to the original LLaMA-2-70B weights by Meta.
-    # /path/to/finetune/sg/dialog_sharegpt_70b: ShareGPT finetuned delta
-    #   weights downloaded from our repo.
-    # /path/to/llama/tokenizer.model: Tokenizer model file released by Meta.
-    # /path/to/llama2_accessory_github_repo: Path to the cloned Github repo.
-    #
-    # Then, run in Bash:
+    If you are working with LLAMA models:
+        # The folders to prepare:
+        #
+        # /path/to/llama-2-70b: Path to the original LLaMA-2-70B weights by Meta.
+        # /path/to/finetune/sg/dialog_sharegpt_70b: ShareGPT finetuned delta
+        #   weights downloaded from our repo.
+        # /path/to/llama/tokenizer.model: Tokenizer model file released by Meta.
+        # /path/to/llama2_accessory_github_repo: Path to the cloned Github repo.
+        #
+        # Then, run in Bash:
 
-    $ cd /path/to/llama2_accessory_github_repo
-    $ python -m tools.convert_weights_to_hf \
-        --src_weights_path /path/to/llama-2-70b \
-            /path/to/finetune/sg/dialog_sharegpt_70b \
-        --src_config_path /path/to/llama-2-70b/params.json \
-        --tokenizer_path /path/to/llama/tokenizer.model \
-        --dst_weights_path /path/to/llama-2-70b-hf-sharegpt
+        $ cd /path/to/llama2_accessory_github_repo
+        $ python -m tools.convert_weights_to_hf \
+            --src_weights_path /path/to/llama-2-70b \
+                /path/to/finetune/sg/dialog_sharegpt_70b \
+            --src_config_path /path/to/llama-2-70b/params.json \
+            --tokenizer_path /path/to/llama/tokenizer.model \
+            --dst_weights_path /path/to/llama-2-70b-hf-sharegpt
+    
+    If you are working with Mixtral MoE models:
+        # The folders to prepare:
+        #
+        # /mnt/bn/codegeniusgen1/ckpt/MoE-Mixtral-7B-8Expert/converted: Path to the 
+        #   converted mixtral MoE ckpt. (base implementation)
+        # /mnt/bn/codegeniusgen1/ckpt/MoE-Mixtral-7B-8Expert/converted/tokenizer.model: Tokenizer model file released by Meta.
+        # /path/to/llama2_accessory_github_repo: Path to the cloned Github repo.
+        #
+        # Then, run in Bash:
+
+        $ cd /path/to/llama2_accessory_github_repo
+        $ python -m tools.convert_weights_to_hf --mixtral \
+            --src_weights_path /mnt/bn/codegeniusgen1/ckpt/MoE-Mixtral-7B-8Expert/converted \
+            --src_config_path /mnt/bn/codegeniusgen1/ckpt/MoE-Mixtral-7B-8Expert/converted/config.json \
+            --tokenizer_path /mnt/bn/codegeniusgen1/ckpt/MoE-Mixtral-7B-8Expert/converted/path/to/llama/tokenizer.model \
+            --dst_weights_path /path/to/MoE-Mixtral-7B-8Expert-hf
 
     # If the model to convert contains unknown parameters (e.g., converting a
     # multi-modal model to huggingface LLaMA which is language-only), add
@@ -59,7 +77,6 @@ Note:
     to the latest version of ``transformers`` (e.g., >= 4.32.0) should get rid
     of the warning.
 """
-
 import argparse
 import json
 import os
@@ -92,31 +109,57 @@ if (hf_major_ver, hf_minor_ver) < (4, 31):
 def load_and_merge_tensor_parallel_weights(
     src_weights_path: List[str], torch_dtype: torch.dtype, 
     ignore_unknown_keys: bool = False,
+    model_type: str = 'llama'
 ) -> Dict[str, torch.Tensor]:
     # Manually specify merge dim for each weight name pattern because:
     # 1. To avoid creating a model (and then infer the merge dim) to save
     #    memory.
     # 2. Only weights actually supported by HuggingFace are listed (e.g.,
     #    biases are not supported now) so there won't be a lot of corner cases.
-    pattern_to_merge_dim = (
-        ("^llma.tok_embeddings.weight$", 1),
-        ("^llma.layers.(\d+).attention.wq.weight$", 0),
-        ("^llma.layers.(\d+).attention.wk.weight$", 0),
-        ("^llma.layers.(\d+).attention.wv.weight$", 0),
-        ("^llma.layers.(\d+).attention.wo.weight$", 1),
-        ("^llma.layers.(\d+).attention_norm.weight", -1),
-        ("^llma.layers.(\d+).feed_forward.w1.weight$", 0),
-        ("^llma.layers.(\d+).feed_forward.w2.weight$", 1),
-        ("^llma.layers.(\d+).feed_forward.w3.weight$", 0),
-        ("^llma.layers.(\d+).ffn_norm.weight", -1),
-        ("^llma.output.weight$", 0),
-        ("^llma.norm.weight$", -1),
-        ("^llma.rope.freqs$", -1),
-    )
+    if model_type == 'llama':
+        pattern_to_merge_dim = (
+            ("^llma.tok_embeddings.weight$", 1),
+            ("^llma.layers.(\d+).attention.wq.weight$", 0),
+            ("^llma.layers.(\d+).attention.wk.weight$", 0),
+            ("^llma.layers.(\d+).attention.wv.weight$", 0),
+            ("^llma.layers.(\d+).attention.wo.weight$", 1),
+            ("^llma.layers.(\d+).attention_norm.weight", -1),
+            ("^llma.layers.(\d+).feed_forward.w1.weight$", 0),
+            ("^llma.layers.(\d+).feed_forward.w2.weight$", 1),
+            ("^llma.layers.(\d+).feed_forward.w3.weight$", 0),
+            ("^llma.layers.(\d+).ffn_norm.weight", -1),
+            ("^llma.output.weight$", 0),
+            ("^llma.norm.weight$", -1),
+            ("^llma.rope.freqs$", -1),
+        )
+    elif model_type == 'mixtral':
+        pattern_to_merge_dim = (
+            ("^llma.tok_embeddings.weight$", 1),
+            ("^llma.layers.(\d+).attention.wq.weight$", 0),
+            ("^llma.layers.(\d+).attention.wk.weight$", 0),
+            ("^llma.layers.(\d+).attention.wv.weight$", 0),
+            ("^llma.layers.(\d+).attention.wo.weight$", 1),
+            ("^llma.layers.(\d+).attention_norm.weight", -1),
+            ("^llma.layers.(\d+).feed_forward.gate.weight$", -1),
+            ("^llma.layers.(\d+).feed_forward.experts.(\d+).w1.weight$", -1), # for base impl TODO: support sparse impl
+            ("^llma.layers.(\d+).feed_forward.experts.(\d+).w2.weight$", -1), # for base impl TODO: support sparse impl
+            ("^llma.layers.(\d+).feed_forward.experts.(\d+).w3.weight$", -1), # for base impl TODO: support sparse impl
+            ("^llma.layers.(\d+).ffn_norm.weight", -1),
+            ("^llma.output.weight$", 0),
+            ("^llma.norm.weight$", -1),
+        )
+    else:
+        raise NotImplementedError(f"Unsupported model type {model_type}")
     pattern_to_merge_dim = tuple(
         (re.compile(pattern), dim)
         for pattern, dim in pattern_to_merge_dim
     )
+
+    # these tensors are distributed # TODO: support sparse impl
+    distributed_pattern = ["^llma.layers.(\d+).feed_forward.experts.(\d+).w1.weight$",
+                            "^llma.layers.(\d+).feed_forward.experts.(\d+).w2.weight$",
+                            "^llma.layers.(\d+).feed_forward.experts.(\d+).w3.weight$"]
+    
     merged_ckpt = {}
     ignored_keys = []
     for i, path in enumerate(src_weights_path):
@@ -154,13 +197,15 @@ def load_and_merge_tensor_parallel_weights(
                     )
                     merged_ckpt[key] = torch.zeros(merged_size,
                                                    dtype=init_dtype)
+                distributed_loading = any([re.compile(pattern).match(key) for pattern in distributed_pattern])
                 if key not in sharded_tensor_loaders:
                     sharded_tensor_loaders[key] = ShardedTensorLoader(
-                        merged_ckpt[key], mp_size, merge_dim,
+                        merged_ckpt[key], 
+                        1 if distributed_loading else mp_size, 
+                        merge_dim,
                         mode="add" if format.endswith("_diff") else "set"
                     )
-                sharded_tensor_loaders[key].load_shard(shard_id, value)
-
+                sharded_tensor_loaders[key].load_shard(0 if distributed_loading else shard_id, value)
         for key, value in sharded_tensor_loaders.items():
             assert value.is_complete(), (
                 "A key is not loaded completely after going through all "
@@ -181,28 +226,56 @@ def load_and_merge_tensor_parallel_weights(
 
 def convert_merged_ckpt_to_hf(
     merged_state_dict: Dict[str, torch.Tensor], params: Dict[str, Any],
+    model_type: str = 'llama'
 ) -> List[Dict[str, torch.Tensor]]:
     merged_state_dict = merged_state_dict.copy()
     num_layers = 0
     while (f"llma.layers.{num_layers}.attention_norm.weight"
            in merged_state_dict):
         num_layers += 1
+    if model_type == 'mixtral':
+        num_experts = 0
+        while (f"llma.layers.0.feed_forward.experts.{num_experts}.w1.weight" 
+                in merged_state_dict):
+            num_experts += 1
+    else:
+        num_experts = None
     hf_ckpts = []
-    if "llma.rope.freqs" in merged_state_dict:
-        del merged_state_dict["llma.rope.freqs"]
+    if model_type == 'llama':
+        if "llma.rope.freqs" in merged_state_dict:
+            del merged_state_dict["llma.rope.freqs"]
     for i in range(num_layers):
         hf_ckpt_shard = {}
-        for src_key, dst_key in [
-            ("attention.wq.weight", "self_attn.q_proj.weight"),
-            ("attention.wk.weight", "self_attn.k_proj.weight"),
-            ("attention.wv.weight", "self_attn.v_proj.weight"),
-            ("attention.wo.weight", "self_attn.o_proj.weight"),
-            ("feed_forward.w3.weight", "mlp.up_proj.weight"),
-            ("feed_forward.w2.weight", "mlp.down_proj.weight"),
-            ("feed_forward.w1.weight", "mlp.gate_proj.weight"),
-            ("attention_norm.weight", "input_layernorm.weight"),
-            ("ffn_norm.weight", "post_attention_layernorm.weight"),
-        ]:
+        if model_type == 'llama':
+            src_dst_name_mapping = [
+                ("attention.wq.weight", "self_attn.q_proj.weight"),
+                ("attention.wk.weight", "self_attn.k_proj.weight"),
+                ("attention.wv.weight", "self_attn.v_proj.weight"),
+                ("attention.wo.weight", "self_attn.o_proj.weight"),
+                ("feed_forward.w3.weight", "mlp.up_proj.weight"),
+                ("feed_forward.w2.weight", "mlp.down_proj.weight"),
+                ("feed_forward.w1.weight", "mlp.gate_proj.weight"),
+                ("attention_norm.weight", "input_layernorm.weight"),
+                ("ffn_norm.weight", "post_attention_layernorm.weight"),
+            ]
+        elif model_type == 'mixtral':
+            src_dst_name_mapping = [
+                ("attention.wq.weight", "self_attn.q_proj.weight"),
+                ("attention.wk.weight", "self_attn.k_proj.weight"),
+                ("attention.wv.weight", "self_attn.v_proj.weight"),
+                ("attention.wo.weight", "self_attn.o_proj.weight"),
+                ("attention_norm.weight", "input_layernorm.weight"),
+                ("ffn_norm.weight", "post_attention_layernorm.weight"),
+                ("feed_forward.gate.weight", "block_sparse_moe.gate.weight"),
+            ] + sum([[
+                (f"feed_forward.experts.{exp_no}.w1.weight", f"block_sparse_moe.experts.{exp_no}.w1.weight"),
+                (f"feed_forward.experts.{exp_no}.w2.weight", f"block_sparse_moe.experts.{exp_no}.w2.weight"),
+                (f"feed_forward.experts.{exp_no}.w3.weight", f"block_sparse_moe.experts.{exp_no}.w3.weight"),
+            ] for exp_no in range(num_experts)], start=[])
+        else:
+            raise NotImplementedError(f"Unsupported model type {model_type}")
+        
+        for src_key, dst_key in src_dst_name_mapping:
             dst_key = f"model.layers.{i}." + dst_key
             src_key = f"llma.layers.{i}." + src_key
             value = merged_state_dict[src_key]
@@ -282,7 +355,7 @@ def write_tokenizer(tokenizer_path: str, dest_dir: str) -> Any:
 
 
 def write_configs(
-    params: Dict[str, Any], dtype: torch.dtype, dest_dir: str, vocab_size: int
+    params: Dict[str, Any], dtype: torch.dtype, dest_dir: str, vocab_size: int, model_type: str
 ) -> None:
     def calculate_hidden_dim():
         hidden_dim = params["dim"] * 4
@@ -295,56 +368,103 @@ def write_configs(
         )
         return hidden_dim
 
-    config = {
-        "architectures": [
-            "LlamaForCausalLM"
-        ],
-        "bos_token_id": 1,
-        "eos_token_id": 2,
-        "hidden_act": "silu",
-        "hidden_size": params["dim"],
-        "initializer_range": 0.02,
-        "intermediate_size": calculate_hidden_dim(),
-        "max_position_embeddings": 2048,
-        "model_type": "llama",
-        "num_attention_heads": params["n_heads"],
-        "num_hidden_layers": params["n_layers"],
-        "num_key_value_heads": params.get("n_kv_heads", params["n_heads"]),
-        "pad_token_id": 0,
-        "pretraining_tp": 1,
-        "rms_norm_eps": params.get("norm_eps", 1e-5),
-        "rope_theta": params.get("rope_theta", 10000),
-        "rope_scaling": None if "rope_scaling" not in params else {
-            "type": "linear",
-            "factor": params["rope_scaling"],
-        },
-        "tie_word_embeddings": False,
-        "torch_dtype": {
-            torch.float16: "float16",
-            torch.bfloat16: "bfloat16",
-            torch.float32: "float32",
-        }[dtype],
-        "transformers_version": transformers.__version__,
-        "use_cache": True,
-        "vocab_size": vocab_size
-    }
+    if model_type == 'llama':
+        config = {
+            "architectures": [
+                "LlamaForCausalLM"
+            ],
+            "bos_token_id": 1,
+            "eos_token_id": 2,
+            "hidden_act": "silu",
+            "hidden_size": params["dim"],
+            "initializer_range": 0.02,
+            "intermediate_size": calculate_hidden_dim(),
+            "max_position_embeddings": 2048,
+            "model_type": "llama",
+            "num_attention_heads": params["n_heads"],
+            "num_hidden_layers": params["n_layers"],
+            "num_key_value_heads": params.get("n_kv_heads", params["n_heads"]),
+            "pad_token_id": 0,
+            "pretraining_tp": 1,
+            "rms_norm_eps": params.get("norm_eps", 1e-5),
+            "rope_theta": params.get("rope_theta", 10000),
+            "rope_scaling": None if "rope_scaling" not in params else {
+                "type": "linear",
+                "factor": params["rope_scaling"],
+            },
+            "tie_word_embeddings": False,
+            "torch_dtype": {
+                torch.float16: "float16",
+                torch.bfloat16: "bfloat16",
+                torch.float32: "float32",
+            }[dtype],
+            "transformers_version": transformers.__version__,
+            "use_cache": True,
+            "vocab_size": vocab_size
+        }
+    elif model_type == 'mixtral':
+        config = {
+            "architectures": [
+                "MixtralForCausalLM"
+            ],
+            "bos_token_id": 1,
+            "eos_token_id": 2,
+            "attention_dropout": 0.0,
+            "hidden_act": "silu",
+            "hidden_size": params["dim"],
+            "initializer_range": 0.02,
+            "intermediate_size": params["hidden_dim"],
+            "max_position_embeddings": 32768,
+            "model_type": "mixtral",
+            "num_attention_heads": params["n_heads"],
+            "num_experts_per_tok": 2,
+            "num_hidden_layers": params["n_layers"],
+            "num_key_value_heads": params.get("n_kv_heads", params["n_heads"]),
+            "output_router_logits": False,
+            "rms_norm_eps": params.get("norm_eps", 1e-5),
+            "rope_theta": params.get("rope_theta", 10000),
+            "rope_scaling": None if "rope_scaling" not in params or params["rope_scaling"] is None else {
+                "type": "linear",
+                "factor": params["rope_scaling"],
+            },
+            "router_aux_loss_coef": 0.02,
+            "sliding_window": None,
+            "tie_word_embeddings": False,
+            "torch_dtype": {
+                torch.float16: "float16",
+                torch.bfloat16: "bfloat16",
+                torch.float32: "float32",
+            }[dtype],
+            "transformers_version": transformers.__version__,
+            "use_cache": True,
+            "vocab_size": vocab_size
+        }
     with open(os.path.join(dest_dir, "config.json"), "w") as f:
         json.dump(config, f, indent=2)
 
-    generation_config = {
-        "_from_model_config": True,
-        "bos_token_id": 1,
-        "eos_token_id": 2,
-        "pad_token_id": 0,
-        "transformers_version": transformers.__version__,
-    }
+    if model_type == 'llama':
+        generation_config = {
+            "_from_model_config": True,
+            "bos_token_id": 1,
+            "eos_token_id": 2,
+            "pad_token_id": 0,
+            "transformers_version": transformers.__version__,
+        }
+    elif model_type == 'mixtral':
+        generation_config = {
+            "_from_model_config": True,
+            "bos_token_id": 1,
+            "eos_token_id": 2,
+            "transformers_version": transformers.__version__,
+        }
     with open(os.path.join(dest_dir, "generation_config.json"), "w") as f:
         json.dump(generation_config, f, indent=2)
 
 
 def write_hf_ckpt(
     hf_state_dict: List[Dict[str, torch.Tensor]], dest_dir: str,
-    tokenizer_path: str, params: Dict[str, Any], torch_dtype: torch.dtype
+    tokenizer_path: str, params: Dict[str, Any], torch_dtype: torch.dtype,
+    model_type: str = 'llama'
 ) -> None:
     os.makedirs(dest_dir, exist_ok=True)
     print("Writing model weights ...")
@@ -352,7 +472,7 @@ def write_hf_ckpt(
     print("Writing tokenizer ...")
     tokenizer = write_tokenizer(tokenizer_path, dest_dir)
     print("Writing configs ...")
-    write_configs(params, torch_dtype, dest_dir, tokenizer.vocab_size)
+    write_configs(params, torch_dtype, dest_dir, tokenizer.vocab_size, model_type)
 
 
 def main() -> None:
@@ -388,6 +508,10 @@ def main() -> None:
         help="Ignore unknown keys in the source checkpoint (the scripts will "
              "only give warnings); otherwise the conversion will fail."
     )
+    parser.add_argument(
+        "--mixtral", action="store_true",
+        help="Whether the model is of Mixtral MoE architecture."
+    )
     args = parser.parse_args()
 
     params = {}
@@ -403,13 +527,13 @@ def main() -> None:
 
     print("Loading and merging source checkpoints ...")
     src_ckpt_merged = load_and_merge_tensor_parallel_weights(
-        args.src_weights_path, torch_dtype, args.ignore_unknown_keys
+        args.src_weights_path, torch_dtype, args.ignore_unknown_keys, 'mixtral' if args.mixtral else 'llama'
     )
     print("Converting to HuggingFace format ...")
-    hf_ckpt = convert_merged_ckpt_to_hf(src_ckpt_merged, params)
+    hf_ckpt = convert_merged_ckpt_to_hf(src_ckpt_merged, params, 'mixtral' if args.mixtral else 'llama')
     print("Writing HuggingFace checkpoints to disk ...")
     write_hf_ckpt(hf_ckpt, args.dst_weights_path, args.tokenizer_path, params,
-                  torch_dtype)
+                  torch_dtype, 'mixtral' if args.mixtral else 'llama')
     print("Done!")
 
 
