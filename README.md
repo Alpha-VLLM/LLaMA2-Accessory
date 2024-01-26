@@ -17,6 +17,7 @@
 ✨Within this toolkit, we present **SPHINX**, a versatile multimodal large language model (MLLM) that combines a diverse array of training tasks, data domains, and visual embeddings.
 
 ## News
+- **[2024-1-27]** [SPHINX-MoE](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX) achieves **29.57%** and **29.33%** accuracy results on [CMMMU-test](https://github.com/CMMMU-Benchmark/CMMMU) and [CMMMU-val](https://github.com/CMMMU-Benchmark/CMMMU) respectively.
 - **[2024-1-24]** [SPHINX-MoE](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX) achieves new SOTA performance (**49.33%**) on [MMVP](https://github.com/tsb0601/MMVP), higher than GPT-4V! 🔥🔥🔥
 - **[2024-1-20]** [SPHINX-MoE](https://huggingface.co/Alpha-VLLM/LLaMA2-Accessory/tree/main/finetune/mm/SPHINX) achieves SOTA performance on [AesBench](https://github.com/yipoh/AesBench/tree/main)! 🔥🔥🔥
 - **[2024-1-18]** [LLaMA-Adapter](https://arxiv.org/pdf/2303.16199.pdf) is accepted by **ICLR 2024**!🎉
