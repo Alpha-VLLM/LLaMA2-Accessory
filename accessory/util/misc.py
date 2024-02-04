@@ -51,6 +51,7 @@ def setup_for_distributed(is_master):
 
     def print(*args, **kwargs):
         force = kwargs.pop('force', False)
+        kwargs['flush'] = True
 #        force = force or (get_world_size() > 8)
         if is_master or force:
             now = datetime.datetime.now().time()
@@ -620,9 +621,9 @@ def cached_file_from_hf(hf_path: str) -> str:
         print(f"Downloading from huggingface repo: {repo_id}")
         snapshot_download_args = {
             'repo_id': repo_id,
-            'repo_type': 'model', 
-            'local_dir': cache_path, 
-            'local_dir_use_symlinks': False, 
+            'repo_type': 'model',
+            'local_dir': cache_path,
+            'local_dir_use_symlinks': False,
             'resume_download': True
         }
 
@@ -665,4 +666,3 @@ def cached_file_from_hf(hf_path: str) -> str:
         download_files()
 
     return os.path.join(cache_path, subfolder)
-

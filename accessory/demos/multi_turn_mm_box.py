@@ -7,6 +7,7 @@ import argparse
 import multiprocessing as mp
 import numpy as np
 from typing import List, Optional
+import traceback
 
 import torch
 import torch.distributed as dist
@@ -132,6 +133,7 @@ def model_worker(
                     if stream_response["end_of_content"]:
                         break
         except Exception:
+            print(traceback.format_exc())
             response_queue.put(ModelFailure())
 
 def extract_and_color(input_string):
@@ -330,8 +332,8 @@ def gradio_worker(
                     boxed_image, masked_image = None, None
                 yield chatbot, chatbot_display, boxed_image, masked_image
                 break
-            # else:
-            #     yield chatbot, chatbot_display, None, None
+            else:
+                yield chatbot, chatbot_display, None, None
 
     def undo(chatbot, chatbot_display):
         if len(chatbot) > 0:
@@ -404,10 +406,7 @@ def gradio_worker(
         undo_button.click(undo, [chatbot, chatbot_display], [chatbot, chatbot_display])
         img_input.change(clear, [], [chatbot, chatbot_display, msg])
     barrier.wait()
-    demo.queue(api_open=True, concurrency_count=1).launch(
-        share=True,
-        server_name="0.0.0.0" if args.bind_all else "127.0.0.1",
-    )
+    demo.queue(api_open=True).launch(share=True, server_name="0.0.0.0")
 
 
 if __name__ == "__main__":
@@ -459,10 +458,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--quant", action="store_true", default=False,
         help="enable quantization"
-    )
-    parser.add_argument(
-        "--bind_all", action="store_true",
-        help="Listen to all addresses on the host."
     )
     args = parser.parse_args()
 
