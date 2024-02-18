@@ -1,10 +1,9 @@
 # Large-DiT
-![image](./assets/sample.png)
 We have released the Large Diffusion Transformer (L-DiT-7B), inspired by the architectures of LLaMa and DiT. L-DiT-7B achieves comparable performance to DiT-XL/2, with an FID of 2.37 versus 2.27 on ImageNet, while requiring only 1/14th of the training steps, 500K iterations compared to 7M iterations.
 ![image](./assets/teaser.png)
 
 ### Contributations
-- We noticed instability during the training of the original diffusion transformer, particularly when utilizing low-bit training modes and scaling up. To mitigate this, we combined the architectures of LLaMa and DiT. To further enhance the stability of the training process, we normalized the key and query of the attention mechanism. Consequently, the Large Diffusion Transformer can now be trained stably in BF16 mode and is scalable.
+- We notice instability during the training of the original diffusion transformer, particularly when utilizing low-bit training modes and scaling up. To mitigate this, we combine the architectures of LLaMa and DiT. To further enhance the stability of the training process, we normalize the key and query of the attention mechanism. Consequently, the Large Diffusion Transformer can now be trained stably in BF16 mode and is scalable.
 
 - By utilizing the architecture of the Large Diffusion Transformer, we have scaled the parameters to 3 and 7 billion. This scaling has notably improved the convergence speed of the Large DiT on label-conditioned ImageNet generation, thereby demonstrating the potential of scaling-up diffusion transformer for improved performance and faster convergence.
 
@@ -95,6 +94,8 @@ python -u sample.py --ckpt /path/to/checkpoint --local_diffusers_model_root /pat
 ### ImageNet 256x256 Benchmark
 ![image](./assets/table.png)
 
+### ImageNet 256 Samples
+![image](./assets/sample.png)
 
 ### Text-conditioned Samples
 ![image](./assets/sample_t2i.png)
