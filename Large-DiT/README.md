@@ -3,10 +3,9 @@ We have released the Large Diffusion Transformer (L-DiT-7B), inspired by the arc
 ![image](./assets/teaser.png)
 
 ### Contributations
-- We notice instability during the training of the original diffusion transformer, particularly when utilizing low-bit training modes and scaling up. To mitigate this, we combine the architectures of LLaMa and DiT. To further enhance the stability of the training process, we normalize the key and query of the attention mechanism. Consequently, the Large Diffusion Transformer can now be trained stably in BF16 mode and is scalable.
+- We observed instability during the training of the original diffusion transformer, particularly when employing low-bit training modes and parameter scaling up. Considering that the LLaMa architecture has been rigorously validated as a scalable, causal transformer architecture for large language models, we have integrated the architectures of LLaMa and DiT. This integration involves modifying the causal attention of LLaMa to a bi-directional attention mechanism. To further improve the stability of the training process, we have also normalized the key and query within the attention mechanism. Consequently, the Large Diffusion Transformer (Large-DiT) can be trained in BF16 mode and demonstrates improved scalability.
 
 - By utilizing the architecture of the Large Diffusion Transformer, we have scaled the parameters to 3 and 7 billion. This scaling has notably improved the convergence speed of the Large DiT on label-conditioned ImageNet generation, thereby demonstrating the potential of scaling-up diffusion transformer for improved performance and faster convergence.
-
 
 - We have made all training, inference, and evaluation codes publicly available, supporting further research on scaling  Diffusion Transformers.
 
