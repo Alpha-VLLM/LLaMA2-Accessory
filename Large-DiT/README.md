@@ -3,6 +3,7 @@
 We release the ***Large Diffusion Transformer*** (**L-DiT-3B** & **L-DiT-7B** 🔥), inspired by the methodologies of [LLaMA](https://github.com/facebookresearch/llama) and [DiT](https://github.com/facebookresearch/DiT). 
 
 ![image](./assets/sample_t2i.png)
+![image](./assets/sample2.jpg)
 
 
 Compared to DiT-XL/2, our L-DiT-7B:
@@ -28,9 +29,6 @@ We observe instability issues during the training of the original DiT, particula
   <img src="./assets/sample.png"/ width="57%">  <img src="./assets/table.png"/ width="37%"> <br>
 </div>
 
-<div>
-  <img src="./assets/sample2.jpg"/ width="100%"> <br>
-</div>
 
 ## Model zoo
 
