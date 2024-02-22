@@ -29,7 +29,7 @@ We observe instability issues during the training of the original DiT, particula
 </div>
 
 <div>
-  <img src="./assets/sample2.png"/ width="100%"> <br>
+  <img src="./assets/sample2.jpg"/ width="100%"> <br>
 </div>
 
 ## Model zoo
