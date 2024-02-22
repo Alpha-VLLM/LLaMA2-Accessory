@@ -28,6 +28,10 @@ We observe instability issues during the training of the original DiT, particula
   <img src="./assets/sample.png"/ width="57%">  <img src="./assets/table.png"/ width="37%"> <br>
 </div>
 
+<div>
+  <img src="./assets/sample2.png"/ width="100%"> <br>
+</div>
+
 ## Model zoo
 
 We currently release the following model checkpoints.
