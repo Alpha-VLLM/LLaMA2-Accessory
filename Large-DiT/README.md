@@ -46,7 +46,7 @@ We currently release the following model checkpoints.
 ```bash
 conda create -n large_dit
 conda activate large_dit
-conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=12.1 -c pytorch -c nvidia
+conda install python=3.11 pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=12.1 -c pytorch -c nvidia
 ```
 
 2. Install other dependencies.
