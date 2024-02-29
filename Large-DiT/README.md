@@ -26,7 +26,7 @@ We observe instability issues during the training of the original DiT, particula
 ### ImageNet 256x256 Samples and Benchmark
 
 <div>
-  <img src="./assets/sample.png"/ width="62%">  <img src="./assets/table.png"/ width="32%"> <br>
+  <img src="./assets/sample_any_reso.png"/ width="66%">  <img src="./assets/table.png"/ width="31%"> <br>
 </div>
 
 
