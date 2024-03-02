@@ -6,9 +6,9 @@ We release the ***Large Diffusion Transformer*** (**L-DiT-3B** & **L-DiT-7B** �
 ![image](./assets/sample.png)
 
 
-Compared to DiT-XL/2, our L-DiT-7B:
-- 💪 Achieves **comparable performance**, 2.37 versus 2.27 FID on ImageNet
-- 🚀 Requires only **7% of the training steps**, 500K versus 7M iterations
+On ImageNet generation, our L-DiT versus DiT-XL/2:
+- 💪 Achieves **comparable performance**, 2.28 (-7B) vs 2.27 FID on 256x256 and 2.52 (-3B) vs 3.04 on 512x512
+- 🚀 Requires **faster convergence step**, 332M (-7B) vs 1792M training images on 256x256 and 472M (-3B) cs 786M on 512x512
 
 ## Introduction
 
