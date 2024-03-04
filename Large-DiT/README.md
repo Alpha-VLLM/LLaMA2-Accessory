@@ -133,4 +133,7 @@ python -u sample.py --ckpt /path/to/checkpoint --local_diffusers_model_root /pat
 
 ## Acknowledgements
 
-The codebase is extended from [DiT](https://github.com/facebookresearch/DiT) and [LLaMA](https://github.com/facebookresearch/llama). This project is also highly motivated by [PixArt-alpha](https://github.com/PixArt-alpha/PixArt-alpha) and [JourneyDB](https://journeydb.github.io/). Thanks for their awesome work!
+The codebase is extended from [DiT](https://github.com/facebookresearch/DiT) and [LLaMA](https://github.com/facebookresearch/llama). This project is also highly motivated by [PixArt-alpha](https://github.com/PixArt-alpha/PixArt-alpha) and [JourneyDB](https://journeydb.github.io/). Thanks for their awesome work! 
+
+## Hiring Announcement
+🔥 We are hiring interns, postdocs, and full-time researchers at the General Vision Group, Shanghai AI Lab, with a focus on multi-modality and vision foundation models. If you are interested, please contact gaopengcuhk@gmail.com.
