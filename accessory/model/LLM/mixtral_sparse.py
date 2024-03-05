@@ -673,5 +673,3 @@ class Transformer(nn.Module):
     def _destroy_kv_cache(self) -> None:
         for layer in self.layers:
             layer.attention.destroy_kv_cache()
-
-

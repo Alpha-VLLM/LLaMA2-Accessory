@@ -71,6 +71,8 @@ class ModelArgs:
 
     load_pretrained_visual_encoder: bool = False
 
+    trainable_mode: str = "mm_stage2"  # options: ["mm_stage1", "mm_stage2"]
+
 
 def promote_scalar(x: torch.Tensor) -> torch.Tensor:
     return x.view(1) if len(x.size()) == 0 else x
@@ -128,7 +130,7 @@ class Attention(nn.Module):
         Supported mask spec:
 
         1. Float tensor: The tensor is added to the attention score matrix.
-        2. Boolean tensor: Substitute the ``True`` values with ``0.0`` and ``False`` values with 
+        2. Boolean tensor: Substitute the ``True`` values with ``0.0`` and ``False`` values with
            ``-inf``, then process in the same way as the float tensor.
         3. str: Currently the only supported choice is ``causal``, for which each token attends
            to all tokens appearing no later than itself. Our implementation assumes the query and
@@ -617,11 +619,22 @@ class Transformer(nn.Module):
 
     def get_trainable_params(self):
         trainable = {}
-        no_train_prefix = ["qformer.", "openclip_convnext_xxl.", "clip.", "dinov2_vitg14."]
-        for name, para in self.named_parameters():
-            if not any([name.startswith(_) for _ in no_train_prefix]):
-                trainable[name] = para
-
+        if self.args.trainable_mode == "mm_stage1":
+            train_keywords = [
+                "visual_proj",
+                "start_img",
+                "end_img",
+            ]
+            for name, para in self.named_parameters():
+                if any([keyword in name for keyword in train_keywords]):
+                    trainable[name] = para
+        elif self.args.trainable_mode == "mm_stage2":
+            no_train_prefix = ["qformer.", "openclip_convnext_xxl.", "clip.", "dinov2_vitg14."]
+            for name, para in self.named_parameters():
+                if not any([name.startswith(_) for _ in no_train_prefix]):
+                    trainable[name] = para
+        else:
+            raise ValueError(f"Unknown trainable stage {self.args.trainable_mode}")
         return trainable
 
     @torch.no_grad()

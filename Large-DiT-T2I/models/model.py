@@ -10,21 +10,19 @@
 # --------------------------------------------------------
 
 import functools
-from typing import Optional, Tuple, List
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.distributed as dist
 import math
+from typing import Optional, Tuple, List
+
+from apex.normalization import FusedRMSNorm as RMSNorm
+import fairscale.nn.model_parallel.initialize as fs_init
 from fairscale.nn.model_parallel.layers import (
     ColumnParallelLinear, RowParallelLinear, ParallelEmbedding,
 )
-import fairscale.nn.model_parallel.initialize as fs_init
-from apex.normalization import FusedRMSNorm as RMSNorm
 from flash_attn import flash_attn_func
-import glob
-import logging
-import os
+import torch
+import torch.distributed as dist
+import torch.nn as nn
+import torch.nn.functional as F
 
 
 def modulate(x, shift, scale):
@@ -134,7 +132,8 @@ class ParallelLabelEmbedder(nn.Module):
 
 
 class Attention(nn.Module):
-    def __init__(self, dim: int, n_heads: int, n_kv_heads: Optional[int], qk_norm: bool):
+    """Multi-head attention module."""
+    def __init__(self, dim: int, n_heads: int, n_kv_heads: Optional[int], qk_norm: bool, y_dim: int):
         """
         Initialize the Attention module.
 
@@ -177,6 +176,17 @@ class Attention(nn.Module):
             dim, self.n_kv_heads * self.head_dim, bias=False,
             gather_output=False, init_method=nn.init.xavier_uniform_,
         )
+        if y_dim > 0:
+            self.wk_y = ColumnParallelLinear(
+                y_dim, self.n_kv_heads * self.head_dim, bias=False,
+                gather_output=False, init_method=nn.init.xavier_uniform_,
+            )
+            self.wv_y = ColumnParallelLinear(
+                y_dim, self.n_kv_heads * self.head_dim, bias=False,
+                gather_output=False, init_method=nn.init.xavier_uniform_,
+            )
+            self.gate = nn.Parameter(torch.zeros([self.n_local_heads]))
+
         self.wo = RowParallelLinear(
             n_heads * self.head_dim, dim, bias=False,
             input_is_parallel=True, init_method=nn.init.xavier_uniform_,
@@ -185,8 +195,13 @@ class Attention(nn.Module):
         if qk_norm:
             self.q_norm = nn.LayerNorm(self.n_local_heads * self.head_dim)
             self.k_norm = nn.LayerNorm(self.n_local_kv_heads * self.head_dim)
+            if y_dim > 0:
+                self.ky_norm = nn.LayerNorm(self.n_local_kv_heads * self.head_dim)
+            else:
+                self.ky_norm = nn.Identity()
         else:
             self.q_norm = self.k_norm = nn.Identity()
+            self.ky_norm = nn.Identity()
 
     @staticmethod
     def reshape_for_broadcast(freqs_cis: torch.Tensor, x: torch.Tensor):
@@ -252,7 +267,7 @@ class Attention(nn.Module):
             return xq_out.type_as(xq), xk_out.type_as(xk)
 
     def forward(
-        self, x: torch.Tensor, freqs_cis: torch.Tensor,
+        self, x: torch.Tensor, freqs_cis: torch.Tensor, y: torch.Tensor, y_mask: torch.Tensor,
     ) -> torch.Tensor:
         """
         Forward pass of the attention module.
@@ -293,6 +308,23 @@ class Attention(nn.Module):
                 dropout_p=0., is_causal=False,
             ).permute(0, 2, 1, 3)
         output = output.flatten(-2)
+
+        if hasattr(self, "wk_y"):
+            yk = self.ky_norm(self.wk_y(y)).view(bsz, -1, self.n_local_kv_heads, self.head_dim)
+            yv = self.wv_y(y).view(bsz, -1, self.n_local_kv_heads, self.head_dim)
+            n_rep = self.n_local_heads // self.n_local_kv_heads
+            if n_rep >= 1:
+                yk = yk.unsqueeze(3).repeat(1, 1, 1, n_rep, 1).flatten(2, 3)
+                yv = yv.unsqueeze(3).repeat(1, 1, 1, n_rep, 1).flatten(2, 3)
+            output_y = F.scaled_dot_product_attention(
+                xq.permute(0, 2, 1, 3),
+                yk.permute(0, 2, 1, 3),
+                yv.permute(0, 2, 1, 3),
+                y_mask.view(bsz, 1, 1, -1).expand(bsz, self.n_local_heads, seqlen, -1)
+            ).permute(0, 2, 1, 3)
+            output_y = output_y * self.gate.tanh().view(1, 1, -1, 1)
+            output_y = output_y.flatten(-2)
+            output = output + output_y
 
         return self.wo(output)
 
@@ -357,7 +389,7 @@ class FeedForward(nn.Module):
 class TransformerBlock(nn.Module):
     def __init__(self, layer_id: int, dim: int, n_heads: int, n_kv_heads: int,
                  multiple_of: int, ffn_dim_multiplier: float, norm_eps: float,
-                 qk_norm: bool) -> None:
+                 qk_norm: bool, y_dim: int) -> None:
         """
         Initialize a TransformerBlock.
 
@@ -384,14 +416,12 @@ class TransformerBlock(nn.Module):
             layer_id (int): Identifier for the layer.
             attention_norm (RMSNorm): Layer normalization for attention output.
             ffn_norm (RMSNorm): Layer normalization for feedforward output.
-            adaLN_modulation (nn.Sequential): A small network to generate
-                feature modulation factors.
 
         """
         super().__init__()
         self.dim = dim
         self.head_dim = dim // n_heads
-        self.attention = Attention(dim, n_heads, n_kv_heads, qk_norm)
+        self.attention = Attention(dim, n_heads, n_kv_heads, qk_norm, y_dim)
         self.feed_forward = FeedForward(
             dim=dim, hidden_dim=4 * dim, multiple_of=multiple_of,
             ffn_dim_multiplier=ffn_dim_multiplier,
@@ -408,9 +438,13 @@ class TransformerBlock(nn.Module):
             ),
         )
 
+        self.attention_y_norm = RMSNorm(y_dim, eps=norm_eps)
+
     def forward(
         self,
         x: torch.Tensor,
+        y: torch.Tensor,
+        y_mask: torch.Tensor,
         freqs_cis: torch.Tensor,
         adaln_input: Optional[torch.Tensor] = None,
     ):
@@ -432,21 +466,22 @@ class TransformerBlock(nn.Module):
             shift_msa, scale_msa, gate_msa, shift_mlp, scale_mlp, gate_mlp = \
                 self.adaLN_modulation(adaln_input).chunk(6, dim=1)
 
-            h = x + gate_msa.unsqueeze(1) * self.attention(
+            x = x + gate_msa.unsqueeze(1) * self.attention(
                 modulate(self.attention_norm(x), shift_msa, scale_msa),
                 freqs_cis,
+                self.attention_y_norm(y), y_mask
             )
-            out = h + gate_mlp.unsqueeze(1) * self.feed_forward(
-                modulate(self.ffn_norm(h), shift_mlp, scale_mlp),
+            x = x + gate_mlp.unsqueeze(1) * self.feed_forward(
+                modulate(self.ffn_norm(x), shift_mlp, scale_mlp),
             )
 
         else:
-            h = x + self.attention(
-                self.attention_norm(x), freqs_cis,
+            x = x + self.attention(
+                self.attention_norm(x), freqs_cis, self.attention_y_norm(y), y_mask,
             )
-            out = h + self.feed_forward(self.ffn_norm(h))
+            x = x + self.feed_forward(self.ffn_norm(x))
 
-        return out
+        return x
 
 class ParallelFinalLayer(nn.Module):
     """
@@ -482,8 +517,8 @@ class DiT_Llama(nn.Module):
     """
     def __init__(
         self,
-        input_size: int = 32,
         patch_size: int = 2,
+        max_seq_len: int = 288,
         in_channels: int = 4,
         dim: int = 4096,
         n_layers: int = 32,
@@ -492,17 +527,17 @@ class DiT_Llama(nn.Module):
         multiple_of: int = 256,
         ffn_dim_multiplier: Optional[float] = None,
         norm_eps: float = 1e-5,
-        class_dropout_prob: float = 0.1,
-        num_classes: int = 1000,
         learn_sigma: bool = True,
         qk_norm: bool = False,
+        cap_feat_dim: int = 5120,
+        rope_scaling_factor: float = 1.,
     ) -> None:
         super().__init__()
         self.learn_sigma = learn_sigma
         self.in_channels = in_channels
         self.out_channels = in_channels * 2 if learn_sigma else in_channels
-        self.input_size = input_size
         self.patch_size = patch_size
+        self.max_seq_len = max_seq_len
 
         self.x_embedder = ColumnParallelLinear(
             in_features=patch_size * patch_size * in_channels,
@@ -514,69 +549,121 @@ class DiT_Llama(nn.Module):
         nn.init.constant_(self.x_embedder.bias, 0.)
 
         self.t_embedder = ParallelTimestepEmbedder(min(dim, 1024))
-        self.y_embedder = ParallelLabelEmbedder(num_classes, min(dim, 1024),
-                                                class_dropout_prob)
+        self.cap_embedder = nn.Sequential(
+            nn.LayerNorm(cap_feat_dim),
+            ColumnParallelLinear(
+                cap_feat_dim, min(dim, 1024), bias=True, gather_output=True,
+                init_method=lambda x: nn.init.zeros_
+                ),
+        )
 
         self.layers = nn.ModuleList([
             TransformerBlock(layer_id, dim, n_heads, n_kv_heads, multiple_of,
-                             ffn_dim_multiplier, norm_eps, qk_norm)
+                             ffn_dim_multiplier, norm_eps, qk_norm, cap_feat_dim)
             for layer_id in range(n_layers)
         ])
         self.final_layer = ParallelFinalLayer(dim, patch_size, self.out_channels)
 
-        self.freqs_cis = DiT_Llama.precompute_freqs_cis(dim // n_heads, 4096)
+        self.freqs_cis = DiT_Llama.precompute_freqs_cis(
+            dim // n_heads, max_seq_len, rope_scaling_factor=rope_scaling_factor
+        )
+        self.eol_token = nn.Parameter(torch.empty(dim))
+        self.pad_token = nn.Parameter(torch.empty(dim))
+        nn.init.normal_(self.eol_token, std=0.02)
+        nn.init.normal_(self.pad_token, std=0.02)
 
-    def unpatchify(self, x: torch.Tensor) -> torch.Tensor:
+    def unpatchify(self, x: torch.Tensor, img_size: List[Tuple[int, int]], return_tensor=False) -> List[torch.Tensor]:
         """
         x: (N, T, patch_size**2 * C)
         imgs: (N, H, W, C)
         """
-        c = self.out_channels
-        p = self.patch_size
-        h = w = int(x.shape[1] ** 0.5)
-        assert h * w == x.shape[1]
-
-        x = x.reshape(shape=(x.shape[0], h, w, p, p, c))
-        x = torch.einsum('nhwpqc->nchpwq', x)
-        imgs = x.reshape(shape=(x.shape[0], c, h * p, h * p))
+        pH = pW = self.patch_size
+        if return_tensor:
+            H, W = img_size[0]
+            B = x.size(0)
+            L = (H // pH) * (W // pW + 1)  # one additional for eol
+            x = x[:, :L].view(B, H // pH, W // pW + 1, pH, pW, self.out_channels)
+            x = x[:, :, :-1]
+            x = x.permute(0, 5, 1, 3, 2, 4).flatten(4, 5).flatten(2, 3)
+            return x
+        else:
+            imgs = []
+            for i in range(x.size(0)):
+                H, W = img_size[i]
+                L = (H // pH) * (W // pW + 1)
+                imgs.append(x[i][:L].view(
+                    H // pH, W // pW + 1, pH, pW, self.out_channels
+                )[:, :-1, :, :, :].permute(4, 0, 2, 1, 3).flatten(3, 4).flatten(1, 2))
         return imgs
 
-    def patchify(self, x: torch.Tensor) -> torch.Tensor:
-        B, C, H, W = x.size()
-        assert (H, W) == (self.input_size, self.input_size)
-        pH = pW = self.patch_size
-        x = x.view(B, C, H // pH, pH, W // pW, pW)
-        x = x.permute(0, 2, 4, 1, 3, 5).flatten(-3).flatten(1, 2)
-        return x
+    def patchify_and_embed(self, x: List[torch.Tensor] | torch.Tensor) -> Tuple[torch.Tensor, List[Tuple[int, int]]]:
+        if isinstance(x, torch.Tensor):
+            pH = pW = self.patch_size
+            B, C, H, W = x.size()
+            x = x.view(B, C, H // pH, pH, W // pW, pW).permute(0, 2, 4, 1, 3, 5).flatten(3)
+            x = self.x_embedder(x)
+            x = torch.cat([
+                x,
+                self.eol_token.view(1, 1, 1, -1).expand(B, H // pH, 1, -1),
+            ], dim=2)
+            x = x.flatten(1, 2)
+            if x.size(1) < self.max_seq_len:
+                x = torch.cat([
+                    x,
+                    self.pad_token.view(1, 1, -1).expand(B, self.max_seq_len - x.size(1), -1),
+                ], dim=1)
+            return x, [(H, W)] * B
+        else:
+            pH = pW = self.patch_size
+            x_embed = []
+            img_size = []
 
-    def forward(self, x, t, y):
+            for img in x:
+                C, H, W = img.size()
+                img_size.append((H, W))
+                img = img.view(C, H // pH, pH, W // pW, pW).permute(1, 3, 0, 2, 4).flatten(2)
+                img = self.x_embedder(img)
+                img = torch.cat([
+                    img,
+                    self.eol_token.view(1, 1, -1).expand(H // pH, 1, -1),
+                ], dim=1)
+                img = img.flatten(0, 1)
+                if img.size(0) < self.max_seq_len:
+                    img = torch.cat([
+                        img,
+                        self.pad_token.view(1, -1).expand(self.max_seq_len - img.size(0), -1),
+                    ], dim=0)
+                x_embed.append(img)
+            x_embed = torch.stack(x_embed, dim=0)
+            return x_embed, img_size
+
+    def forward(self, x, t, cap_feats, cap_mask):
         """
         Forward pass of DiT.
-        x: (N, C, H, W) tensor of spatial inputs (images or latent
-           representations of images)
         t: (N,) tensor of diffusion timesteps
         y: (N,) tensor of class labels
         """
+        x_is_tensor = isinstance(x, torch.Tensor)
+        x, img_size = self.patchify_and_embed(x)
         self.freqs_cis = self.freqs_cis.to(x.device)
 
-        x = self.patchify(x)
-        x = self.x_embedder(x)
-
         t = self.t_embedder(t)                   # (N, D)
-        y = self.y_embedder(y, self.training)    # (N, D)
-        adaln_input = t + y
+        cap_mask_float = cap_mask.float().unsqueeze(-1)
+        cap_feats_pool = (cap_feats * cap_mask_float).sum(dim=1) / cap_mask_float.sum(dim=1)
+        cap_emb = self.cap_embedder(cap_feats_pool)
+        adaln_input = t + cap_emb
 
         for layer in self.layers:
             x = layer(
-                x, self.freqs_cis[:x.size(1)],
+                x, cap_feats, cap_mask, self.freqs_cis[:x.size(1)],
                 adaln_input=adaln_input
             )
 
         x = self.final_layer(x, adaln_input)
-        x = self.unpatchify(x)         # (N, out_channels, H, W)
+        x = self.unpatchify(x, img_size, return_tensor=x_is_tensor)         # (N, out_channels, H, W)
         return x
 
-    def forward_with_cfg(self, x, t, y, cfg_scale):
+    def forward_with_cfg(self, x, t, cap_feats, cap_mask, cfg_scale):
         """
         Forward pass of DiT, but also batches the unconditional forward pass
         for classifier-free guidance.
@@ -584,7 +671,7 @@ class DiT_Llama(nn.Module):
         # https://github.com/openai/glide-text2im/blob/main/notebooks/text2im.ipynb
         half = x[: len(x) // 2]
         combined = torch.cat([half, half], dim=0)
-        model_out = self.forward(combined, t, y)
+        model_out = self.forward(combined, t, cap_feats, cap_mask)
         # For exact reproducibility reasons, we apply classifier-free guidance on only
         # three channels by default. The standard approach to cfg applies it to all channels.
         # This can be done by uncommenting the following line and commenting-out the line following that.
@@ -596,7 +683,7 @@ class DiT_Llama(nn.Module):
         return torch.cat([eps, rest], dim=1)
 
     @staticmethod
-    def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0):
+    def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0, rope_scaling_factor: float = 1.0):
         """
         Precompute the frequency tensor for complex exponentials (cis) with
         given dimensions.
@@ -619,7 +706,8 @@ class DiT_Llama(nn.Module):
         freqs = 1.0 / (theta ** (
             torch.arange(0, dim, 2)[: (dim // 2)].float() / dim
         ))
-        t = torch.arange(end, device=freqs.device)  # type: ignore
+        t = torch.arange(end, device=freqs.device, dtype=torch.float)  # type: ignore
+        t = t / rope_scaling_factor
         freqs = torch.outer(t, freqs).float()  # type: ignore
         freqs_cis = torch.polar(torch.ones_like(freqs), freqs)  # complex64
         return freqs_cis
@@ -648,39 +736,24 @@ class DiT_Llama(nn.Module):
         return list(self.layers)
 
 
-DiT_models = {}
-
-
-def export(func):
-    assert func.__name__ not in DiT_models, (
-        f"Model with name 'func.__name__' is exported twice."
-    )
-    DiT_models[func.__name__] = func
-    return func
-
-
 #############################################################################
 #                                 DiT Configs                               #
 #############################################################################
 
 
-@export
 def DiT_Llama_600M_patch2(**kwargs):
     return DiT_Llama(
         patch_size=2, dim=1536, n_layers=16, n_heads=32, **kwargs
     )
 
 
-@export
 def DiT_Llama_3B_patch2(**kwargs):
     return DiT_Llama(
         patch_size=2, dim=3072, n_layers=32, n_heads=32, **kwargs
     )
 
 
-@export
 def DiT_Llama_7B_patch2(**kwargs):
     return DiT_Llama(
         patch_size=2, dim=4096, n_layers=32, n_heads=32, **kwargs
     )
-

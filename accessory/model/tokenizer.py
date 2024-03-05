@@ -34,7 +34,7 @@ class Tokenizer:
             assert self.tokenizer.vocab_size() == self.tokenizer.get_piece_size()
         else:
             self.tokenizer_type = "transformers"
-            self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+            self.tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
             logger.info(f"load HF transformers tokenizer from {model_path}")
             # BOS / EOS token IDs
             self.bos_id: int = self.tokenizer.bos_token_id
