@@ -5,43 +5,44 @@
 # LICENSE file in the root directory of this source tree.
 
 """
-A minimal training script for DiT using PyTorch DDP.
+A minimal training script for DiT using PyTorch FSDP.
 """
+import argparse
+from collections import OrderedDict
 import contextlib
+from copy import deepcopy
+from datetime import datetime
 import functools
+import json
+import logging
+import multiprocessing as mp
+import os
+import socket
+import subprocess
+from time import time, sleep
+
+from PIL import Image
+from diffusers.models import AutoencoderKL
+import fairscale.nn.model_parallel.initialize as fs_init
+import numpy as np
 import torch
 import torch.distributed as dist
-import torch.nn as nn
-from torch.utils.data import DataLoader
-from torchvision.datasets import ImageFolder
-from torchvision import transforms
-import numpy as np
-from collections import OrderedDict
-from PIL import Image
-from copy import deepcopy
-from time import time, sleep
-import argparse
-import logging
-import os
-import subprocess
-import fairscale.nn.model_parallel.initialize as fs_init
 from torch.distributed.fsdp import (
     FullyShardedDataParallel as FSDP,
     ShardingStrategy, MixedPrecision, StateDictType, FullStateDictConfig
 )
 from torch.distributed.fsdp.wrap import lambda_auto_wrap_policy
-import multiprocessing as mp
-import json
+import torch.nn as nn
+from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from datetime import datetime
-import socket
+from torchvision import transforms
+from torchvision.datasets import ImageFolder
 
-from models import DiT_models
 from diffusion import create_diffusion
-from diffusers.models import AutoencoderKL
 from grad_norm import (
     get_model_parallel_dim_dict, calculate_l2_grad_norm, scale_grad,
 )
+from models import DiT_models
 
 
 #############################################################################
