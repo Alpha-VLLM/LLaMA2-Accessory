@@ -64,7 +64,13 @@ python -u demo.py --ckpt /path/to/trained/ckpt
 
 1. Example training scripts are provided in the [exps](./exps) folder. Configure the `*.yaml` data collection file correctly before running. The scripts are for 8xA100-80G machines, and you may need to reduce `--micro_batch_size` or model size in case of OOM.
 
-## Acknowledgements
+## High-quality Generation
+
+* More samples are on the way:
+
+![sample2](assets/sample_2.png)
+
+## Acknowledgments
 
 The codebase is extended from [DiT](https://github.com/facebookresearch/DiT) and [LLaMA](https://github.com/facebookresearch/llama). This project is also highly motivated by [PixArt-alpha](https://github.com/PixArt-alpha/PixArt-alpha) and [JourneyDB](https://journeydb.github.io/). Thanks for their awesome work! 
 
