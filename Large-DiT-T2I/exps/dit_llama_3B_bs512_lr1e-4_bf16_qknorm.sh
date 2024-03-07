@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-train_data_root='configs/data/JourneyDB.yaml'
+data_config='configs/data/JourneyDB.yaml'
 
 model=DiT_Llama_3B_patch2
 batch_size=512
@@ -11,7 +11,7 @@ exp_name=${model}_bs${batch_size}_lr${lr}_${precision}_qknorm
 
 torchrun --nproc_per_node 8 train.py \
     --model ${model} \
-    --data_path ${train_data_root} \
+    --data_path ${data_config} \
     --results_dir results/${exp_name} \
     --micro_batch_size 32 \
     --global_batch_size ${batch_size} --lr ${lr} \

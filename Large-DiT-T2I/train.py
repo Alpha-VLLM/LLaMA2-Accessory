@@ -57,7 +57,6 @@ class T2IItemProcessor(ItemProcessor):
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, add_bos_token=True, add_eos_token=True)
         self.text_dropout_prob = text_dropout_prob
         self.max_words = max_words
-        self.pad_id = self.tokenizer.pad_token_id
 
     def process_item(self, data_item, training_mode=False):
         if "conversations" in data_item:
@@ -75,7 +74,7 @@ class T2IItemProcessor(ItemProcessor):
         tokenized_caption = self.tokenizer.encode(text, truncation=False)
         token_mask = torch.arange(self.max_words) < len(tokenized_caption)
         if len(tokenized_caption) < self.max_words:
-            tokenized_caption = tokenized_caption + [self.pad_id] * (self.max_words - len(tokenized_caption))
+            tokenized_caption = tokenized_caption + [0] * (self.max_words - len(tokenized_caption))
         else:
             tokenized_caption = tokenized_caption[:self.max_words]
         tokenized_caption = torch.tensor(tokenized_caption, dtype=torch.long)
@@ -164,7 +163,7 @@ def setup_lm_fsdp_sync(model: nn.Module) -> FSDP:
         model,
         auto_wrap_policy=functools.partial(
             lambda_auto_wrap_policy,
-            lambda_fn=lambda m: m in model.get_fsdp_wrap_module_list(),
+            lambda_fn=lambda m: m in list(model.layers),
         ),
         process_group=get_intra_node_process_group(),
         sharding_strategy=ShardingStrategy.FULL_SHARD,
@@ -314,7 +313,7 @@ def main(args):
 
     logger.info(f"Setting-up language model: {args.lm}")
 
-    model_lm = AutoModelForCausalLM.from_pretrained(args.lm)  # e.g. meta-llama/Llama-2-7b-hf
+    model_lm = AutoModelForCausalLM.from_pretrained(args.lm).get_decoder()  # e.g. meta-llama/Llama-2-7b-hf
     cap_feat_dim = model_lm.config.hidden_size
     model_lm = setup_lm_fsdp_sync(model_lm)
 
@@ -496,7 +495,7 @@ def main(args):
             caps = caps[caps.size(0) // mp_world_size * mp_rank, caps.size(0) // mp_world_size * (mp_rank + 1)]
 
         with torch.no_grad():
-            cap_feats = model_lm.get_decoder()(input_ids=caps).last_hidden_state
+            cap_feats = model_lm(input_ids=caps).last_hidden_state
 
         if mp_world_size > 1:
             local_cap_feats = cap_feats
