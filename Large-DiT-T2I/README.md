@@ -12,11 +12,11 @@ We release the ***Text-to-Image Large Diffusion Transformer*** (**L-DiT-T2I-3B**
 
 The checkpoints of our model will be released soon~
 
-| Resolution | Download URL   |
-| ---------- | -------------- |
-| 256        | To be released |
-| 512        | To be released |
-| 1024       | https://huggingface.co/Alpha-VLLM/Large-DiT/tree/main/240308_3b_1024 |
+| Resolution | Download URL     |
+| ---------- |------------------|
+| 256        | To be released   |
+| 512        | To be released   |
+| 1024       | [hugging face](https://huggingface.co/Alpha-VLLM/Large-DiT/tree/main/240308_3b_1024) |
 
 ## Installation
 
@@ -27,8 +27,8 @@ For installation instructions, please refer to the [Large-DiT installation guide
 Once the necessary checkpoints are prepared, you can initiate a demo on your local machine using Gradio. Run the following command to get started:
 
 ```bash
-# You can change the --ckpt to different resolution models and set --resolution to corresponding model resolution
-python -u demo.py --ckpt /path/to/trained/ckpt --resolution 256
+# You can change the --ckpt to different resolution models
+python -u demo.py --ckpt /path/to/trained/ckpt
 ```
 
 ## Training
