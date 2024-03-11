@@ -12,11 +12,11 @@ We release the ***Text-to-Image Large Diffusion Transformer*** (**L-DiT-T2I-3B**
 
 The checkpoints of our model will be released soon~
 
-| Resolution | Download URL   |
-| ---------- | -------------- |
-| 256        | To be released |
-| 512        | To be released |
-| 1024       | To be released |
+| Resolution | Download URL     |
+| ---------- |------------------|
+| 256        | To be released   |
+| 512        | To be released   |
+| 1024       | [hugging face](https://huggingface.co/Alpha-VLLM/Large-DiT/tree/main/240308_3b_1024) |
 
 ## Installation
 
