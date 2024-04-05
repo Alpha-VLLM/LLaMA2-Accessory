@@ -16,10 +16,18 @@ We observe instability issues during the training of the original DiT, particula
 
 ![image](./assets/teaser.png)
 
+
+<p align="center">
+ <img src="./assets/cascade.png" width="80%"/> 
+ <br>
+</p>
+
 ### Contribution
 - We introduce Large-DiT to incorporate the methodologies of LLaMA and DiT. Specifically, we modify the causal attention of LLaMA to a bi-directional attention mechanism. Further, we normalize the key and query within the attention mechanism, which allows Large-DiT to be trained in BF16 mode with improved scalability.
 
 - By utilizing the architecture of Large-DiT, we can scale up the parameters from 600M to 7 billion. This parameter scaling-up has significantly improved the convergence speed for the label-conditioned ImageNet generation. This demonstrates the potential of scaling-up diffusion transformers for enhanced performance and faster convergence.
+
+- To enable better high-resolution latent diffusion, we propose a cascade paradigm regarding low-resolution latent as conditioning to high-resolution generation, achieving higher quality and fidelity.
 
 - We have made all training, inference, and evaluation codes publicly available, supporting further research on scaling Diffusion Transformers.
 
