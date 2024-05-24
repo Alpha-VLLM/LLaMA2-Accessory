@@ -21,6 +21,9 @@ The checkpoints of our model will be released soon~
 ## Installation
 
 For installation instructions, please refer to the [Large-DiT installation guide](https://github.com/Alpha-VLLM/LLaMA2-Accessory/tree/main/Large-DiT-ImageNet).
+```bash
+pip install transformers h5py
+```
 
 ## Sampling
 
